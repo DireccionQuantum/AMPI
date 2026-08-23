@@ -16,7 +16,8 @@
     "test:import": "node test/importacion.js",
     "test:modulo": "node test/modulo.js",
     "test:usuarios": "node test/usuarios.js",
-    "test:expositores": "node test/expositores.js"
+    "test:expositores": "node test/expositores.js",
+    "test:codigo": "node test/codigo-modulo.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

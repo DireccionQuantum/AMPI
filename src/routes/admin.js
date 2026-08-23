@@ -103,15 +103,30 @@ module.exports = function adminRoutes(db, io) {
       // PIN de 4 dígitos, fácil de dictar al expositor.
       const pin = String(crypto.randomInt(1000, 10000));
       const token = crypto.randomBytes(12).toString('hex');
+      // Código de acceso: es lo que teclea en la dirección general.
+      const { generarCodigoCorto } = require('../services/sesion');
 
-      const { rows } = await db.query(
-        `INSERT INTO expositores (nombre, empresa, contacto, telefono, pin_hash, token, puntos, orden)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, nombre, token`,
-        [String(nombre).trim(), empresa || null, contacto || null, telefono || null,
-         await hashearPassword(pin), token, Math.max(1, Number(puntos) || 1), Number(orden) || 0]
-      );
+      let rows;
+      let creado = false;
+      for (let intento = 0; intento < 8 && !creado; intento++) {
+        try {
+          const r = await db.query(
+            `INSERT INTO expositores (nombre, empresa, contacto, telefono, pin_hash, token, codigo, puntos, orden)
+                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, nombre, token, codigo`,
+            [String(nombre).trim(), empresa || null, contacto || null, telefono || null,
+             await hashearPassword(pin), token, generarCodigoCorto(),
+             Math.max(1, Number(puntos) || 1), Number(orden) || 0]
+          );
+          rows = r.rows;
+          creado = true;
+        } catch (e) {
+          if (e.code !== '23505') throw e;   // colisión de código: reintenta
+        }
+      }
+      if (!creado) return res.status(500).json({ error: 'No se pudo generar un código libre' });
+
       // El PIN se muestra UNA vez: después sólo vive hasheado.
-      res.json({ ok: true, expositor: rows[0], pin });
+      res.json({ ok: true, expositor: rows[0], pin, codigo: rows[0].codigo });
     } catch (err) { next(err); }
   });
 
@@ -205,6 +220,28 @@ module.exports = function adminRoutes(db, io) {
         [req.session.usuario.email, JSON.stringify(rows[0])]
       ).catch(() => {});
       res.json({ ok: true, expositor: rows[0] });
+    } catch (err) { next(err); }
+  });
+
+  /** Regenera el código de acceso del módulo. Útil si se filtró. */
+  router.post('/expositores/:id/codigo', soloAdmin, async (req, res, next) => {
+    try {
+      const { generarCodigoCorto } = require('../services/sesion');
+      for (let intento = 0; intento < 8; intento++) {
+        const codigo = generarCodigoCorto();
+        try {
+          const { rows } = await db.query(
+            `UPDATE expositores SET codigo = $2 WHERE id = $1
+             RETURNING id, nombre, codigo`,
+            [req.params.id, codigo]
+          );
+          if (!rows.length) return res.status(404).json({ error: 'Módulo no encontrado' });
+          return res.json({ ok: true, expositor: rows[0], codigo });
+        } catch (e) {
+          if (e.code !== '23505') throw e;   // colisión: reintentamos
+        }
+      }
+      res.status(500).json({ error: 'No se pudo generar un código libre' });
     } catch (err) { next(err); }
   });
 

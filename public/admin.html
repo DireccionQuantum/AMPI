@@ -237,7 +237,7 @@
           <button class="btn-chico" id="btn-nuevo-modulo">Agregar módulo</button>
         </h3>
         <div class="scroll"><table>
-          <thead><tr><th>Módulo</th><th>Puntos</th><th>Visitas</th>
+          <thead><tr><th>Módulo</th><th>Código</th><th>Puntos</th><th>Visitas</th>
                      <th>Estado</th><th></th></tr></thead>
           <tbody id="t-modulos"></tbody>
         </table></div>
@@ -629,13 +629,11 @@
    * está hasheado y no hay forma de recuperarlo.
    */
   function abrirInstructivo(x){
-    api('/expositores/' + x.id + '/liga').then(function(d){
-      var url = '/instructivo?modulo=' + encodeURIComponent(x.nombre) +
-                '&t=' + encodeURIComponent(d.token);
-      if(ultimoPin[x.id]) url += '&pin=' + encodeURIComponent(ultimoPin[x.id]);
-      else toast('Genera un PIN nuevo si quieres que aparezca impreso');
-      window.open(url, '_blank');
-    }).catch(function(e){ toast(e.message); });
+    // El instructivo se arma con el código del módulo: es lo único que el
+    // expositor necesita teclear en la dirección general del escáner.
+    var url = '/instructivo?modulo=' + encodeURIComponent(x.nombre) +
+              '&codigo=' + encodeURIComponent(x.codigo || '');
+    window.open(url, '_blank');
   }
 
   function cargarModulos(){
@@ -644,6 +642,12 @@
       lista.forEach(function(x){
         var fila = document.createElement('tr');
         fila.appendChild(celda(x.nombre));
+        var tdc = document.createElement('td');
+        tdc.style.fontFamily = 'ui-monospace,Menlo,monospace';
+        tdc.style.fontWeight = '700';
+        tdc.style.letterSpacing = '.08em';
+        tdc.textContent = x.codigo || '—';
+        fila.appendChild(tdc);
         fila.appendChild(celda(x.puntos));
         fila.appendChild(celda(x.visitas));
         var td = document.createElement('td');
@@ -655,14 +659,15 @@
         tdb.style.whiteSpace = 'nowrap';
 
         var b = document.createElement('button');
-        b.className = 'btn-chico btn-fantasma'; b.textContent = 'Nuevo PIN';
+        b.className = 'btn-chico btn-fantasma'; b.textContent = 'Nuevo código';
         b.onclick = function(){
-          api('/expositores/' + x.id + '/pin', { method:'POST' })
+          if (!confirm('¿Generar un código nuevo para "' + x.nombre + '"?\n\n' +
+                       'El código anterior dejará de funcionar de inmediato.')) return;
+          api('/expositores/' + x.id + '/codigo', { method:'POST' })
             .then(function(d){
-              ultimoPin[x.id] = d.pin;
-              // El PIN sólo se puede ver aquí: en la base vive hasheado.
-              alert('PIN de ' + d.expositor.nombre + ': ' + d.pin +
-                    '\n\nAnótalo: no se puede volver a consultar.');
+              alert('Código nuevo de ' + d.expositor.nombre + ':\n\n' + d.codigo +
+                    '\n\nEl anterior ya no sirve. Avísale al expositor.');
+              cargarModulos();
             })
             .catch(function(e){ toast(e.message); });
         };
@@ -715,9 +720,8 @@
       body: JSON.stringify({ nombre: nombre.trim(), empresa: empresa.trim() || null, puntos: puntos })
     }).then(function(d){
       alert('Módulo creado: ' + d.expositor.nombre +
-            '\n\nPIN: ' + d.pin +
-            '\nLiga: ' + location.origin + '/s/' + d.expositor.token +
-            '\n\nAnota el PIN ahora: después sólo vive cifrado y no se puede volver a ver.');
+            '\n\nCódigo de acceso: ' + d.codigo +
+            '\n\nEl expositor entra en ' + location.origin + '/scan y escribe ese código.');
       cargarModulos();
     }).catch(function(e){ toast(e.message); });
   });

@@ -144,12 +144,12 @@
     <div>
       <div class="etq">Tu módulo</div>
       <div class="modulo" id="c-modulo">_______________________________</div>
-      <div class="etq" style="margin-top:4mm">Abre esta liga en tu celular</div>
+      <div class="etq" style="margin-top:4mm">Abre esta dirección en tu celular</div>
       <div class="liga" id="c-liga">_______________________________</div>
     </div>
     <div class="pin-caja">
-      <div class="etq">Tu PIN</div>
-      <div class="pin" id="c-pin">····</div>
+      <div class="etq">Tu código</div>
+      <div class="pin" id="c-pin">······</div>
     </div>
   </div>
 
@@ -158,8 +158,8 @@
     <div class="paso">
       <div class="n">1</div>
       <div>
-        <div class="t">Abre tu liga y guárdala</div>
-        <div class="d">Desde el navegador de tu celular. Escribe tu PIN de 4 dígitos una sola vez y deja la pestaña abierta todo el día.</div>
+        <div class="t">Abre la dirección y guárdala</div>
+        <div class="d">Desde el navegador de tu celular. Escribe tu código de 6 caracteres una sola vez y deja la pestaña abierta todo el día.</div>
       </div>
     </div>
     <div class="paso">
@@ -257,13 +257,14 @@
 (function(){
   'use strict';
   // Permite personalizar la hoja por módulo desde la URL:
-  //   /instructivo.html?modulo=Inmobiliaria+Costa+Azul&pin=3994&t=<token>
+  //   /instructivo.html?modulo=Inmobiliaria+Costa+Azul&codigo=RUB9QJ
   var q = new URLSearchParams(location.search);
-  var mod = q.get('modulo'), pin = q.get('pin'), t = q.get('t');
+  var mod = q.get('modulo'), codigo = q.get('codigo');
 
-  if (mod) document.getElementById('c-modulo').textContent = mod;
-  if (pin) document.getElementById('c-pin').textContent = pin;
-  if (t)   document.getElementById('c-liga').textContent = location.origin + '/s/' + t;
+  if (mod)    document.getElementById('c-modulo').textContent = mod;
+  if (codigo) document.getElementById('c-pin').textContent = codigo;
+  // Todos los módulos entran por la misma dirección: sólo cambia el código.
+  document.getElementById('c-liga').textContent = location.origin + '/scan';
 
   // Logo del evento si el administrador ya lo subió
   var img = new Image();

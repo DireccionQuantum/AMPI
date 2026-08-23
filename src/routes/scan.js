@@ -4,8 +4,9 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { enTransaccion } = require('../db');
 const { parseQr } = require('../services/vinculacion');
+const { limpiarCodigo } = require('../services/sesion');
 const { registrarEscaneo, metricas } = require('../services/puntos');
-const { soloExpositor, limiteLogin, verificarPassword } = require('../middleware/auth');
+const { soloExpositor, limiteLoginExpositor, verificarPassword } = require('../middleware/auth');
 
 module.exports = function scanRoutes(db, io) {
   const router = express.Router();
@@ -20,12 +21,45 @@ module.exports = function scanRoutes(db, io) {
     message: { error: 'Demasiados escaneos seguidos. Espera un momento.' },
   });
 
-  // ---- Login del expositor: por token de liga o por PIN ----
-  router.post('/login', limiteLogin, async (req, res, next) => {
+  // ---- Login del expositor ----
+  // Dos formas, ambas válidas:
+  //   1. Código de módulo desde la dirección general /scan (la habitual).
+  //   2. Liga directa /s/<token> + PIN (las ya repartidas siguen sirviendo).
+  router.post('/login', limiteLoginExpositor, async (req, res, next) => {
     try {
-      const { token, pin } = req.body || {};
+      const { token, pin, codigo } = req.body || {};
 
       let expo = null;
+
+      // --- Camino 1: código de módulo ---
+      if (codigo) {
+        const limpio = limpiarCodigo(codigo);
+        if (!limpio) {
+          return res.status(400).json({
+            error: 'El código son 6 caracteres, como los del gafete de tu módulo.',
+          });
+        }
+        const { rows } = await db.query(
+          `SELECT id, nombre, empresa, puntos, pin_hash, activo
+             FROM expositores WHERE codigo = $1`,
+          [limpio]
+        );
+        expo = rows[0] || null;
+        if (!expo) return res.status(401).json({ error: 'Código no reconocido. Revísalo con la organización.' });
+        if (!expo.activo) return res.status(403).json({ error: 'Este módulo está desactivado' });
+
+        req.session.expositor = { id: expo.id, nombre: expo.nombre, puntos: expo.puntos };
+        return res.json({
+          ok: true,
+          expositor: { id: expo.id, nombre: expo.nombre, empresa: expo.empresa, puntos: expo.puntos },
+        });
+      }
+
+      // --- Camino 2: liga directa /s/<token> ---
+      // El token son 24 hex aleatorios: es en sí mismo la credencial, del
+      // mismo modo que el código de 6 caracteres. Si viene por la liga, no
+      // se le pide nada más. Si además mandan PIN, se valida (compatible
+      // con clientes viejos).
       if (token && typeof token === 'string') {
         const { rows } = await db.query(
           `SELECT id, nombre, empresa, puntos, pin_hash, activo
@@ -36,18 +70,17 @@ module.exports = function scanRoutes(db, io) {
       }
 
       if (!token || typeof token !== 'string') {
-        // Causa habitual: el expositor abrió /scan directo en lugar de su
-        // liga. Su PIN puede ser correcto y aun así no hay forma de saber
-        // de qué módulo se trata.
         return res.status(401).json({
-          error: 'Entra por la liga de tu módulo, la que termina en /s/ y una clave larga. El PIN por sí solo no identifica al módulo.',
+          error: 'Escribe el código de 6 caracteres de tu módulo.',
         });
       }
       if (!expo) return res.status(401).json({ error: 'Módulo no encontrado' });
       if (!expo.activo) return res.status(403).json({ error: 'Este módulo está desactivado' });
 
-      const ok = await verificarPassword(pin, expo.pin_hash);
-      if (!ok) return res.status(401).json({ error: 'PIN incorrecto' });
+      if (pin != null && pin !== '') {
+        const ok = await verificarPassword(pin, expo.pin_hash);
+        if (!ok) return res.status(401).json({ error: 'PIN incorrecto' });
+      }
 
       req.session.expositor = { id: expo.id, nombre: expo.nombre, puntos: expo.puntos };
       res.json({

@@ -159,10 +159,12 @@ npm run simular         # 41 pruebas contra la base
 npm run test:import     # 32 pruebas del importador
 npm run test:modulo     # 40 pruebas del flujo del módulo (requiere servidor)
 npm run test:usuarios   # 28 pruebas de usuarios y permisos (requiere servidor)
+npm run test:expositores # 27 pruebas de alta, edición y baja de stands
+npm run test:codigo     # 19 pruebas del acceso por código de módulo
 bash test/e2e.sh        # 52 pruebas end-to-end (requiere servidor en :3000)
 ```
 
-Total: **193 pruebas**.
+Total: **239 pruebas**.
 
 ---
 
@@ -195,23 +197,32 @@ del evento, en cambio, se puede quitar sin ese riesgo.
 
 ## 6-ter. Cómo entra el expositor a su escáner
 
-**Cada módulo entra por su propia liga**, no por la pantalla `/scan`:
+**Todos los módulos entran a la misma dirección:**
 
 ```
-https://tu-dominio/s/<clave-larga-del-modulo>
+https://tu-dominio/scan
 ```
 
-El sistema identifica al módulo por esa liga; el PIN sólo confirma que es
-la persona correcta. Por eso **el PIN por sí solo no sirve**: si el
-expositor abre `/scan` a secas y escribe su PIN, no hay forma de saber de
-qué módulo se trata.
+Ahí escriben el **código de 6 caracteres** de su módulo y listo. No hay
+liga distinta por stand ni PIN aparte.
 
-La liga de cada módulo está en `/admin` → pestaña **Módulos** → botón
-**Instructivo**. Es la que hay que imprimir o mandar por WhatsApp a cada
-expositor.
+El código se ve en `/admin` → pestaña **Módulos**, en su propia columna, y
+sale impreso en el **Instructivo** de cada expositor.
 
-Si cambias el PIN de un módulo con **Nuevo PIN**, la liga NO cambia: sigue
-siendo la misma. Sólo hay que dictarle el PIN nuevo.
+Detalles que conviene saber:
+
+- El código no distingue mayúsculas ni le molestan espacios o guiones.
+- No usa 0, O, 1, I ni L, porque se confunden al leer en papel.
+- **Nuevo código** genera uno distinto y el anterior deja de servir de
+  inmediato. Úsalo si un código se filtró.
+- Las ligas `/s/<clave>` que ya hayas repartido **siguen funcionando** y
+  ahora entran directo, sin pedir nada más.
+
+**Sobre el límite de intentos:** el corte es por código, no por dirección
+de internet. Esto importa porque en el salón los 40 módulos comparten el
+mismo WiFi y salen por una sola IP; si el límite fuera por IP, a partir
+del módulo quince se bloquearían entre sí. Así, quien se equivoca sólo se
+afecta a sí mismo.
 
 ## 7. Referencia de la API
 

@@ -4,6 +4,7 @@ require('dotenv').config();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../src/db');
+const { generarCodigoCorto } = require('../src/services/sesion');
 
 const EXPOSITORES = [
   'Inmobiliaria Costa Azul', 'Grupo Constructor Baja', 'Créditos Hipotecarios TJ',
@@ -65,12 +66,25 @@ const PATROCINADORES = [
     for (let i = 0; i < EXPOSITORES.length; i++) {
       const pin = String(crypto.randomInt(1000, 10000));
       const token = crypto.randomBytes(12).toString('hex');
-      const { rows } = await client.query(
-        `INSERT INTO expositores (nombre, pin_hash, token, puntos, orden)
-              VALUES ($1,$2,$3,1,$4) RETURNING id, nombre`,
-        [EXPOSITORES[i], await bcrypt.hash(pin, 10), token, i]
-      );
-      credenciales.push({ id: rows[0].id, nombre: rows[0].nombre, pin, token });
+      // El código es lo que el expositor teclea en /scan. Se reintenta
+      // ante una colisión, que es improbable pero barata de cubrir.
+      let rows = null;
+      let codigo = null;
+      for (let intento = 0; intento < 8 && !rows; intento++) {
+        codigo = generarCodigoCorto();
+        try {
+          const r = await client.query(
+            `INSERT INTO expositores (nombre, pin_hash, token, codigo, puntos, orden)
+                  VALUES ($1,$2,$3,$4,1,$5) RETURNING id, nombre, codigo`,
+            [EXPOSITORES[i], await bcrypt.hash(pin, 10), token, codigo, i]
+          );
+          rows = r.rows;
+        } catch (e) {
+          if (e.code !== '23505') throw e;
+        }
+      }
+      if (!rows) throw new Error('No se pudo generar un código libre para ' + EXPOSITORES[i]);
+      credenciales.push({ id: rows[0].id, nombre: rows[0].nombre, pin, token, codigo: rows[0].codigo });
     }
 
     // ---------- Rifas del día ----------
@@ -100,15 +114,15 @@ const PATROCINADORES = [
     console.log(`  Admin:  admin@quantummkt.mx / ${passAdmin}`);
     console.log(`  Staff:  registro@quantummkt.mx / ${passStaff}`);
     console.log(`\n  ${credenciales.length} expositores, ${rifas.length} rifas programadas`);
-    console.log('\n  Primeros 5 módulos (PIN y liga directa):');
+    console.log('\n  Primeros 5 módulos (el expositor entra en /scan con su código):');
     for (const c of credenciales.slice(0, 5)) {
-      console.log(`    ${String(c.id).padStart(2)} ${c.nombre.padEnd(32)} PIN ${c.pin}  /s/${c.token}`);
+      console.log(`    ${String(c.id).padStart(2)} ${c.nombre.padEnd(32)} código ${c.codigo}`);
     }
-    console.log('\n  Las credenciales completas se guardan en credenciales.csv');
+    console.log('\n  Los códigos de los 40 módulos están en credenciales.csv');
 
     const fs = require('fs');
-    const csv = ['id,modulo,pin,liga']
-      .concat(credenciales.map((c) => `${c.id},"${c.nombre}",${c.pin},/s/${c.token}`))
+    const csv = ['id,modulo,codigo,liga_alterna']
+      .concat(credenciales.map((c) => `${c.id},"${c.nombre}",${c.codigo},/s/${c.token}`))
       .join('\n');
     fs.writeFileSync(require('path').join(__dirname, '..', 'credenciales.csv'), '\uFEFF' + csv);
   } catch (err) {

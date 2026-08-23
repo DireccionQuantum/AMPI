@@ -36,8 +36,8 @@
   #p-login{max-width:380px;margin:24px auto 0;width:100%}
   #p-login h2{font-size:21px;margin-bottom:6px}
   #p-login p.intro{color:var(--muted);font-size:14px;margin-bottom:22px}
-  #pin{font-size:30px;text-align:center;letter-spacing:.5em;
-       font-weight:1000;padding:16px 14px 16px 22px}
+  #codigo{font-size:28px;text-align:center;letter-spacing:.32em;
+       font-weight:1000;padding:16px 14px 16px 22px;text-transform:uppercase}
 
   /* ---------- Escáner ---------- */
   #lector{
@@ -110,23 +110,14 @@
     <!-- ================= Login ================= -->
     <section id="p-login">
       <h2>Activa tu escáner</h2>
-      <p class="intro" id="login-intro">Escribe el PIN de 4 dígitos que te entregó la organización.</p>
+      <p class="intro" id="login-intro">Escribe el código de 6 caracteres de tu módulo.</p>
       <div class="aviso aviso-rojo oculto" id="login-error"></div>
 
-      <!-- Sin liga no se sabe de qué módulo se trata: el PIN solo no basta.
-           En lugar de dejar que el expositor falle una y otra vez, se lo
-           explicamos y le damos cómo resolverlo. -->
-      <div class="aviso aviso-rojo oculto" id="sin-liga">
-        <b>Falta tu liga personal.</b><br>
-        Cada módulo entra por su propia dirección, que termina en
-        <code>/s/</code> y una clave larga. Búscala en el instructivo que te
-        entregó la organización, o pídela en el módulo de Quantum.
-      </div>
-
-      <div class="campo" id="campo-pin">
-        <label for="pin">PIN del módulo</label>
-        <input id="pin" type="tel" inputmode="numeric" maxlength="4"
-               placeholder="••••" autocomplete="off">
+      <div class="campo" id="campo-codigo">
+        <label for="codigo">Código del módulo</label>
+        <input id="codigo" type="text" inputmode="text" maxlength="7"
+               placeholder="XXXXXX" autocomplete="off"
+               autocapitalize="characters" spellcheck="false">
       </div>
       <button class="btn-bloque" id="btn-entrar">Entrar</button>
     </section>
@@ -180,19 +171,6 @@
   var $ = function(id){ return document.getElementById(id); };
   var token = (location.pathname.match(/^\/s\/([a-f0-9]{24})/i) || [])[1] || '';
 
-  // Sin liga el PIN no sirve para nada: el servidor identifica al módulo
-  // por el token, no por el PIN. Se lo decimos de frente en vez de dejarlo
-  // tecleando su PIN correcto y recibiendo "Módulo no encontrado".
-  if (!token) {
-    var s = document.getElementById('sin-liga');
-    if (s) s.classList.remove('oculto');
-    var ci = document.getElementById('campo-pin');
-    if (ci) ci.classList.add('oculto');
-    var bi = document.getElementById('btn-entrar');
-    if (bi) bi.classList.add('oculto');
-    var li = document.getElementById('login-intro');
-    if (li) li.classList.add('oculto');
-  }
 
   var lector = null, ultimoQr = '', ultimoEn = 0, procesando = false;
   var COLA = 'ampi_cola_escaneos';
@@ -283,9 +261,9 @@
 
   /* ---------- Login ---------- */
   function entrar(){
-    var pin = $('pin').value.trim();
-    if(pin.length !== 4){
-      $('login-error').textContent = 'El PIN son 4 dígitos';
+    var codigo = $('codigo').value.trim();
+    if(codigo.replace(/[\s\-_.]/g,'').length !== 6){
+      $('login-error').textContent = 'El código son 6 caracteres';
       $('login-error').classList.remove('oculto');
       return;
     }
@@ -294,7 +272,7 @@
 
     fetch('/api/scan/login', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ token: token, pin: pin })
+      body: JSON.stringify({ codigo: codigo })
     })
     .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
     .then(function(res){
@@ -303,7 +281,7 @@
       if(!res.ok){
         $('login-error').textContent = res.d.error || 'No pudimos entrar';
         $('login-error').classList.remove('oculto');
-        $('pin').value = ''; $('pin').focus();
+        $('codigo').value = ''; $('codigo').focus();
         return;
       }
       iniciarSesion(res.d.expositor);
@@ -437,21 +415,38 @@
   });
 
   $('btn-entrar').addEventListener('click', entrar);
-  $('pin').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
-  $('pin').addEventListener('input', function(){
-    this.value = this.value.replace(/\D/g,'').slice(0,4);
-    if(this.value.length === 4) entrar();
+  $('codigo').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
+  $('codigo').addEventListener('input', function(){
+    // Mayúsculas y sólo caracteres del alfabeto del código. Los que se
+    // confunden al leer (0/O, 1/I/L) los corrige el servidor.
+    this.value = this.value.toUpperCase().replace(/[^0-9A-Z]/g,'').slice(0,6);
+    if(this.value.length === 6) entrar();
   });
 
   /* ---------- Arranque: ¿ya hay sesión abierta? ---------- */
-  if(!token){
-    $('login-intro').textContent =
-      'Abre la liga que te dio la organización desde tu módulo.';
-    $('btn-entrar').disabled = true;
+  // Si entró por su liga vieja /s/<token>, la canjeamos en silencio: las
+  // que ya se repartieron siguen sirviendo y no le pedimos nada más.
+  function arrancar(){
+    fetch('/api/scan/sesion').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (d && d.ok) return iniciarSesion(d.expositor);
+        if (token) {
+          return fetch('/api/scan/login', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ token: token, porLiga: true })
+          })
+          .then(function(r){ return r.json().then(function(x){ return {ok:r.ok, d:x}; }); })
+          .then(function(res){
+            if (res.ok) iniciarSesion(res.d.expositor);
+            else $('codigo').focus();      // liga inválida: que use su código
+          })
+          .catch(function(){ $('codigo').focus(); });
+        }
+        $('codigo').focus();
+      })
+      .catch(function(){});
   }
-  fetch('/api/scan/sesion').then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){ if(d && d.ok) iniciarSesion(d.expositor); else $('pin').focus(); })
-    .catch(function(){});
+  arrancar();
 
   pintarCola();
   setInterval(function(){ if(navigator.onLine) vaciarCola(); }, 15000);
