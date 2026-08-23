@@ -167,6 +167,7 @@
       <button class="tab" data-p="ajustes">Ajustes</button>
       <button class="tab" data-p="marca">Marca</button>
       <button class="tab" data-p="modulo">Módulo</button>
+      <button class="tab" data-p="usuarios">Usuarios</button>
     </div>
 
     <!-- ---------- Tablero ---------- -->
@@ -310,6 +311,52 @@
       </div>
     </div>
 
+    <div class="panel" id="p-usuarios">
+      <div class="bloque">
+        <h3>Nuevo usuario</h3>
+        <div class="cuerpo">
+          <p style="color:var(--muted);font-size:14px;margin-top:0">
+            Crea aquí las cuentas de los practicantes. Con rol <b>staff</b> pueden
+            usar la mesa de entrega, la estación de registro y la impresión de
+            etiquetas. Con rol <b>administrador</b> además pueden importar,
+            configurar el evento y crear usuarios.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px">
+            <label style="font-size:12px;color:var(--muted)">Nombre
+              <input id="u-nombre" placeholder="Ana Practicante"
+                style="width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;
+                       border:1px solid #c9d4e0;border-radius:8px;font-size:14px"></label>
+            <label style="font-size:12px;color:var(--muted)">Correo
+              <input id="u-email" type="email" placeholder="ana@quantummkt.mx"
+                style="width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;
+                       border:1px solid #c9d4e0;border-radius:8px;font-size:14px"></label>
+            <label style="font-size:12px;color:var(--muted)">Contraseña
+              <input id="u-pass" placeholder="mínimo 8 caracteres"
+                style="width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;
+                       border:1px solid #c9d4e0;border-radius:8px;font-size:14px;
+                       font-family:ui-monospace,Menlo,monospace"></label>
+            <label style="font-size:12px;color:var(--muted)">Rol
+              <select id="u-rol"
+                style="width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;
+                       border:1px solid #c9d4e0;border-radius:8px;font-size:14px">
+                <option value="staff">Staff · mesa de entrega</option>
+                <option value="admin">Administrador · todo</option>
+              </select></label>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn btn-p" id="u-crear">Crear usuario</button>
+            <button class="btn" id="u-sugerir">Sugerir contraseña</button>
+          </div>
+          <div id="u-aviso" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3>Usuarios del panel</h3>
+        <div class="cuerpo"><div id="u-lista"></div></div>
+      </div>
+    </div>
+
     <div class="panel" id="p-marca">
       <div class="dos">
         <div class="bloque">
@@ -332,6 +379,12 @@
 (function(){
   'use strict';
   var $ = function(id){ return document.getElementById(id); };
+  // Escapa texto que viene de la base antes de meterlo en HTML.
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
   var socket = null;
 
   function api(ruta, opciones){
@@ -881,7 +934,7 @@
   var CARGADORES = {
     tablero: cargarTablero, rifas: cargarRifas, asistentes: cargarAsistentes,
     modulos: cargarModulos, ganadores: cargarGanadores, ajustes: cargarConfig,
-    marca: cargarMarca, modulo: modPanorama,
+    marca: cargarMarca, modulo: modPanorama, usuarios: cargarUsuarios,
   };
   /* ================= Módulo: importar y operar ================= */
   var modUltimoCsv = '';
@@ -1018,6 +1071,103 @@
     });
     $('mod-csv').addEventListener('input', function(){
       if ($('mod-csv').value.trim() !== modUltimoCsv) $('mod-confirmar').disabled = true;
+    });
+  })();
+
+  /* ================= Usuarios del panel ================= */
+  var uYo = null, uSugerida = '';
+
+  function uAviso(msg, mal){
+    $('u-aviso').innerHTML = msg
+      ? '<div style="border-radius:9px;padding:11px 14px;' +
+        (mal ? 'background:#fdf3de;color:#6b4e12;border-left:3px solid var(--amber)'
+             : 'background:#e8f5e8;color:#245c24;border-left:3px solid var(--green)') +
+        '">' + msg + '</div>'
+      : '';
+  }
+
+  function cargarUsuarios(){
+    api('/usuarios').then(function(d){
+      uYo = d.yo;
+      uSugerida = d.sugerida;
+      $('u-lista').innerHTML = d.usuarios.map(function(u){
+        var soyYo = u.id === uYo;
+        return '<div style="display:flex;gap:12px;align-items:center;padding:11px 0;' +
+          'border-top:1px solid #e6ecf2' + (u.activo ? '' : ';opacity:.55') + '">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-weight:700">' + esc(u.nombre) +
+              (soyYo ? ' <span style="font-size:11px;color:var(--muted);font-weight:400">(tú)</span>' : '') +
+            '</div>' +
+            '<div style="font-size:12.5px;color:var(--muted)">' + esc(u.email) + '</div>' +
+          '</div>' +
+          '<span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;' +
+            'padding:3px 8px;border-radius:4px;' +
+            (u.rol === 'admin' ? 'background:#e8f5e8;color:#245c24' : 'background:#eef2f7;color:#54657c') +
+            '">' + (u.rol === 'admin' ? 'Admin' : 'Staff') + '</span>' +
+          (u.activo ? '' : '<span style="font-size:11px;color:var(--muted)">Inactivo</span>') +
+          '<div style="display:flex;gap:6px;flex-shrink:0">' +
+            '<button class="btn-chico btn-fantasma" data-u="' + u.id + '" data-acc="pass">Contraseña</button>' +
+            (soyYo ? '' :
+              '<button class="btn-chico btn-fantasma" data-u="' + u.id + '" data-acc="rol">' +
+                (u.rol === 'admin' ? 'Hacer staff' : 'Hacer admin') + '</button>' +
+              '<button class="btn-chico btn-fantasma" data-u="' + u.id + '" data-acc="activo" ' +
+                'data-v="' + (u.activo ? '0' : '1') + '">' +
+                (u.activo ? 'Desactivar' : 'Reactivar') + '</button>') +
+          '</div></div>';
+      }).join('');
+    }).catch(function(e){ uAviso(e.message, true); });
+  }
+
+  function uAccion(id, acc, v){
+    var ruta, cuerpo;
+    if (acc === 'pass') {
+      var np = prompt('Nueva contraseña (mínimo 8 caracteres):', uSugerida || '');
+      if (!np) return;
+      ruta = '/usuarios/' + id + '/password'; cuerpo = { password: np };
+    } else if (acc === 'rol') {
+      if (!confirm('¿Cambiar el rol de este usuario?')) return;
+      var actual = null;
+      document.querySelectorAll('[data-u="' + id + '"][data-acc="rol"]').forEach(function(b){
+        actual = /staff/i.test(b.textContent) ? 'staff' : 'admin';
+      });
+      ruta = '/usuarios/' + id + '/rol'; cuerpo = { rol: actual };
+    } else {
+      ruta = '/usuarios/' + id + '/activo'; cuerpo = { activo: v === '1' };
+    }
+    api(ruta, { method: 'POST', body: JSON.stringify(cuerpo) })
+      .then(function(){
+        uAviso(acc === 'pass' ? 'Contraseña actualizada. Anótala y entrégasela.' : 'Listo.');
+        cargarUsuarios();
+      })
+      .catch(function(e){ uAviso(e.message, true); });
+  }
+
+  (function uInit(){
+    if (!$('u-crear')) return;
+    $('u-crear').addEventListener('click', function(){
+      api('/usuarios', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre: $('u-nombre').value,
+          email: $('u-email').value,
+          password: $('u-pass').value,
+          rol: $('u-rol').value,
+        })
+      }).then(function(d){
+        uAviso('Usuario creado: ' + esc(d.usuario.email) +
+               ' — anota la contraseña antes de salir de esta pantalla.');
+        $('u-nombre').value = ''; $('u-email').value = ''; $('u-pass').value = '';
+        cargarUsuarios();
+      }).catch(function(e){ uAviso(e.message, true); });
+    });
+
+    $('u-sugerir').addEventListener('click', function(){
+      api('/usuarios').then(function(d){ $('u-pass').value = d.sugerida; uSugerida = d.sugerida; });
+    });
+
+    $('u-lista').addEventListener('click', function(e){
+      var b = e.target.closest('[data-acc]');
+      if (b) uAccion(parseInt(b.dataset.u, 10), b.dataset.acc, b.dataset.v);
     });
   })();
 

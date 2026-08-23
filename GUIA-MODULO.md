@@ -124,20 +124,49 @@ altas se hicieron en el evento.
 
 ---
 
-## 5. Comandos de prueba
+## 5. Usuarios de los practicantes
 
-```bash
-npm run simular       # 41 pruebas contra la base
-npm run test:import   # 32 pruebas del importador
-npm run test:modulo   # 40 pruebas del flujo del módulo (requiere servidor)
-bash test/e2e.sh      # 52 pruebas end-to-end (requiere servidor en :3000)
-```
+`/admin` → pestaña **Usuarios**. Sólo un administrador la ve.
 
-Total: **165 pruebas**.
+Para cada practicante: nombre, correo, contraseña y rol **staff**. El botón
+**Sugerir contraseña** genera una fácil de dictar en voz alta, del estilo
+`sierra-mango-92`. Anótala antes de salir de la pantalla: se guarda cifrada
+y no se puede volver a ver.
+
+Qué puede hacer cada rol:
+
+| | staff | admin |
+|---|---|---|
+| Mesa de entrega y estación de registro | sí | sí |
+| Imprimir etiquetas | sí | sí |
+| Importar la base previa | no | sí |
+| Configurar reglas y rifas | no | sí |
+| Crear usuarios | no | sí |
+
+**Desactivar en lugar de borrar.** Al terminar el evento, desactiva las
+cuentas de los practicantes. Conservan su rastro en la bitácora y dejan de
+poder entrar.
+
+El sistema no te deja desactivarte a ti mismo ni quitarte tu propio rol de
+administrador, y siempre exige que quede al menos un admin activo.
 
 ---
 
-## 6. Referencia de la API
+## 6. Comandos de prueba
+
+```bash
+npm run simular         # 41 pruebas contra la base
+npm run test:import     # 32 pruebas del importador
+npm run test:modulo     # 40 pruebas del flujo del módulo (requiere servidor)
+npm run test:usuarios   # 28 pruebas de usuarios y permisos (requiere servidor)
+bash test/e2e.sh        # 52 pruebas end-to-end (requiere servidor en :3000)
+```
+
+Total: **193 pruebas**.
+
+---
+
+## 7. Referencia de la API
 
 Todas requieren sesión. `soloAdmin` para importar, `soloStaff` para el resto.
 
@@ -151,3 +180,8 @@ Todas requieren sesión. `soloAdmin` para importar, `soloStaff` para el resto.
 | `GET /api/admin/modulo/etiquetas` | Lista para imprimir. `?filtro=todos` |
 | `POST /api/admin/modulo/etiquetas/impresas` | Marca un lote como impreso. |
 | `GET /api/admin/modulo/asistente/:id` | Datos para la etiqueta individual. |
+| `GET /api/admin/usuarios` | Lista usuarios del panel. Sólo admin. |
+| `POST /api/admin/usuarios` | Crea usuario. Sólo admin. |
+| `POST /api/admin/usuarios/:id/password` | Cambia contraseña. Sólo admin. |
+| `POST /api/admin/usuarios/:id/activo` | Activa o desactiva. Sólo admin. |
+| `POST /api/admin/usuarios/:id/rol` | Cambia el rol. Sólo admin. |

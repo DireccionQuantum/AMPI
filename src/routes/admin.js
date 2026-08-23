@@ -9,6 +9,7 @@ const v = require('../services/vinculacion');
 const sesion = require('../services/sesion');
 const importacion = require('../services/importacion');
 const modulo = require('../services/modulo');
+const usuarios = require('../services/usuarios');
 const {
   soloAdmin, soloStaff, limiteLogin,
   verificarPassword, hashearPassword,
@@ -505,6 +506,68 @@ module.exports = function adminRoutes(db, io) {
   router.post('/modulo/etiquetas/impresas', soloStaff, async (req, res, next) => {
     try { res.json(await modulo.marcarImpresas(db, req.body.ids)); }
     catch (err) { next(err); }
+  });
+
+  // ==================== Usuarios del panel ==============================
+
+  router.get('/usuarios', soloAdmin, async (req, res, next) => {
+    try {
+      res.json({
+        usuarios: await usuarios.listar(db),
+        yo: req.session.usuario.id,
+        sugerida: usuarios.passwordSugerida(),
+      });
+    } catch (err) { next(err); }
+  });
+
+  router.post('/usuarios', soloAdmin, async (req, res, next) => {
+    try {
+      const r = await usuarios.crear(db, req.body || {});
+      if (r.error) return res.status(400).json(r);
+      await db.query(
+        `INSERT INTO bitacora (actor, accion, detalle) VALUES ($1,'crear_usuario',$2)`,
+        [req.session.usuario.email, JSON.stringify({ email: r.usuario.email, rol: r.usuario.rol })]
+      ).catch(() => {});
+      res.status(201).json(r);
+    } catch (err) { next(err); }
+  });
+
+  router.post('/usuarios/:id/password', soloAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) return res.status(400).json({ error: 'Id inválido' });
+      const r = await usuarios.cambiarPassword(db, id, (req.body || {}).password);
+      if (r.error) return res.status(400).json(r);
+      await db.query(
+        `INSERT INTO bitacora (actor, accion, detalle) VALUES ($1,'cambiar_password',$2)`,
+        [req.session.usuario.email, JSON.stringify({ usuario: r.usuario.email })]
+      ).catch(() => {});
+      res.json(r);
+    } catch (err) { next(err); }
+  });
+
+  router.post('/usuarios/:id/activo', soloAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) return res.status(400).json({ error: 'Id inválido' });
+      const r = await usuarios.cambiarActivo(
+        db, id, !!(req.body || {}).activo, req.session.usuario.id
+      );
+      if (r.error) return res.status(400).json(r);
+      res.json(r);
+    } catch (err) { next(err); }
+  });
+
+  router.post('/usuarios/:id/rol', soloAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) return res.status(400).json({ error: 'Id inválido' });
+      const r = await usuarios.cambiarRol(
+        db, id, (req.body || {}).rol, req.session.usuario.id
+      );
+      if (r.error) return res.status(400).json(r);
+      res.json(r);
+    } catch (err) { next(err); }
   });
 
   return router;

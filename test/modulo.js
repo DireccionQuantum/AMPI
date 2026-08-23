@@ -11,7 +11,7 @@ const mod = require('../src/services/modulo');
 const imp = require('../src/services/importacion');
 
 const URL = process.env.DATABASE_URL || 'postgres://postgres:test@localhost:5432/ampi_test';
-const BASE = process.env.BASE || 'http://localhost:8790';
+const BASE = process.env.BASE || 'http://localhost:3000';
 
 let pasaron = 0, fallaron = 0;
 function ok(cond, msg, extra) {
