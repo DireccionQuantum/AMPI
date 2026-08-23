@@ -35,6 +35,14 @@ module.exports = function scanRoutes(db, io) {
         expo = rows[0] || null;
       }
 
+      if (!token || typeof token !== 'string') {
+        // Causa habitual: el expositor abrió /scan directo en lugar de su
+        // liga. Su PIN puede ser correcto y aun así no hay forma de saber
+        // de qué módulo se trata.
+        return res.status(401).json({
+          error: 'Entra por la liga de tu módulo, la que termina en /s/ y una clave larga. El PIN por sí solo no identifica al módulo.',
+        });
+      }
       if (!expo) return res.status(401).json({ error: 'Módulo no encontrado' });
       if (!expo.activo) return res.status(403).json({ error: 'Este módulo está desactivado' });
 

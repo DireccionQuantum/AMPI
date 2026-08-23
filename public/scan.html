@@ -112,7 +112,18 @@
       <h2>Activa tu escáner</h2>
       <p class="intro" id="login-intro">Escribe el PIN de 4 dígitos que te entregó la organización.</p>
       <div class="aviso aviso-rojo oculto" id="login-error"></div>
-      <div class="campo">
+
+      <!-- Sin liga no se sabe de qué módulo se trata: el PIN solo no basta.
+           En lugar de dejar que el expositor falle una y otra vez, se lo
+           explicamos y le damos cómo resolverlo. -->
+      <div class="aviso aviso-rojo oculto" id="sin-liga">
+        <b>Falta tu liga personal.</b><br>
+        Cada módulo entra por su propia dirección, que termina en
+        <code>/s/</code> y una clave larga. Búscala en el instructivo que te
+        entregó la organización, o pídela en el módulo de Quantum.
+      </div>
+
+      <div class="campo" id="campo-pin">
         <label for="pin">PIN del módulo</label>
         <input id="pin" type="tel" inputmode="numeric" maxlength="4"
                placeholder="••••" autocomplete="off">
@@ -168,6 +179,21 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var token = (location.pathname.match(/^\/s\/([a-f0-9]{24})/i) || [])[1] || '';
+
+  // Sin liga el PIN no sirve para nada: el servidor identifica al módulo
+  // por el token, no por el PIN. Se lo decimos de frente en vez de dejarlo
+  // tecleando su PIN correcto y recibiendo "Módulo no encontrado".
+  if (!token) {
+    var s = document.getElementById('sin-liga');
+    if (s) s.classList.remove('oculto');
+    var ci = document.getElementById('campo-pin');
+    if (ci) ci.classList.add('oculto');
+    var bi = document.getElementById('btn-entrar');
+    if (bi) bi.classList.add('oculto');
+    var li = document.getElementById('login-intro');
+    if (li) li.classList.add('oculto');
+  }
+
   var lector = null, ultimoQr = '', ultimoEn = 0, procesando = false;
   var COLA = 'ampi_cola_escaneos';
 

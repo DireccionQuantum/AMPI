@@ -193,6 +193,26 @@ historial arrastraría en cascada los puntos que asistentes reales ya
 ganaron ahí, sin dejar rastro de qué pasó. Un stand mal dado de alta antes
 del evento, en cambio, se puede quitar sin ese riesgo.
 
+## 6-ter. Cómo entra el expositor a su escáner
+
+**Cada módulo entra por su propia liga**, no por la pantalla `/scan`:
+
+```
+https://tu-dominio/s/<clave-larga-del-modulo>
+```
+
+El sistema identifica al módulo por esa liga; el PIN sólo confirma que es
+la persona correcta. Por eso **el PIN por sí solo no sirve**: si el
+expositor abre `/scan` a secas y escribe su PIN, no hay forma de saber de
+qué módulo se trata.
+
+La liga de cada módulo está en `/admin` → pestaña **Módulos** → botón
+**Instructivo**. Es la que hay que imprimir o mandar por WhatsApp a cada
+expositor.
+
+Si cambias el PIN de un módulo con **Nuevo PIN**, la liga NO cambia: sigue
+siendo la misma. Sólo hay que dictarle el PIN nuevo.
+
 ## 7. Referencia de la API
 
 Todas requieren sesión. `soloAdmin` para importar, `soloStaff` para el resto.
