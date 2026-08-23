@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12233f">
+<title>Estación de registro · AMPI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  /* Pensada para una tablet en la entrada, operada por el staff.
+     Todo grande: se usa de pie, con prisa y con fila esperando. */
+  body{background:var(--navy);min-height:100dvh}
+  .wrap{max-width:640px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+
+  header{padding:calc(env(safe-area-inset-top) + 16px) 22px 16px;color:#fff;
+         display:flex;align-items:center;justify-content:space-between}
+  header .t{font-size:18px;font-weight:1000}
+  header .s{font-size:12px;color:#9db0c9;margin-top:2px}
+  .cont-hoy{text-align:right}
+  .cont-hoy .n{font-size:26px;font-weight:1000;color:var(--green-bright);line-height:1}
+  .cont-hoy .e{font-size:10px;font-weight:800;letter-spacing:.09em;
+               text-transform:uppercase;color:#9db0c9;margin-top:2px}
+
+  main{flex:1;background:var(--paper);border-radius:22px 22px 0 0;
+       padding:24px 22px calc(env(safe-area-inset-bottom) + 26px)}
+
+  input{font-size:19px;padding:16px}
+  label{font-size:12.5px}
+  .campo{margin-bottom:18px}
+  button{font-size:17px;padding:17px}
+
+  h2{font-size:22px;margin-bottom:6px}
+  .intro{color:var(--muted);font-size:15px;margin-bottom:22px}
+
+  /* Pantalla de éxito: el QR debe verse desde donde está el asistente */
+  .listo{text-align:center}
+  .listo .paloma{width:64px;height:64px;margin:0 auto 16px;border-radius:50%;
+                 background:var(--green);display:grid;place-items:center;
+                 animation:brinco .4s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes brinco{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .listo .paloma svg{width:32px;height:32px;stroke:#fff;stroke-width:3.4;
+                     fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .listo h3{font-size:25px;margin-bottom:6px}
+  .listo .quien{color:var(--muted);font-size:15px;margin-bottom:20px}
+  #qr-listo{width:220px;height:220px;margin:0 auto;display:block;
+            border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff}
+  .codigo-grande{font-size:34px;font-weight:1000;letter-spacing:.22em;
+                 color:var(--navy);margin-top:16px}
+  .codigo-etq{font-size:11px;font-weight:800;letter-spacing:.1em;
+              text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .siguiente{margin-top:24px}
+  .auto-aviso{font-size:13px;color:var(--muted);margin-top:12px}
+
+  .modo{display:flex;gap:8px;margin-bottom:20px}
+  .modo button{flex:1;font-size:14px;padding:12px;background:#fff;
+               color:var(--muted);border:1.5px solid var(--line)}
+  .modo button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="t">Estación de registro</div>
+      <div class="s" id="h-staff">AMPI Tijuana 2026</div>
+    </div>
+    <div class="cont-hoy">
+      <div class="n num" id="c-hoy">0</div>
+      <div class="e">Registrados</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Login staff -->
+    <section id="p-login">
+      <h2>Acceso del personal</h2>
+      <p class="intro">Inicia sesión para operar la estación.</p>
+      <div class="aviso aviso-rojo oculto" id="l-err"></div>
+      <div class="campo">
+        <label for="email">Correo</label>
+        <input id="email" type="email" autocomplete="username">
+      </div>
+      <div class="campo">
+        <label for="pass">Contraseña</label>
+        <input id="pass" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn-bloque" id="btn-login">Entrar</button>
+    </section>
+
+    <!-- Formulario de registro -->
+    <section id="p-form" class="oculto">
+      <div class="modo">
+        <button class="on" data-m="nuevo">Registrar</button>
+        <button data-m="recuperar">Recuperar acceso</button>
+      </div>
+
+      <div id="m-nuevo">
+        <h2>Datos del asistente</h2>
+        <p class="intro">Se le entrega su código para las rifas.</p>
+        <div class="aviso aviso-rojo oculto" id="f-err"></div>
+        <div class="campo">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" autocomplete="off" enterkeyhint="next">
+          <div class="error-txt" id="e-nombre"></div>
+        </div>
+        <div class="campo">
+          <label for="apellido">Apellido</label>
+          <input id="apellido" autocomplete="off" enterkeyhint="next">
+          <div class="error-txt" id="e-apellido"></div>
+        </div>
+        <div class="campo">
+          <label for="telefono">Teléfono</label>
+          <input id="telefono" type="tel" inputmode="numeric" maxlength="16"
+                 placeholder="664 123 4567" enterkeyhint="done">
+          <div class="error-txt" id="e-telefono"></div>
+        </div>
+        <button class="btn-bloque" id="btn-registrar">Registrar y generar código</button>
+      </div>
+
+      <div id="m-recuperar" class="oculto">
+        <h2>Recuperar acceso</h2>
+        <p class="intro">Busca por teléfono y se genera una liga nueva.</p>
+        <div class="aviso aviso-rojo oculto" id="r-err"></div>
+        <div class="campo">
+          <label for="r-tel">Teléfono registrado</label>
+          <input id="r-tel" type="tel" inputmode="numeric" maxlength="16"
+                 placeholder="664 123 4567">
+        </div>
+        <button class="btn-bloque" id="btn-recuperar">Buscar y reemitir</button>
+      </div>
+    </section>
+
+    <!-- Éxito -->
+    <section id="p-listo" class="oculto">
+      <div class="listo">
+        <div class="paloma"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 7"/></svg></div>
+        <h3 id="l-titulo">¡Listo!</h3>
+        <div class="quien" id="l-quien"></div>
+        <img id="qr-listo" alt="Código del asistente">
+        <div class="codigo-grande" id="l-codigo">······</div>
+        <div class="codigo-etq">Código de respaldo</div>
+        <button class="btn-bloque btn-verde siguiente" id="btn-etiqueta">Imprimir etiqueta</button>
+        <button class="btn-bloque btn-fantasma" id="btn-siguiente"
+                style="margin-top:9px">Siguiente persona</button>
+        <div class="auto-aviso" id="l-auto"></div>
+      </div>
+    </section>
+    <div data-credito></div>
+  </main>
+</div>
+
+<script src="/lib/qrcode.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var registrados = 0, autoTimer = null, ultimo = null;
+
+  function post(ruta, cuerpo){
+    return fetch(ruta, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(cuerpo) })
+      .then(function(r){ return r.json().catch(function(){return{};})
+        .then(function(d){ return { s:r.status, ok:r.ok, d:d }; }); });
+  }
+
+  /* ---------- Login ---------- */
+  function entrar(){
+    post('/api/admin/login', { email: $('email').value.trim(), password: $('pass').value })
+      .then(function(res){
+        if(!res.ok){
+          $('l-err').textContent = res.d.error || 'No pudimos entrar';
+          $('l-err').classList.remove('oculto');
+          return;
+        }
+        $('h-staff').textContent = res.d.usuario.nombre;
+        $('p-login').classList.add('oculto');
+        $('p-form').classList.remove('oculto');
+        $('nombre').focus();
+      })
+      .catch(function(){
+        $('l-err').textContent = 'Revisa la conexión';
+        $('l-err').classList.remove('oculto');
+      });
+  }
+  $('btn-login').addEventListener('click', entrar);
+  $('pass').addEventListener('keydown', function(e){ if(e.key==='Enter') entrar(); });
+
+  /* ---------- Modos ---------- */
+  document.querySelectorAll('.modo button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.modo button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      $('m-nuevo').classList.toggle('oculto', b.dataset.m !== 'nuevo');
+      $('m-recuperar').classList.toggle('oculto', b.dataset.m !== 'recuperar');
+    });
+  });
+
+  /* ---------- Registrar ---------- */
+  function limpiarErrores(){
+    ['nombre','apellido','telefono'].forEach(function(c){
+      $(c).classList.remove('malo');
+      $('e-'+c).classList.remove('ver');
+    });
+    $('f-err').classList.add('oculto');
+  }
+
+  function registrar(){
+    limpiarErrores();
+    var btn = $('btn-registrar');
+    btn.disabled = true; btn.textContent = 'Registrando…';
+
+    post('/api/asistente/registro', {
+      nombre: $('nombre').value,
+      apellido: $('apellido').value,
+      telefono: $('telefono').value,
+    }).then(function(res){
+      btn.disabled = false; btn.textContent = 'Registrar y generar código';
+
+      if(res.s === 422){
+        var errs = res.d.errores || {};
+        Object.keys(errs).forEach(function(c){
+          if(!$(c)) return;
+          $(c).classList.add('malo');
+          $('e-'+c).textContent = errs[c];
+          $('e-'+c).classList.add('ver');
+        });
+        return;
+      }
+      if(!res.ok){
+        $('f-err').textContent = res.d.error || 'No se pudo registrar';
+        $('f-err').classList.remove('oculto');
+        return;
+      }
+      registrados++;
+      $('c-hoy').textContent = registrados;
+      mostrarListo(res.d, res.d.yaExistia);
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Registrar y generar código';
+      $('f-err').textContent = 'Revisa la conexión';
+      $('f-err').classList.remove('oculto');
+    });
+  }
+
+  /* ---------- Recuperar ---------- */
+  $('btn-recuperar').addEventListener('click', function(){
+    $('r-err').classList.add('oculto');
+    var btn = $('btn-recuperar');
+    btn.disabled = true; btn.textContent = 'Buscando…';
+
+    post('/api/admin/asistentes/reemitir', { telefono: $('r-tel').value })
+      .then(function(res){
+        btn.disabled = false; btn.textContent = 'Buscar y reemitir';
+        if(!res.ok){
+          $('r-err').textContent = res.d.error || 'No encontramos a esa persona';
+          $('r-err').classList.remove('oculto');
+          return;
+        }
+        mostrarListo({
+          nombre: res.d.nombre, codigo: res.d.codigo, token: res.d.token,
+        }, false, true);
+      })
+      .catch(function(){
+        btn.disabled = false; btn.textContent = 'Buscar y reemitir';
+        $('r-err').textContent = 'Revisa la conexión';
+        $('r-err').classList.remove('oculto');
+      });
+  });
+
+  /* ---------- Pantalla de éxito ---------- */
+  function mostrarListo(d, yaExistia, esRecuperacion){
+    ultimo = d;
+    $('l-titulo').textContent = esRecuperacion ? 'Acceso reemitido'
+                              : (yaExistia ? 'Ya estaba registrado' : '¡Registro completo!');
+    $('l-quien').textContent = d.nombre ? d.nombre : '';
+    $('l-codigo').textContent = d.codigo || '······';
+
+    // El QR apunta a la liga personal: el asistente sólo lo escanea y entra.
+    var liga = location.origin + '/p/' + d.token;
+    if(window.QRCode){
+      QRCode.toDataURL(liga, { width:440, margin:1,
+        color:{ dark:'#12233f', light:'#ffffff' } },
+        function(err, url){ if(!err) $('qr-listo').src = url; });
+    }
+
+    $('p-form').classList.add('oculto');
+    $('p-listo').classList.remove('oculto');
+
+    // Reseteo automático: la fila no debe esperar a que el staff recuerde.
+    var quedan = 25;
+    $('l-auto').textContent = 'Se limpia en ' + quedan + ' s';
+    if(autoTimer) clearInterval(autoTimer);
+    autoTimer = setInterval(function(){
+      quedan--;
+      $('l-auto').textContent = 'Se limpia en ' + quedan + ' s';
+      if(quedan <= 0) siguiente();
+    }, 1000);
+  }
+
+  function siguiente(){
+    if(autoTimer) clearInterval(autoTimer);
+    ['nombre','apellido','telefono','r-tel'].forEach(function(c){ $(c).value = ''; });
+    limpiarErrores();
+    $('p-listo').classList.add('oculto');
+    $('p-form').classList.remove('oculto');
+    $('nombre').focus();
+  }
+
+  /**
+   * Abre la etiqueta en una ventana aparte y lanza la impresión sola.
+   * Va en ventana nueva para no perder la pantalla de la estación:
+   * el staff sigue con la siguiente persona sin esperar al diálogo.
+   */
+  $('btn-etiqueta').addEventListener('click', function(){
+    if(!ultimo) return;
+    var p = new URLSearchParams({
+      qr: ultimo.qr_id || '',
+      nombre: ultimo.nombre || '',
+      apellido: ultimo.apellido || '',
+      codigo: ultimo.codigo || '',
+      auto: '1',
+    });
+    window.open('/etiqueta?' + p.toString(), 'etiqueta',
+                'width=420,height=560,menubar=no,toolbar=no');
+  });
+
+  $('btn-registrar').addEventListener('click', registrar);
+  $('btn-siguiente').addEventListener('click', siguiente);
+  $('nombre').addEventListener('keydown', function(e){ if(e.key==='Enter') $('apellido').focus(); });
+  $('apellido').addEventListener('keydown', function(e){ if(e.key==='Enter') $('telefono').focus(); });
+  $('telefono').addEventListener('keydown', function(e){ if(e.key==='Enter') registrar(); });
+
+  /* ---------- ¿Ya hay sesión? ---------- */
+  fetch('/api/admin/sesion').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(d && d.ok){
+        $('h-staff').textContent = d.usuario.nombre;
+        $('p-login').classList.add('oculto');
+        $('p-form').classList.remove('oculto');
+        $('nombre').focus();
+      } else { $('email').focus(); }
+    }).catch(function(){});
+})();
+</script>
+<script src="/js/marca.js" data-marca="claro"></script>
+</body>
+</html>

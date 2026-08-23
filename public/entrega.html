@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Entrega de carnets · AMPI 2026</title>
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  /* Misma familia visual que la estación de registro. */
+  body{background:var(--navy);min-height:100dvh;padding-bottom:30px;color:#fff}
+  .cab{
+    position:sticky;top:0;z-index:20;background:var(--navy);
+    border-bottom:1px solid rgba(255,255,255,.16);padding:12px 16px;
+  }
+  .cab-in{max-width:620px;margin:0 auto}
+  .cab h1{font-size:16px;margin:0 0 2px;color:#fff}
+  .cab .sub{font-size:12px;color:var(--muted)}
+  .marcador{display:flex;gap:8px;margin-top:10px}
+  .m{
+    flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);
+    border-radius:9px;padding:7px 9px;text-align:center;
+  }
+  .m .n{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:17px;color:var(--green-bright)}
+  .m .e{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:2px}
+
+  .zona{max-width:620px;margin:0 auto;padding:16px}
+  .buscador{position:relative}
+  .buscador input{
+    width:100%;font-size:19px;padding:15px 16px;border-radius:12px;
+    border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.09);
+    color:#fff;box-sizing:border-box;
+  }
+  .buscador input:focus{outline:none;border-color:var(--green);background:rgba(255,255,255,.13)}
+  .buscador input::placeholder{color:#7f92a8}
+  .limpiar{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:50%;
+    width:30px;height:30px;font-size:17px;cursor:pointer;line-height:1;
+  }
+
+  .res{margin-top:14px;display:grid;gap:9px}
+  .p{
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);
+    border-radius:12px;padding:13px 15px;display:flex;gap:12px;align-items:center;
+  }
+  .p.listo{border-color:rgba(92,184,92,.55);background:rgba(92,184,92,.14)}
+  .p-datos{flex:1;min-width:0}
+  .p-nom{font-size:16.5px;font-weight:700;color:#fff;line-height:1.2}
+  .p-emp{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .p-cod{
+    font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--green-bright);
+    margin-top:4px;letter-spacing:.06em;
+  }
+  .p-tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+  .tag{
+    font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+    padding:3px 7px;border-radius:4px;
+  }
+  .tag.imp{background:rgba(92,184,92,.22);color:var(--green-bright)}
+  .tag.noimp{background:rgba(232,168,56,.22);color:var(--amber)}
+  .tag.ent{background:rgba(92,184,92,.3);color:#dff3df}
+  .p-acc{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+  .b{
+    border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
+    border-radius:9px;padding:11px 15px;font-size:13.5px;font-weight:700;
+    cursor:pointer;white-space:nowrap;min-width:112px;
+  }
+  .b:hover{background:rgba(255,255,255,.12)}
+  .b-p{background:var(--green);border-color:var(--green);color:#0d2a12}
+  .b-p:hover{background:var(--green-bright)}
+  .b-s{font-size:12px;padding:8px 12px}
+
+  .estado{text-align:center;padding:34px 18px;color:var(--muted);font-size:14.5px}
+  .nueva{
+    margin-top:18px;padding:16px;border-radius:12px;text-align:center;
+    background:rgba(232,168,56,.14);border:1px dashed rgba(232,168,56,.5);
+  }
+  .nueva p{margin:0 0 11px;font-size:14px;color:#f2e6cf}
+  .flash{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    background:var(--green);color:#0d2a12;padding:12px 22px;border-radius:10px;
+    font-weight:700;font-size:14.5px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .flash.ver{opacity:1}
+  .flash.mal{background:var(--amber)}
+</style>
+</head>
+<body>
+
+<div class="cab">
+  <div class="cab-in">
+    <h1>Entrega de carnets</h1>
+    <div class="sub">Módulo Quantum · AMPI Tijuana 2026</div>
+    <div class="marcador">
+      <div class="m"><div class="n" id="m-ent">—</div><div class="e">Entregados</div></div>
+      <div class="m"><div class="n" id="m-fal">—</div><div class="e">Faltan</div></div>
+      <div class="m"><div class="n" id="m-viv">—</div><div class="e">Altas en vivo</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="zona">
+  <div class="buscador">
+    <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+           placeholder="Escribe el apellido…" aria-label="Buscar asistente">
+    <button class="limpiar" id="limpiar" hidden aria-label="Limpiar">×</button>
+  </div>
+
+  <div class="res" id="res"></div>
+  <div class="estado" id="estado">Escribe al menos dos letras del nombre o apellido.</div>
+
+  <div class="nueva" id="nueva" hidden>
+    <p>No aparece en la lista. Puede darse de alta en el momento.</p>
+    <button class="b b-p" id="btn-nueva">Registrar aquí</button>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var q       = document.getElementById('q');
+  var res     = document.getElementById('res');
+  var estado  = document.getElementById('estado');
+  var nueva   = document.getElementById('nueva');
+  var flash   = document.getElementById('flash');
+  var limpiar = document.getElementById('limpiar');
+  var timer   = null;
+  var ultima  = 0;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function aviso(msg, mal) {
+    flash.textContent = msg;
+    flash.className = 'flash ver' + (mal ? ' mal' : '');
+    setTimeout(function () { flash.className = 'flash'; }, 2200);
+  }
+
+  function panorama() {
+    fetch('/api/admin/modulo/panorama', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        document.getElementById('m-ent').textContent = d.entregados;
+        document.getElementById('m-fal').textContent = d.sin_entregar;
+        document.getElementById('m-viv').textContent = d.altas_en_vivo;
+      })
+      .catch(function () {});
+  }
+
+  function tarjeta(a) {
+    var nom = [a.nombre, a.apellido].filter(Boolean).join(' ');
+    var entregado = !!a.entregado_en;
+    var tags = '';
+    if (entregado) tags += '<span class="tag ent">Entregado</span>';
+    tags += a.etiqueta_impresa_en
+      ? '<span class="tag imp">Etiqueta lista</span>'
+      : '<span class="tag noimp">Falta imprimir</span>';
+
+    return '<div class="p' + (entregado ? ' listo' : '') + '" data-id="' + a.id + '">' +
+      '<div class="p-datos">' +
+        '<div class="p-nom">' + esc(nom) + '</div>' +
+        (a.empresa ? '<div class="p-emp">' + esc(a.empresa) + '</div>' : '') +
+        '<div class="p-cod">' + esc(a.codigo_corto || '') + '</div>' +
+        '<div class="p-tags">' + tags + '</div>' +
+      '</div>' +
+      '<div class="p-acc">' +
+        (entregado
+          ? '<button class="b b-s" data-acc="deshacer">Deshacer</button>'
+          : '<button class="b b-p" data-acc="entregar">Entregar</button>') +
+        '<button class="b b-s" data-acc="imprimir">Imprimir</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function buscar() {
+    var t = q.value.trim();
+    limpiar.hidden = !t;
+    if (t.length < 2) {
+      res.innerHTML = '';
+      estado.hidden = false;
+      estado.textContent = 'Escribe al menos dos letras del nombre o apellido.';
+      nueva.hidden = true;
+      return;
+    }
+    var mio = ++ultima;
+    fetch('/api/admin/modulo/buscar?q=' + encodeURIComponent(t), { credentials: 'same-origin' })
+      .then(function (r) {
+        if (r.status === 403) throw new Error('Inicia sesión para usar la mesa de entrega.');
+        return r.json();
+      })
+      .then(function (d) {
+        if (mio !== ultima) return;           // llegó una respuesta vieja, se ignora
+        var lista = d.resultados || [];
+        res.innerHTML = lista.map(tarjeta).join('');
+        estado.hidden = lista.length > 0;
+        if (!lista.length) estado.textContent = 'Sin coincidencias.';
+        nueva.hidden = lista.length > 0;
+      })
+      .catch(function (e) {
+        if (mio !== ultima) return;
+        estado.hidden = false;
+        estado.textContent = e.message;
+      });
+  }
+
+  q.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(buscar, 180);
+  });
+
+  limpiar.addEventListener('click', function () {
+    q.value = ''; q.focus(); buscar();
+  });
+
+  res.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-acc]');
+    if (!btn) return;
+    var fila = btn.closest('[data-id]');
+    var id = parseInt(fila.getAttribute('data-id'), 10);
+    var acc = btn.getAttribute('data-acc');
+
+    if (acc === 'imprimir') {
+      window.open('/etiqueta?id=' + id + '&auto=1', '_blank', 'width=420,height=380');
+      return;
+    }
+
+    btn.disabled = true;
+    var ruta = acc === 'entregar' ? 'entregar' : 'desentregar';
+    fetch('/api/admin/modulo/' + ruta, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id: id })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('No se pudo registrar');
+        return r.json();
+      })
+      .then(function () {
+        aviso(acc === 'entregar' ? 'Entrega registrada' : 'Entrega deshecha');
+        buscar();
+        panorama();
+      })
+      .catch(function () {
+        btn.disabled = false;
+        aviso('No se pudo registrar. Reintenta.', true);
+      });
+  });
+
+  document.getElementById('btn-nueva').addEventListener('click', function () {
+    // Se lleva lo ya tecleado para no capturarlo dos veces.
+    location.href = '/estacion?nombre=' + encodeURIComponent(q.value.trim());
+  });
+
+  q.focus();
+  panorama();
+  setInterval(panorama, 20000);
+})();
+</script>
+</body>
+</html>

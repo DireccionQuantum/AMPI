@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Etiquetas por lote · AMPI 2026</title>
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  /* ---------- Pantalla ---------- */
+  .barra{
+    position:sticky;top:0;z-index:20;background:var(--navy);
+    border-bottom:1px solid rgba(255,255,255,.16);padding:14px 18px;
+  }
+  .barra-in{max-width:1100px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .barra h1{font-size:17px;margin:0;color:#fff}
+  .cuenta{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px;color:var(--green-bright);
+  }
+  .crece{flex:1}
+  .btn{
+    border:1px solid rgba(255,255,255,.28);background:transparent;color:#fff;
+    border-radius:8px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .btn:hover{background:rgba(255,255,255,.1)}
+  .btn-p{background:var(--green);border-color:var(--green);color:#0d2a12}
+  .btn-p:hover{background:var(--green-bright)}
+  .btn:disabled{opacity:.45;cursor:default}
+  select{
+    background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.28);
+    border-radius:8px;padding:8px 11px;font-size:13px;
+  }
+  select option{background:var(--navy);color:#fff}
+  .aviso{
+    max-width:1100px;margin:16px auto;padding:12px 16px;border-radius:10px;
+    background:#fdf3de;border-left:3px solid var(--amber);
+    color:#6b4e12;font-size:14px;
+  }
+  .aviso.ok{background:#e8f5e8;border-left-color:var(--green);color:#245c24}
+  .zona{max-width:1100px;margin:0 auto;padding:18px}
+  .vacio{text-align:center;padding:60px 20px;color:var(--muted)}
+
+  /* ---------- La etiqueta ---------- */
+  .hoja{display:flex;flex-wrap:wrap;gap:12px}
+  .eti{
+    width:62mm;height:50mm;background:#fff;color:#000;
+    border-radius:3px;padding:3.5mm 4mm;display:flex;flex-direction:column;
+    box-sizing:border-box;position:relative;overflow:hidden;
+    border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
+  }
+  @media print{ .eti{border:0;box-shadow:none} }
+  .eti-top{
+    font-size:8pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    border-bottom:.4mm solid #000;padding-bottom:1.2mm;line-height:1.25;
+  }
+  .eti-top span{display:block;font-weight:600;font-size:7pt;letter-spacing:.02em;text-transform:none}
+  .eti-cuerpo{flex:1;display:flex;gap:3mm;align-items:center;padding-top:2mm;min-height:0}
+  .eti-datos{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .eti-nom{font-size:15pt;font-weight:900;line-height:1.05;word-break:break-word}
+  .eti-nom.chico{font-size:12pt}
+  .eti-nom.mini{font-size:10pt}
+  .eti-emp{font-size:7pt;margin-top:1mm;line-height:1.2;color:#333}
+  .eti-cod{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10pt;font-weight:700;letter-spacing:.1em;margin-top:1.5mm;
+  }
+  .eti-cod b{font-size:6.5pt;font-weight:600;letter-spacing:.06em;display:block;color:#444}
+  .eti-qr{width:22mm;height:22mm;flex-shrink:0}
+  .eti-qr canvas,.eti-qr img{width:100%;height:100%;display:block}
+  .eti-pie{
+    border-top:.3mm solid #000;padding-top:1.2mm;display:flex;
+    justify-content:space-between;align-items:flex-end;font-size:6.5pt;
+  }
+  .eti-pie img{height:3.6mm;filter:brightness(0)}   /* logo en negro puro para térmica */
+
+  /* Marca de ya impresa, sólo en pantalla */
+  .eti-ya{
+    position:absolute;top:0;right:0;background:var(--amber);color:#000;
+    font-size:6.5pt;font-weight:800;padding:1mm 2mm;border-radius:0 0 0 3px;
+    text-transform:uppercase;letter-spacing:.06em;
+  }
+
+  /* ---------- Impresión ---------- */
+  @page{size:62mm 50mm;margin:0}
+  @media print{
+    .barra,.aviso,.vacio{display:none !important}
+    .zona{padding:0;margin:0;max-width:none}
+    .hoja{display:block;gap:0}
+    .eti{
+      width:62mm;height:50mm;page-break-after:always;break-after:page;
+      border-radius:0;margin:0;
+    }
+    .eti:last-child{page-break-after:auto;break-after:auto}
+    .eti-ya{display:none}
+    body{background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <div class="barra-in">
+    <h1>Etiquetas por lote</h1>
+    <span class="cuenta" id="cuenta">cargando…</span>
+    <span class="crece"></span>
+    <select id="filtro">
+      <option value="pendientes">Sólo pendientes de imprimir</option>
+      <option value="todos">Todos los asistentes</option>
+    </select>
+    <button class="btn" id="recargar">Actualizar</button>
+    <button class="btn btn-p" id="imprimir" disabled>Imprimir lote</button>
+  </div>
+</div>
+
+<div class="aviso" id="aviso">
+  Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
+  diálogo de impresión diga 62 × 50 mm. Al terminar te preguntamos si marcamos
+  el lote como impreso.
+</div>
+
+<div class="zona">
+  <div class="hoja" id="hoja"></div>
+  <div class="vacio" id="vacio" hidden>No hay etiquetas pendientes.</div>
+</div>
+
+<script src="/lib/qrcode.min.js"></script>
+<script src="/js/marca.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var hoja     = document.getElementById('hoja');
+  var vacio    = document.getElementById('vacio');
+  var cuenta   = document.getElementById('cuenta');
+  var filtro   = document.getElementById('filtro');
+  var btnImp   = document.getElementById('imprimir');
+  var aviso    = document.getElementById('aviso');
+  var lote     = [];
+  var logoUrl  = '/img/quantum-h.png';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /** El nombre largo se achica en lugar de desbordarse fuera del sticker. */
+  function claseNombre(txt) {
+    var n = (txt || '').length;
+    if (n > 26) return 'eti-nom mini';
+    if (n > 17) return 'eti-nom chico';
+    return 'eti-nom';
+  }
+
+  var pendientesQr = 0;
+
+  function pintar(lista) {
+    hoja.innerHTML = '';
+    vacio.hidden = lista.length > 0;
+    pendientesQr = lista.length;
+    // Se habilita hasta que todos los QR estén dibujados: imprimir antes
+    // saca etiquetas con el cuadro en blanco.
+    btnImp.disabled = true;
+    cuenta.textContent = lista.length + (lista.length === 1 ? ' etiqueta' : ' etiquetas');
+
+    lista.forEach(function (a) {
+      // Nombre y apellido viajan separados desde la base: así no se pierden
+      // los apellidos con partículas ("de la Torre").
+      var nombreCompleto = [a.nombre, a.apellido].filter(Boolean).join(' ');
+
+      var div = document.createElement('div');
+      div.className = 'eti';
+      div.innerHTML =
+        (a.etiqueta_impresa_en ? '<div class="eti-ya">ya impresa</div>' : '') +
+        '<div class="eti-top">AMPI Tijuana 2026<span>3 de septiembre</span></div>' +
+        '<div class="eti-cuerpo">' +
+          '<div class="eti-datos">' +
+            '<div class="' + claseNombre(nombreCompleto) + '">' + esc(nombreCompleto) + '</div>' +
+            (a.empresa ? '<div class="eti-emp">' + esc(a.empresa) + '</div>' : '') +
+            '<div class="eti-cod"><b>CÓDIGO</b>' + esc(a.codigo_corto || '') + '</div>' +
+          '</div>' +
+          '<div class="eti-qr" data-qr="' + esc(a.qr_id) + '"></div>' +
+        '</div>' +
+        '<div class="eti-pie"><span>Muestra este código en cada módulo</span>' +
+          '<img src="' + logoUrl + '" alt=""></div>';
+      hoja.appendChild(div);
+    });
+
+    // Los QR se generan en el navegador, sin pedirle nada al servidor.
+    // Misma configuración que la etiqueta individual: 600 px y corrección
+    // media, que a 22 mm impresos deja margen de sobra para la cámara.
+    Array.prototype.forEach.call(hoja.querySelectorAll('[data-qr]'), function (caja) {
+      var valor = caja.getAttribute('data-qr');
+      QRCode.toDataURL(valor, {
+        width: 600, margin: 1, errorCorrectionLevel: 'M',
+        color: { dark: '#000000', light: '#ffffff' }
+      }, function (err, url) {
+        if (err) { caja.textContent = valor.slice(0, 8); return; }
+        var img = new Image();
+        img.src = url;
+        img.alt = '';
+        caja.innerHTML = '';
+        caja.appendChild(img);
+        pendientesQr--;
+        if (pendientesQr <= 0) btnImp.disabled = lista.length === 0;
+      });
+    });
+  }
+
+  function cargar() {
+    cuenta.textContent = 'cargando…';
+    fetch('/api/admin/modulo/etiquetas?filtro=' + filtro.value + '&limite=500',
+          { credentials: 'same-origin' })
+      .then(function (r) {
+        if (r.status === 403) throw new Error('Inicia sesión en el panel para imprimir etiquetas.');
+        if (!r.ok) throw new Error('No se pudo cargar la lista.');
+        return r.json();
+      })
+      .then(function (d) { lote = d.etiquetas || []; pintar(lote); })
+      .catch(function (e) {
+        cuenta.textContent = '';
+        aviso.textContent = e.message;
+        aviso.className = 'aviso';
+      });
+  }
+
+  btnImp.addEventListener('click', function () {
+    if (!lote.length) return;
+    var ids = lote.map(function (a) { return a.id; });
+    window.print();
+    // Se pregunta después de imprimir: si la impresora falló, no se marca.
+    setTimeout(function () {
+      if (!confirm('¿Se imprimieron bien las ' + ids.length + ' etiquetas?\n\n' +
+                   'Al aceptar se marcan como impresas y dejarán de aparecer en pendientes.')) return;
+      fetch('/api/admin/modulo/etiquetas/impresas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ ids: ids })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          aviso.textContent = d.marcadas + ' etiquetas marcadas como impresas.';
+          aviso.className = 'aviso ok';
+          cargar();
+        })
+        .catch(function () {
+          aviso.textContent = 'Se imprimieron, pero no se pudieron marcar. Vuelve a intentar.';
+          aviso.className = 'aviso';
+        });
+    }, 700);
+  });
+
+  document.getElementById('recargar').addEventListener('click', cargar);
+  filtro.addEventListener('change', cargar);
+  cargar();
+})();
+</script>
+</body>
+</html>

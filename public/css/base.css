@@ -1,0 +1,128 @@
+/* ============================================================
+   Gamificación AMPI 2026 — estilos compartidos
+   Identidad Quantum: azul marino profundo + verde señal.
+   ============================================================ */
+
+:root{
+  --navy:#12233f;
+  --navy-2:#1b3358;
+  --navy-3:#24456f;
+  --green:#5cb85c;
+  --green-bright:#7ad675;
+  --amber:#e8a838;
+  --red:#d0554a;
+  --paper:#f6f8f9;
+  --white:#ffffff;
+  --ink:#12233f;
+  --muted:#6b7b8f;
+  --line:#dde4ea;
+  --radius:14px;
+  --sombra:0 1px 3px rgba(18,35,63,.08), 0 8px 24px rgba(18,35,63,.06);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color:var(--ink);
+  background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.45;
+}
+
+/* ---------- Tipografía ---------- */
+h1,h2,h3{letter-spacing:-.02em;line-height:1.15}
+.eyebrow{
+  font-size:11px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--green-bright);
+}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Controles ---------- */
+button,.btn{
+  font-family:inherit;font-size:15px;font-weight:800;
+  color:#fff;background:var(--navy);
+  padding:14px 18px;border:none;border-radius:12px;
+  cursor:pointer;transition:transform .1s,background .15s,opacity .15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+button:active,.btn:active{transform:scale(.985)}
+button:disabled{background:var(--muted);cursor:default}
+button:focus-visible,a:focus-visible,input:focus-visible{
+  outline:3px solid var(--green);outline-offset:2px;
+}
+.btn-verde{background:var(--green)}
+.btn-fantasma{background:transparent;color:var(--navy);border:1.5px solid var(--line)}
+.btn-chico{padding:8px 12px;font-size:13px;border-radius:9px}
+.btn-bloque{width:100%}
+
+input,select,textarea{
+  width:100%;font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);
+  padding:13px 14px;background:#fff;
+  border:1.5px solid var(--line);border-radius:11px;
+}
+input:focus,select:focus{
+  outline:none;border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(92,184,92,.16);
+}
+input.malo{border-color:var(--red)}
+label{
+  display:block;font-size:11.5px;font-weight:800;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+}
+.campo{margin-bottom:16px}
+.ayuda{font-size:13px;color:var(--muted);margin-top:5px}
+.error-txt{font-size:13px;color:var(--red);font-weight:700;margin-top:5px;display:none}
+.error-txt.ver{display:block}
+
+/* ---------- Tarjetas y superficies ---------- */
+.tarjeta{
+  background:#fff;border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px;
+}
+.chip{
+  display:inline-block;font-size:11px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 9px;border-radius:99px;
+}
+.chip-verde{background:rgba(92,184,92,.14);color:#2f7a31}
+.chip-ambar{background:rgba(232,168,56,.16);color:#8a6116}
+.chip-gris{background:#eef2f5;color:var(--muted)}
+.chip-rojo{background:rgba(208,85,74,.14);color:#9c2f25}
+
+/* ---------- Utilidades ---------- */
+.oculto{display:none !important}
+.centro{text-align:center}
+.fila{display:flex;align-items:center;gap:10px}
+.entre{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+
+.aviso{
+  border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5;
+  border:1px solid;margin-bottom:16px;
+}
+.aviso-ambar{background:#fff8e6;border-color:#f0d99a;color:#7a5a12}
+.aviso-verde{background:#eef9ee;border-color:#bfe4bf;color:#2f7a31}
+.aviso-rojo{background:#fdeeec;border-color:#f2c2bc;color:#9c2f25}
+
+.cargando{
+  display:inline-block;width:18px;height:18px;
+  border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;
+  border-radius:50%;animation:girar .7s linear infinite;
+}
+@keyframes girar{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
+/* ---------- Tablas ---------- */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{
+  text-align:left;font-size:11px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);
+  padding:9px 10px;border-bottom:1.5px solid var(--line);
+}
+td{padding:11px 10px;border-bottom:1px solid #eef2f5}
+tbody tr:hover{background:#fafcfd}

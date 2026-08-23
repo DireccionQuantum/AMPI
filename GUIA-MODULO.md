@@ -1,0 +1,153 @@
+# Operación del módulo Quantum — AMPI Tijuana 2026
+
+Guía de la parte que opera Quantum: la base previa, las etiquetas y la
+entrega de carnets en el stand. Para el despliegue del sistema completo,
+ver `GUIA-DESPLIEGUE.md`.
+
+---
+
+## Resumen del flujo
+
+| Cuándo | Qué se hace | Dónde |
+|---|---|---|
+| Al recibir la lista | Importar la base previa | `/admin` → pestaña **Módulo** |
+| Hasta un día antes | Imprimir etiquetas por lote | `/etiquetas` |
+| Día del evento | Entregar carnets y marcar entrega | `/entrega` |
+| Día del evento | Alta de quien no venía en la lista | `/estacion` |
+
+---
+
+## 1. Importar la base previa
+
+Entra a `/admin` con la cuenta de administrador, pestaña **Módulo**.
+
+Arrastra el archivo que te mandó AMPI o pega su contenido. Al presionar
+**Revisar archivo** se muestra qué va a pasar **sin guardar nada**: cuántos
+son nuevos, cuántos ya existían y qué filas no sirven, con su número de
+línea y el motivo. Sólo al presionar **Confirmar importación** se escribe
+en la base.
+
+### Qué columnas reconoce
+
+No importa el orden ni las mayúsculas ni los acentos. Se aceptan estos
+nombres de columna, entre otros:
+
+- **Nombre**: nombre, nombres, nombre completo
+- **Apellido**: apellido, apellidos, apellido paterno
+- **Teléfono**: telefono, tel, celular, móvil, whatsapp
+- **Correo**: email, correo, correo electrónico
+- **Empresa**: empresa, compañía, organización, inmobiliaria
+- **Identificador**: id, qr, objectid, folio, código
+
+Separadores aceptados: coma, punto y coma o tabulador. Si el nombre viene
+completo en una sola columna, se parte solo.
+
+### Lo que hay que saber
+
+- **Reimportar no duplica.** Cuando llegue la lista actualizada, se puede
+  importar completa. Reconoce a quien ya está y sólo agrega a los nuevos.
+- **No pisa lo capturado en el stand.** Si alguien ya se registró en vivo y
+  después llega su fila en el archivo, se rellenan los campos vacíos pero no
+  se sobrescribe lo que la persona dijo en el módulo.
+- **Si el archivo trae el identificador de WeChamber**, se respeta. Si no lo
+  trae, el sistema emite uno propio con el mismo formato. El escáner del
+  expositor no nota la diferencia.
+- Una fila mala no aborta la importación: se reporta y el resto entra.
+
+---
+
+## 2. Imprimir las etiquetas
+
+Entra a `/etiquetas` (o desde la pestaña **Módulo**).
+
+1. Deja el filtro en **Sólo pendientes de imprimir**.
+2. Espera a que todos los códigos QR aparezcan. El botón **Imprimir lote**
+   se habilita hasta entonces, a propósito: imprimir antes saca etiquetas
+   con el cuadro en blanco.
+3. Presiona **Imprimir lote**. En el diálogo del sistema, confirma que el
+   tamaño de papel sea **62 × 50 mm**.
+4. Al terminar, el sistema pregunta si salieron bien. **Sólo confirma si de
+   verdad se imprimieron**: al aceptar dejan de aparecer como pendientes.
+
+Si la impresora se atora a la mitad, no confirmes. Vuelve a cargar la
+página y el lote sigue completo en pendientes.
+
+### Impresora
+
+Brother QL-800, rollo **DK-2205 de 62 mm**. Conectada por USB a la
+computadora donde se imprime. El logo se imprime en negro puro, que es lo
+que entiende una impresora térmica.
+
+---
+
+## 3. La mesa de entrega
+
+Es la pantalla que usan los practicantes: `/entrega`. Requiere sesión de
+staff o de administrador; conviene dejarla abierta en cada dispositivo
+antes de que empiece a llegar gente.
+
+**Cómo se usa:**
+
+1. El asistente da su apellido.
+2. Se teclean dos o tres letras. No hace falta poner acentos ni mayúsculas:
+   escribir `rios` encuentra a *Ríos*, `torre` encuentra a *de la Torre*.
+   También busca por empresa y por código de respaldo.
+3. Se le entrega su carnet con la etiqueta pegada y se presiona
+   **Entregar**. La tarjeta se pone verde.
+4. Si alguien **no aparece**, aparece el botón **Registrar aquí**, que lleva
+   a la estación de alta con lo ya tecleado. Ahí se le da de alta en vivo y
+   se le imprime su etiqueta en el momento.
+
+Cada tarjeta muestra si su etiqueta ya está impresa o falta, y el botón
+**Imprimir** saca la etiqueta individual de esa persona.
+
+Arriba se ve, en vivo, cuántos van entregados, cuántos faltan y cuántas
+altas se hicieron en el evento.
+
+**Si se marca una entrega por error**, el botón **Deshacer** la revierte.
+
+---
+
+## 4. Recomendaciones de operación
+
+- **Ordena físicamente los carnets impresos por apellido** antes del evento.
+  El sistema los imprime en ese orden justamente para eso.
+- **Tres dispositivos** en la mesa de entrega, cada uno con su sesión ya
+  iniciada. Todos comparten la misma lista y ven las entregas de los demás.
+- **Deja la impresora prendida** durante el evento, aunque hayas
+  preimpreso todo: es para quien no venía en la lista.
+- **Prueba la impresión de una etiqueta real y escanéala** con el escáner
+  del expositor antes del día del evento. Es la única forma de saber que el
+  QR impreso se lee bien a 22 mm.
+- La zona horaria del servidor debe estar en hora de Tijuana. Verifícalo
+  antes de programar las rifas.
+
+---
+
+## 5. Comandos de prueba
+
+```bash
+npm run simular       # 41 pruebas contra la base
+npm run test:import   # 32 pruebas del importador
+npm run test:modulo   # 40 pruebas del flujo del módulo (requiere servidor)
+bash test/e2e.sh      # 52 pruebas end-to-end (requiere servidor en :3000)
+```
+
+Total: **165 pruebas**.
+
+---
+
+## 6. Referencia de la API
+
+Todas requieren sesión. `soloAdmin` para importar, `soloStaff` para el resto.
+
+| Método y ruta | Para qué |
+|---|---|
+| `POST /api/admin/importar` | Importa. Sin `confirmar:true` sólo simula. |
+| `GET /api/admin/modulo/panorama` | Totales de impresión y entrega. |
+| `GET /api/admin/modulo/buscar?q=` | Busca en la mesa de entrega. |
+| `POST /api/admin/modulo/entregar` | Marca la entrega del carnet. |
+| `POST /api/admin/modulo/desentregar` | Revierte una entrega. |
+| `GET /api/admin/modulo/etiquetas` | Lista para imprimir. `?filtro=todos` |
+| `POST /api/admin/modulo/etiquetas/impresas` | Marca un lote como impreso. |
+| `GET /api/admin/modulo/asistente/:id` | Datos para la etiqueta individual. |

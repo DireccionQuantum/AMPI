@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12233f">
+<title>Mi panel · AMPI Tijuana 2026</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  body{background:var(--navy);min-height:100dvh}
+  .wrap{width:100%;max-width:520px;margin:0 auto;min-height:100dvh;
+        display:flex;flex-direction:column}
+
+  header{padding:calc(env(safe-area-inset-top) + 18px) 20px 20px;color:#fff}
+  header .hola{font-size:24px;font-weight:1000;letter-spacing:-.02em;margin-top:6px}
+
+  /* --- Marcador: el elemento firma de la pantalla --- */
+  .marcador[hidden]{display:none}
+  .marcador{display:flex;gap:26px;margin-top:20px;padding-top:18px;
+            border-top:1px solid rgba(255,255,255,.14)}
+  .marcador .col .n{font-size:44px;font-weight:1000;color:var(--green-bright);
+                    line-height:.9;letter-spacing:-.04em}
+  .marcador .col .etq{font-size:11px;font-weight:800;letter-spacing:.1em;
+                      text-transform:uppercase;color:#9db0c9;margin-top:7px}
+
+  main{flex:1;background:var(--paper);border-radius:24px 24px 0 0;
+       padding:22px 20px calc(env(safe-area-inset-bottom) + 28px)}
+
+  h2.sec{font-size:15px;font-weight:1000;margin:26px 0 12px;
+         display:flex;align-items:center;justify-content:space-between}
+  h2.sec:first-child{margin-top:0}
+  h2.sec .cuenta{font-size:12px;font-weight:800;color:var(--muted)}
+
+  /* --- QR del asistente --- */
+  .qr-caja{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+           padding:20px;text-align:center}
+  #qr-img{width:210px;height:210px;margin:0 auto;display:block}
+  .qr-caja .instruccion{font-size:13.5px;color:var(--muted);margin-top:14px;line-height:1.45}
+  .codigo{font-size:26px;font-weight:1000;letter-spacing:.22em;
+          color:var(--navy);margin-top:12px;font-variant-numeric:tabular-nums}
+  .codigo-etq{font-size:10.5px;font-weight:800;letter-spacing:.1em;
+              text-transform:uppercase;color:var(--muted);margin-top:8px}
+
+  /* --- Barra de progreso --- */
+  .barra{height:10px;background:#e6ecf1;border-radius:99px;overflow:hidden;margin:10px 0 6px}
+  .barra i{display:block;height:100%;background:var(--green);border-radius:99px;
+           transition:width .5s cubic-bezier(.3,1,.4,1)}
+  .barra-txt{font-size:13px;color:var(--muted);font-weight:700}
+
+  /* --- Módulos --- */
+  .modulos{display:flex;flex-direction:column;gap:7px;max-height:340px;
+           overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .modulo{display:flex;align-items:center;gap:11px;background:#fff;
+          border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .modulo.hecho{background:#f2f9f2;border-color:#cfe8cf}
+  .modulo .mark{width:22px;height:22px;border-radius:50%;flex:0 0 22px;
+                display:grid;place-items:center;font-size:12px;font-weight:1000;
+                background:#e6ecf1;color:var(--muted)}
+  .modulo.hecho .mark{background:var(--green);color:#fff}
+  .modulo .nom{font-size:14px;font-weight:700;line-height:1.25}
+  .modulo.hecho .nom{color:#3f7a41}
+
+  .filtros{display:flex;gap:7px;margin-bottom:11px}
+  .filtro{font-size:12px;font-weight:800;padding:7px 13px;border-radius:99px;
+          border:1.5px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+  .filtro.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* --- Rifas --- */
+  .rifa{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+        padding:16px;margin-bottom:11px}
+  .rifa .premio{font-size:16px;font-weight:1000;line-height:1.25}
+  .rifa .valor{font-size:13px;color:var(--green);font-weight:800;margin-top:3px}
+  .cuenta-regresiva{display:flex;gap:7px;margin-top:13px}
+  .cr{background:var(--navy);color:#fff;border-radius:9px;padding:9px 0;
+      flex:1;text-align:center}
+  .cr .n{font-size:20px;font-weight:1000;font-variant-numeric:tabular-nums;line-height:1}
+  .cr .u{font-size:9.5px;font-weight:800;letter-spacing:.09em;
+         text-transform:uppercase;opacity:.65;margin-top:3px}
+  .rifa.ya .cr{background:var(--green)}
+  .patro{display:flex;align-items:center;gap:8px;margin-top:12px;
+         padding-top:11px;border-top:1px solid #eef2f5}
+  .patro img{height:24px;width:auto;object-fit:contain}
+  .patro span{font-size:11px;font-weight:800;letter-spacing:.06em;
+              text-transform:uppercase;color:var(--muted)}
+
+  /* --- Banner de patrocinador --- */
+  .banner{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+          padding:14px;text-align:center;margin-bottom:20px}
+  .banner .etq{font-size:9.5px;font-weight:800;letter-spacing:.12em;
+               text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .banner img{max-height:44px;max-width:100%;object-fit:contain}
+  .banner .nom{font-size:15px;font-weight:1000;color:var(--navy)}
+
+  .acciones{display:flex;gap:9px;margin-top:20px}
+  .acciones button{flex:1;font-size:13.5px;padding:12px}
+
+  #aviso-ganaste{
+    position:fixed;inset:0;background:rgba(18,35,63,.94);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:26px;text-align:center;
+  }
+  #aviso-ganaste .caja{background:#fff;border-radius:20px;padding:32px 24px;max-width:340px}
+  #aviso-ganaste .emoji{font-size:52px}
+  #aviso-ganaste h3{font-size:24px;margin:14px 0 8px}
+  #aviso-ganaste p{color:var(--muted);font-size:15px;line-height:1.5;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow" id="h-evento">AMPI Tijuana · 3 de septiembre</div>
+    <div class="hola" id="h-hola">Mi panel</div>
+    <div class="marcador">
+      <div class="col"><div class="n num" id="m-puntos">0</div><div class="etq">Puntos</div></div>
+      <div class="col"><div class="n num" id="m-boletos">0</div><div class="etq">Boletos</div></div>
+      <div class="col"><div class="n num" id="m-modulos">0</div><div class="etq">Módulos</div></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="aviso aviso-rojo oculto" id="err"></div>
+
+    <!-- Banner patrocinador principal -->
+    <div class="banner oculto" id="banner">
+      <div class="etq">Patrocinador oficial</div>
+      <div class="nom" id="banner-nom"></div>
+    </div>
+
+    <!-- QR del asistente -->
+    <h2 class="sec">Mi código</h2>
+    <div class="qr-caja">
+      <img id="qr-img" alt="Mi código QR">
+      <div class="instruccion">Muestra este código en cada módulo para sumar puntos.</div>
+      <div class="codigo" id="mi-codigo">······</div>
+      <div class="codigo-etq">Código de respaldo</div>
+    </div>
+
+    <!-- Progreso -->
+    <h2 class="sec">Mi recorrido <span class="cuenta" id="p-cuenta"></span></h2>
+    <div class="barra"><i id="p-barra" style="width:0%"></i></div>
+    <div class="barra-txt" id="p-txt">Cargando…</div>
+
+    <div class="filtros" style="margin-top:14px">
+      <button class="filtro on" data-f="pendientes">Por visitar</button>
+      <button class="filtro" data-f="visitados">Visitados</button>
+      <button class="filtro" data-f="todos">Todos</button>
+    </div>
+    <div class="modulos" id="modulos"></div>
+
+    <!-- Rifas -->
+    <h2 class="sec">Próximas rifas</h2>
+    <div id="rifas"></div>
+
+    <div class="acciones">
+      <button class="btn-fantasma" id="btn-wa">Guardar en WhatsApp</button>
+      <button class="btn-fantasma" id="btn-actualizar">Actualizar</button>
+    </div>
+    <div data-credito></div>
+  </main>
+</div>
+
+<div id="aviso-ganaste" class="oculto">
+  <div class="caja">
+    <div class="emoji">🎉</div>
+    <h3 id="g-titulo">¡Ganaste!</h3>
+    <p id="g-texto"></p>
+    <button class="btn-bloque btn-verde" onclick="document.getElementById('aviso-ganaste').classList.add('oculto')">Listo</button>
+  </div>
+</div>
+
+<script src="/lib/qrcode.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var LS = 'ampi_sesion';
+  var qrId = null, datos = null, filtro = 'pendientes', tickTimer = null;
+
+  function guardarLocal(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
+  function leerLocal(){ try{ return JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){ return null; } }
+
+  function error(msg){
+    $('err').textContent = msg;
+    $('err').classList.remove('oculto');
+  }
+
+  /* ---------- Resolver identidad ---------- */
+  function arrancar(){
+    var mToken = location.pathname.match(/^\/p\/([a-f0-9]{32})/i);
+    var mQr    = location.pathname.match(/^\/a\/([a-f0-9]{24})/i);
+    var pQr    = new URLSearchParams(location.search).get('qr');
+
+    if(mToken) return porToken(mToken[1]);
+    if(mQr)    return cargar(mQr[1].toLowerCase());
+    if(pQr && /^[a-f0-9]{24}$/i.test(pQr)) return cargar(pQr.toLowerCase());
+
+    var guardado = leerLocal();
+    if(guardado && guardado.token) return porToken(guardado.token);
+    if(guardado && guardado.qr_id) return cargar(guardado.qr_id);
+
+    location.href = '/registro';
+  }
+
+  function porToken(token){
+    fetch('/api/asistente/sesion/' + token)
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d){ location.href = '/registro'; return; }
+        guardarLocal({ token: token, qr_id: d.qr_id });
+        cargar(d.qr_id);
+      })
+      .catch(function(){ error('Revisa tu conexión'); });
+  }
+
+  /* ---------- Cargar panel ---------- */
+  function cargar(qr){
+    qrId = qr;
+    fetch('/api/asistente/panel/' + qr)
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+      .then(function(res){
+        if(!res.ok){ error(res.d.error || 'No encontramos tu código'); return; }
+        datos = res.d;
+        pintar();
+        conectarSocket();
+      })
+      .catch(function(){ error('Revisa tu conexión e inténtalo otra vez'); });
+  }
+
+  function pintar(){
+    var d = datos;
+    $('h-hola').textContent = d.nombre ? '¡Hola, ' + d.nombre + '!' : 'Mi panel';
+    $('m-puntos').textContent  = d.puntos;
+    $('m-boletos').textContent = d.boletos;
+    $('m-modulos').textContent = d.progreso.visitados;
+    $('mi-codigo').textContent = d.codigo || '······';
+
+    // QR con el identificador del asistente
+    if(window.QRCode){
+      QRCode.toDataURL(d.qr_id, {
+        width: 420, margin: 1,
+        color:{ dark:'#12233f', light:'#ffffff' }
+      }, function(err, url){ if(!err) $('qr-img').src = url; });
+    }
+
+    var pct = d.progreso.total ? Math.round(d.progreso.visitados / d.progreso.total * 100) : 0;
+    $('p-barra').style.width = pct + '%';
+    $('p-cuenta').textContent = d.progreso.visitados + ' de ' + d.progreso.total;
+    var faltan = d.progreso.total - d.progreso.visitados;
+    $('p-txt').textContent = faltan
+      ? 'Te faltan ' + faltan + (faltan === 1 ? ' módulo' : ' módulos') + ' por visitar'
+      : '¡Visitaste todos los módulos!';
+
+    pintarModulos();
+    pintarRifas();
+
+    var conPatro = (d.rifas || []).find(function(r){ return r.patrocinador; });
+    if(conPatro){
+      $('banner-nom').textContent = conPatro.patrocinador;
+      $('banner').classList.remove('oculto');
+    }
+  }
+
+  function pintarModulos(){
+    var cont = $('modulos');
+    cont.innerHTML = '';
+    var lista = (datos.modulos || []).filter(function(m){
+      if(filtro === 'pendientes') return !m.visitado;
+      if(filtro === 'visitados')  return m.visitado;
+      return true;
+    });
+    if(!lista.length){
+      var v = document.createElement('div');
+      v.className = 'aviso aviso-verde';
+      v.textContent = filtro === 'pendientes'
+        ? '¡Ya visitaste todos los módulos!'
+        : 'Todavía no visitas ningún módulo.';
+      cont.appendChild(v);
+      return;
+    }
+    lista.forEach(function(m){
+      var el = document.createElement('div');
+      el.className = 'modulo' + (m.visitado ? ' hecho' : '');
+      var mk = document.createElement('div');
+      mk.className = 'mark'; mk.textContent = m.visitado ? '✓' : '';
+      var nm = document.createElement('div');
+      nm.className = 'nom'; nm.textContent = m.nombre;
+      el.appendChild(mk); el.appendChild(nm);
+      cont.appendChild(el);
+    });
+  }
+
+  function pintarRifas(){
+    var cont = $('rifas');
+    cont.innerHTML = '';
+    var rifas = datos.rifas || [];
+    if(!rifas.length){
+      cont.innerHTML = '<div class="aviso aviso-ambar">Las rifas se anunciarán durante el evento.</div>';
+      return;
+    }
+    rifas.forEach(function(r){
+      var el = document.createElement('div');
+      el.className = 'rifa'; el.dataset.hora = r.hora; el.dataset.id = r.id;
+
+      var p = document.createElement('div');
+      p.className = 'premio'; p.textContent = r.premio;
+      el.appendChild(p);
+
+      if(r.valor){
+        var v = document.createElement('div');
+        v.className = 'valor';
+        v.textContent = 'Valor $' + Number(r.valor).toLocaleString('es-MX') + ' MXN';
+        el.appendChild(v);
+      }
+
+      var cr = document.createElement('div');
+      cr.className = 'cuenta-regresiva';
+      ['h','m','s'].forEach(function(u){
+        var b = document.createElement('div'); b.className = 'cr';
+        var n = document.createElement('div'); n.className = 'n'; n.dataset.u = u; n.textContent = '00';
+        var t = document.createElement('div'); t.className = 'u';
+        t.textContent = u === 'h' ? 'horas' : (u === 'm' ? 'min' : 'seg');
+        b.appendChild(n); b.appendChild(t); cr.appendChild(b);
+      });
+      el.appendChild(cr);
+
+      if(r.patrocinador){
+        var pt = document.createElement('div');
+        pt.className = 'patro';
+        var sp = document.createElement('span');
+        sp.textContent = 'Patrocina · ' + r.patrocinador;
+        pt.appendChild(sp);
+        el.appendChild(pt);
+      }
+      cont.appendChild(el);
+    });
+    tick();
+    if(tickTimer) clearInterval(tickTimer);
+    tickTimer = setInterval(tick, 1000);
+  }
+
+  function tick(){
+    var ahora = Date.now();
+    document.querySelectorAll('.rifa').forEach(function(el){
+      var falta = Math.max(0, Math.floor((new Date(el.dataset.hora) - ahora)/1000));
+      el.classList.toggle('ya', falta === 0);
+      var h = Math.floor(falta/3600), m = Math.floor(falta%3600/60), s = falta%60;
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      el.querySelector('[data-u="h"]').textContent = pad(h);
+      el.querySelector('[data-u="m"]').textContent = pad(m);
+      el.querySelector('[data-u="s"]').textContent = pad(s);
+    });
+  }
+
+  /* ---------- Tiempo real ---------- */
+  function conectarSocket(){
+    if(typeof io === 'undefined') return;
+    var socket = io();
+    socket.on('connect', function(){ socket.emit('asistente:seguir', qrId); });
+
+    socket.on('asistente:update', function(d){
+      $('m-puntos').textContent  = d.puntos;
+      $('m-boletos').textContent = d.boletos;
+      $('m-modulos').textContent = d.modulos;
+      if(navigator.vibrate) try{ navigator.vibrate(50); }catch(e){}
+      cargar(qrId);   // refresca la lista de módulos
+    });
+
+    socket.on('rifa:ganador', function(d){
+      var yo = (d.ganadores||[]).find(function(g){
+        return datos && g.nombre === datos.nombre;
+      });
+      if(!yo) return;
+      $('g-titulo').textContent = '¡Ganaste!';
+      $('g-texto').textContent = d.rifa.premio +
+        ' — pasa al escenario con tu código ' + (datos.codigo || '');
+      $('aviso-ganaste').classList.remove('oculto');
+      if(navigator.vibrate) try{ navigator.vibrate([100,60,100,60,200]); }catch(e){}
+    });
+
+    socket.on('rifas:proximas', function(lista){
+      if(!datos) return;
+      datos.rifas = lista;
+      pintarRifas();
+    });
+  }
+
+  /* ---------- Acciones ---------- */
+  $('btn-actualizar').addEventListener('click', function(){ if(qrId) cargar(qrId); });
+
+  $('btn-wa').addEventListener('click', function(){
+    var g = leerLocal();
+    var liga = location.origin + (g && g.token ? '/p/' + g.token : '/a/' + qrId);
+    var texto = 'Mi acceso a las rifas de AMPI Tijuana 2026: ' + liga +
+                (datos && datos.codigo ? ' · Código: ' + datos.codigo : '');
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+  });
+
+  document.querySelectorAll('.filtro').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.filtro').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      filtro = b.dataset.f;
+      pintarModulos();
+    });
+  });
+
+  // El QR debe leerse bien aunque el stand esté oscuro o con sol directo.
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && qrId) cargar(qrId);
+  });
+
+  arrancar();
+})();
+</script>
+<script src="/js/marca.js" data-marca="claro"></script>
+</body>
+</html>

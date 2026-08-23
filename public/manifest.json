@@ -1,0 +1,10 @@
+{
+  "name": "Gamificación AMPI Tijuana 2026",
+  "short_name": "AMPI Rifas",
+  "start_url": "/mi",
+  "display": "standalone",
+  "background_color": "#12233f",
+  "theme_color": "#12233f",
+  "orientation": "portrait",
+  "icons": []
+}

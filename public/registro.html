@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12233f">
+<title>Activar mis boletos · AMPI Tijuana 2026</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  body{background:var(--navy);min-height:100dvh}
+  .wrap{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+
+  header{padding:calc(env(safe-area-inset-top) + 22px) 22px 24px;color:#fff}
+  header h1{font-size:26px;font-weight:1000;line-height:1.15;margin-top:8px}
+  header p{color:#a9b8cc;font-size:14px;margin-top:8px;line-height:1.45}
+
+  .marcador[hidden]{display:none}
+  .marcador{display:flex;align-items:baseline;gap:11px;margin-top:22px;
+            padding-top:18px;border-top:1px solid rgba(255,255,255,.14)}
+  .marcador .n{font-size:50px;font-weight:1000;color:var(--green-bright);
+               line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+  .marcador .e{font-size:13px;color:#a9b8cc;font-weight:700;line-height:1.3}
+
+  main{flex:1;background:var(--paper);border-radius:24px 24px 0 0;
+       padding:26px 22px calc(env(safe-area-inset-bottom) + 30px)}
+
+  .pantalla{display:none}
+  .pantalla.on{display:block}
+
+  #lector{border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1;
+          max-width:320px;margin:0 auto}
+
+  .opciones{display:flex;gap:9px;margin-bottom:22px}
+  .opciones button{flex:1;font-size:13.5px;padding:12px;background:#fff;
+                   color:var(--muted);border:1.5px solid var(--line)}
+  .opciones button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  .exito{text-align:center;padding:12px 0 4px}
+  .paloma{width:66px;height:66px;margin:0 auto 18px;border-radius:50%;
+          background:var(--green);display:grid;place-items:center;
+          animation:brinco .45s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes brinco{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .paloma svg{width:32px;height:32px;stroke:#fff;stroke-width:3.4;fill:none;
+              stroke-linecap:round;stroke-linejoin:round}
+  .exito h2{font-size:24px;font-weight:1000}
+  .exito p{color:var(--muted);font-size:15px;margin-top:9px;line-height:1.5}
+  .codigo{font-size:32px;font-weight:1000;letter-spacing:.22em;color:var(--navy);margin-top:20px}
+  .codigo-etq{font-size:10.5px;font-weight:800;letter-spacing:.1em;
+              text-transform:uppercase;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow" id="h-eyebrow">AMPI Tijuana · 3 de septiembre</div>
+    <h1 id="h-titulo">Activa tus boletos</h1>
+    <p id="h-bajada">Con tu nombre y teléfono entras a todas las rifas del día.</p>
+    <div class="marcador" id="marcador" hidden>
+      <span class="n" id="m-puntos">0</span>
+      <span class="e">puntos<br>acumulados</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Cargando -->
+    <section class="pantalla on" id="p-carga">
+      <p class="ayuda centro">Un momento…</p>
+    </section>
+
+    <!-- Elegir modo -->
+    <section class="pantalla" id="p-inicio">
+      <div class="opciones">
+        <button class="on" data-o="nuevo">Soy nuevo</button>
+        <button data-o="escanear">Tengo un QR</button>
+        <button data-o="recuperar">Ya me registré</button>
+      </div>
+
+      <div id="o-nuevo">
+        <div class="aviso aviso-rojo oculto" id="n-err"></div>
+        <div class="campo">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" autocomplete="given-name" enterkeyhint="next" placeholder="María">
+          <div class="error-txt" id="e-nombre"></div>
+        </div>
+        <div class="campo">
+          <label for="apellido">Apellido</label>
+          <input id="apellido" autocomplete="family-name" enterkeyhint="next" placeholder="Hernández">
+          <div class="error-txt" id="e-apellido"></div>
+        </div>
+        <div class="campo">
+          <label for="telefono">Teléfono</label>
+          <input id="telefono" type="tel" inputmode="numeric" autocomplete="tel"
+                 maxlength="16" enterkeyhint="done" placeholder="664 123 4567">
+          <div class="ayuda">A este número te contactamos si sales premiado.</div>
+          <div class="error-txt" id="e-telefono"></div>
+        </div>
+        <button class="btn-bloque" id="btn-crear">Activar mis boletos</button>
+        <p class="ayuda centro" style="margin-top:14px">
+          Tus datos se usan sólo para las rifas del evento.</p>
+      </div>
+
+      <div id="o-escanear" class="oculto">
+        <div class="aviso aviso-ambar">Escanea el QR que recibiste por correo.</div>
+        <div id="lector"></div>
+      </div>
+
+      <div id="o-recuperar" class="oculto">
+        <div class="aviso aviso-rojo oculto" id="r-err"></div>
+        <div class="campo">
+          <label for="r-tel">Teléfono</label>
+          <input id="r-tel" type="tel" inputmode="numeric" maxlength="16" placeholder="664 123 4567">
+        </div>
+        <div class="campo">
+          <label for="r-cod">Tu código de 6 caracteres</label>
+          <input id="r-cod" maxlength="8" placeholder="K7M2Q9"
+                 style="text-transform:uppercase;letter-spacing:.16em;text-align:center;font-size:20px">
+        </div>
+        <button class="btn-bloque" id="btn-recuperar">Recuperar mi acceso</button>
+        <p class="ayuda centro" style="margin-top:14px">
+          ¿No recuerdas tu código? Pásalo en el módulo de registro.</p>
+      </div>
+    </section>
+
+    <!-- Completar datos de un QR ya escaneado -->
+    <section class="pantalla" id="p-completar">
+      <div class="aviso aviso-rojo oculto" id="c-err"></div>
+      <div class="campo">
+        <label for="c-nombre">Nombre</label>
+        <input id="c-nombre" autocomplete="given-name" enterkeyhint="next">
+        <div class="error-txt" id="ce-nombre"></div>
+      </div>
+      <div class="campo">
+        <label for="c-apellido">Apellido</label>
+        <input id="c-apellido" autocomplete="family-name" enterkeyhint="next">
+        <div class="error-txt" id="ce-apellido"></div>
+      </div>
+      <div class="campo">
+        <label for="c-telefono">Teléfono</label>
+        <input id="c-telefono" type="tel" inputmode="numeric" maxlength="16"
+               autocomplete="tel" enterkeyhint="done" placeholder="664 123 4567">
+        <div class="error-txt" id="ce-telefono"></div>
+      </div>
+      <button class="btn-bloque" id="btn-completar">Activar mis boletos</button>
+    </section>
+
+    <!-- Listo -->
+    <section class="pantalla" id="p-listo">
+      <div class="exito">
+        <div class="paloma"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 7"/></svg></div>
+        <h2 id="l-titulo">¡Listo!</h2>
+        <p id="l-texto">Ya estás participando en todas las rifas del día.</p>
+        <div class="codigo" id="l-codigo">······</div>
+        <div class="codigo-etq">Guarda este código</div>
+      </div>
+      <button class="btn-bloque btn-verde" id="btn-panel" style="margin-top:24px">
+        Ver mi panel</button>
+    </section>
+
+    <!-- Error -->
+    <section class="pantalla" id="p-error">
+      <div class="aviso aviso-rojo" id="x-txt"></div>
+      <button class="btn-bloque" onclick="location.href='/registro'">Intentar de nuevo</button>
+    </section>
+    <div data-credito></div>
+  </main>
+</div>
+
+<script src="/lib/html5-qrcode.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var LS = 'ampi_sesion';
+  var qrPendiente = null, lector = null;
+
+  function guardar(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
+  function leer(){ try{ return JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){ return null; } }
+
+  function ver(id){
+    document.querySelectorAll('.pantalla').forEach(function(s){ s.classList.remove('on'); });
+    $(id).classList.add('on');
+  }
+  function fallar(msg){
+    $('x-txt').textContent = msg;
+    $('h-titulo').textContent = 'Algo no salió bien';
+    $('h-bajada').textContent = '';
+    ver('p-error');
+  }
+  function extraerQr(t){
+    if(!t) return null;
+    var m = String(t).match(/([a-f0-9]{24})(?:[\/?#]|$)/i);
+    return m ? m[1].toLowerCase() : null;
+  }
+  function post(ruta, cuerpo){
+    return fetch(ruta, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(cuerpo) })
+      .then(function(r){ return r.json().catch(function(){return{};})
+        .then(function(d){ return { s:r.status, ok:r.ok, d:d }; }); });
+  }
+  function pintarErrores(errs, prefijo){
+    Object.keys(errs||{}).forEach(function(c){
+      var campo = $(prefijo + c);
+      var eti = $((prefijo === 'c-' ? 'ce-' : 'e-') + c);
+      if(campo) campo.classList.add('malo');
+      if(eti){ eti.textContent = errs[c]; eti.classList.add('ver'); }
+    });
+  }
+  function limpiar(prefijo){
+    ['nombre','apellido','telefono'].forEach(function(c){
+      var campo = $(prefijo + c);
+      var eti = $((prefijo === 'c-' ? 'ce-' : 'e-') + c);
+      if(campo) campo.classList.remove('malo');
+      if(eti) eti.classList.remove('ver');
+    });
+  }
+
+  /* ---------- Arranque ---------- */
+  function arrancar(){
+    var enUrl = extraerQr(location.pathname) ||
+                extraerQr(new URLSearchParams(location.search).get('qr'));
+    if(enUrl) return revisarQr(enUrl);
+
+    var g = leer();
+    if(g && (g.token || g.qr_id)){ location.href = '/mi'; return; }
+
+    ver('p-inicio');
+    $('nombre').focus();
+  }
+
+  function revisarQr(qr){
+    ver('p-carga');
+    fetch('/api/asistente/registro/' + qr)
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+      .then(function(res){
+        if(!res.ok) return fallar(res.d.error || 'No pudimos leer tu código');
+        var d = res.d;
+        qrPendiente = qr;
+
+        if(d.existe && d.puntos > 0){
+          $('m-puntos').textContent = d.puntos;
+          $('marcador').hidden = false;
+          $('h-titulo').textContent = 'Ya casi estás dentro de las rifas';
+        }
+        if(d.existe && d.estado === 'verificado'){
+          guardar({ qr_id: qr });
+          location.href = '/a/' + qr;
+          return;
+        }
+        ver('p-completar');
+        $('c-nombre').focus();
+      })
+      .catch(function(){ fallar('Revisa tu conexión'); });
+  }
+
+  /* ---------- Registro nuevo ---------- */
+  function crear(){
+    limpiar('');
+    $('n-err').classList.add('oculto');
+    var b = $('btn-crear');
+    b.disabled = true; b.textContent = 'Guardando…';
+
+    post('/api/asistente/registro', {
+      nombre: $('nombre').value, apellido: $('apellido').value,
+      telefono: $('telefono').value,
+    }).then(function(res){
+      b.disabled = false; b.textContent = 'Activar mis boletos';
+      if(res.s === 422) return pintarErrores(res.d.errores, '');
+
+      // Teléfono ya registrado: lo llevamos a recuperar, no creamos otra cuenta.
+      if(res.s === 409 && res.d.recuperar){
+        document.querySelector('.opciones button[data-o="recuperar"]').click();
+        $('r-tel').value = $('telefono').value;
+        $('r-err').textContent = res.d.error;
+        $('r-err').classList.remove('oculto');
+        $('r-cod').focus();
+        return;
+      }
+      if(!res.ok){
+        $('n-err').textContent = res.d.error || 'No pudimos registrarte';
+        $('n-err').classList.remove('oculto');
+        return;
+      }
+      guardar({ token: res.d.token, qr_id: res.d.qr_id });
+      listo(res.d, res.d.yaExistia);
+    }).catch(function(){
+      b.disabled = false; b.textContent = 'Activar mis boletos';
+      $('n-err').textContent = 'Revisa tu conexión';
+      $('n-err').classList.remove('oculto');
+    });
+  }
+
+  /* ---------- Completar datos ---------- */
+  function completar(){
+    limpiar('c-');
+    $('c-err').classList.add('oculto');
+    var b = $('btn-completar');
+    b.disabled = true; b.textContent = 'Guardando…';
+
+    post('/api/asistente/registro/' + qrPendiente, {
+      nombre: $('c-nombre').value, apellido: $('c-apellido').value,
+      telefono: $('c-telefono').value,
+    }).then(function(res){
+      b.disabled = false; b.textContent = 'Activar mis boletos';
+      if(res.s === 422) return pintarErrores(res.d.errores, 'c-');
+      if(res.s === 409 && res.d.recuperar){
+        $('c-err').textContent = res.d.error;
+        $('c-err').classList.remove('oculto');
+        return;
+      }
+      if(!res.ok){
+        $('c-err').textContent = res.d.error || 'No pudimos guardar tus datos';
+        $('c-err').classList.remove('oculto');
+        return;
+      }
+      guardar({ token: res.d.token, qr_id: qrPendiente });
+      listo(res.d, false);
+    }).catch(function(){
+      b.disabled = false; b.textContent = 'Activar mis boletos';
+      $('c-err').textContent = 'Revisa tu conexión';
+      $('c-err').classList.remove('oculto');
+    });
+  }
+
+  /* ---------- Recuperar ---------- */
+  $('btn-recuperar').addEventListener('click', function(){
+    $('r-err').classList.add('oculto');
+    var b = $('btn-recuperar');
+    b.disabled = true; b.textContent = 'Buscando…';
+
+    post('/api/asistente/recuperar', {
+      telefono: $('r-tel').value, codigo: $('r-cod').value,
+    }).then(function(res){
+      b.disabled = false; b.textContent = 'Recuperar mi acceso';
+      if(!res.ok){
+        $('r-err').textContent = res.d.error || 'No pudimos recuperar tu sesión';
+        $('r-err').classList.remove('oculto');
+        return;
+      }
+      guardar({ token: res.d.token, qr_id: res.d.qr_id });
+      location.href = '/p/' + res.d.token;
+    }).catch(function(){
+      b.disabled = false; b.textContent = 'Recuperar mi acceso';
+      $('r-err').textContent = 'Revisa tu conexión';
+      $('r-err').classList.remove('oculto');
+    });
+  });
+
+  /* ---------- Escanear el propio QR ---------- */
+  function iniciarLector(){
+    if(lector || typeof Html5Qrcode === 'undefined') return;
+    lector = new Html5Qrcode('lector', { verbose:false });
+    lector.start({ facingMode:'environment' },
+      { fps:10, qrbox:{width:220,height:220} },
+      function(texto){
+        var id = extraerQr(texto);
+        if(!id) return;
+        lector.stop().then(function(){ lector = null; revisarQr(id); });
+      }, function(){}
+    ).catch(function(){
+      $('o-escanear').innerHTML =
+        '<div class="aviso aviso-rojo">No pudimos abrir la cámara. ' +
+        'Regístrate con tus datos o pásalo en el módulo de registro.</div>';
+    });
+  }
+
+  /* ---------- Éxito ---------- */
+  function listo(d, yaExistia){
+    $('h-titulo').textContent = yaExistia ? 'Ya estabas registrado' : '¡Boletos activados!';
+    $('h-bajada').textContent = '';
+    if(d.puntos != null){
+      $('m-puntos').textContent = d.puntos;
+      $('marcador').hidden = false;
+    }
+    $('l-titulo').textContent = d.nombre ? '¡Listo, ' + d.nombre + '!' : '¡Listo!';
+    $('l-texto').textContent = yaExistia
+      ? 'Sigues participando en todas las rifas.'
+      : 'Ya estás participando en todas las rifas del día.';
+    $('l-codigo').textContent = d.codigo || '······';
+    ver('p-listo');
+  }
+
+  /* ---------- Enlaces de interfaz ---------- */
+  document.querySelectorAll('.opciones button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.opciones button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      $('o-nuevo').classList.toggle('oculto', b.dataset.o !== 'nuevo');
+      $('o-escanear').classList.toggle('oculto', b.dataset.o !== 'escanear');
+      $('o-recuperar').classList.toggle('oculto', b.dataset.o !== 'recuperar');
+      if(b.dataset.o === 'escanear') iniciarLector();
+    });
+  });
+
+  $('btn-crear').addEventListener('click', crear);
+  $('btn-completar').addEventListener('click', completar);
+  $('btn-panel').addEventListener('click', function(){ location.href = '/mi'; });
+
+  $('nombre').addEventListener('keydown', function(e){ if(e.key==='Enter') $('apellido').focus(); });
+  $('apellido').addEventListener('keydown', function(e){ if(e.key==='Enter') $('telefono').focus(); });
+  $('telefono').addEventListener('keydown', function(e){ if(e.key==='Enter') crear(); });
+  $('c-nombre').addEventListener('keydown', function(e){ if(e.key==='Enter') $('c-apellido').focus(); });
+  $('c-apellido').addEventListener('keydown', function(e){ if(e.key==='Enter') $('c-telefono').focus(); });
+  $('c-telefono').addEventListener('keydown', function(e){ if(e.key==='Enter') completar(); });
+
+  arrancar();
+})();
+</script>
+<script src="/js/marca.js" data-marca="claro"></script>
+</body>
+</html>

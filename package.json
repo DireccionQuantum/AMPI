@@ -1,0 +1,36 @@
+{
+  "name": "gamificacion-ampi",
+  "version": "1.0.0",
+  "description": "Sistema de gamificación con QR y rifas en vivo — Evento AMPI Tijuana 2026",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test test/",
+    "simular": "node scripts/simular-evento.js",
+    "test:import": "node test/importacion.js",
+    "test:modulo": "node test/modulo.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "connect-pg-simple": "^9.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "express-session": "^1.18.0",
+    "helmet": "^7.1.0",
+    "pg": "^8.11.5",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "pg-mem": "^2.8.1"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

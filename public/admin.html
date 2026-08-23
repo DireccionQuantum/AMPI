@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12233f">
+<title>Administración · AMPI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  body{background:var(--paper)}
+  .topbar{
+    background:var(--navy);color:#fff;padding:14px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar .marca{font-size:16px;font-weight:1000;letter-spacing:-.01em}
+  .topbar .marca span{display:block;font-size:11px;font-weight:700;
+                      color:#9db0c9;letter-spacing:.04em}
+  .ident{display:flex;align-items:center;gap:13px}
+  .ident img{height:30px;width:auto;max-width:150px;object-fit:contain;
+             padding-right:13px;border-right:1px solid rgba(255,255,255,.18)}
+
+  /* --- Zona de carga de logotipos --- */
+  .logo-slot{border:1px solid var(--line);border-radius:12px;
+             padding:15px;margin-bottom:14px;background:#fff}
+  .logo-slot h4{font-size:14px;font-weight:1000;margin-bottom:3px}
+  .logo-slot .desc{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:12px}
+  .soltar{
+    border:2px dashed var(--line);border-radius:10px;
+    padding:18px;text-align:center;cursor:pointer;
+    transition:border-color .15s,background .15s;position:relative;
+  }
+  .soltar:hover,.soltar.encima{border-color:var(--green);background:#f3faf3}
+  .soltar .pista{font-size:13px;color:var(--muted);font-weight:700}
+  .soltar .formatos{font-size:11.5px;color:var(--muted);margin-top:4px;opacity:.75}
+  .vista{display:flex;align-items:center;gap:14px}
+  .vista .marco{
+    flex:0 0 auto;padding:11px 14px;border-radius:9px;
+    display:grid;place-items:center;min-width:130px;min-height:56px;
+  }
+  .vista .marco.f-claro{background:#f2f5f8;border:1px solid var(--line)}
+  .vista .marco.f-oscuro{background:var(--navy)}
+  .vista .marco img{max-height:38px;max-width:150px;object-fit:contain;display:block}
+  .vista .meta{flex:1;min-width:0}
+  .vista .meta .n{font-size:13px;font-weight:800;white-space:nowrap;
+                  overflow:hidden;text-overflow:ellipsis}
+  .vista .meta .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .vista .acc{display:flex;gap:7px}
+  .topbar .der{display:flex;align-items:center;gap:12px;font-size:13px}
+  .vivo{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;
+        letter-spacing:.06em;text-transform:uppercase;color:#9db0c9}
+  .vivo i{width:8px;height:8px;border-radius:50%;background:var(--green);
+          animation:latir 2s infinite}
+  @keyframes latir{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .contenedor{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+
+  .tabs{display:flex;gap:5px;margin-bottom:22px;overflow-x:auto;padding-bottom:3px}
+  .tab{font-size:13.5px;font-weight:800;padding:9px 15px;border-radius:10px;
+       border:1.5px solid var(--line);background:#fff;color:var(--muted);
+       cursor:pointer;white-space:nowrap}
+  .tab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  .panel{display:none}
+  .panel.on{display:block}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .kpi .n{font-size:30px;font-weight:1000;color:var(--navy);
+          line-height:1;font-variant-numeric:tabular-nums}
+  .kpi .etq{font-size:10.5px;font-weight:800;letter-spacing:.09em;
+            text-transform:uppercase;color:var(--muted);margin-top:7px}
+  .kpi.destaca .n{color:var(--green)}
+  .kpi.alerta .n{color:var(--amber)}
+
+  .dos{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:900px){.dos{grid-template-columns:1fr}}
+
+  .bloque{background:#fff;border:1px solid var(--line);
+          border-radius:var(--radius);overflow:hidden;margin-bottom:18px}
+  .bloque h3{font-size:13px;font-weight:1000;padding:14px 16px;
+             border-bottom:1px solid var(--line);
+             display:flex;align-items:center;justify-content:space-between}
+  .bloque .cuerpo{padding:16px}
+  .bloque table{margin:0}
+  .bloque .scroll{max-height:420px;overflow-y:auto}
+
+  .rifa-fila{padding:14px 16px;border-bottom:1px solid #eef2f5}
+  .rifa-fila:last-child{border-bottom:none}
+  .rifa-fila .premio{font-size:14.5px;font-weight:800}
+  .rifa-fila .meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .rifa-fila .acc{display:flex;gap:7px;margin-top:10px;align-items:center}
+  .rifa-fila .previa{font-size:12px;color:var(--muted);font-weight:700}
+
+  .barras{display:flex;flex-direction:column;gap:8px}
+  .barra-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .barra-item .nom{font-size:13px;font-weight:700;white-space:nowrap;
+                   overflow:hidden;text-overflow:ellipsis}
+  .barra-item .via{height:7px;background:#eef2f5;border-radius:99px;
+                   overflow:hidden;grid-column:1/-1}
+  .barra-item .via i{display:block;height:100%;background:var(--navy);border-radius:99px}
+  .barra-item .val{font-size:13px;font-weight:1000;font-variant-numeric:tabular-nums}
+
+  #login{max-width:360px;margin:70px auto;background:#fff;
+         border:1px solid var(--line);border-radius:var(--radius);padding:28px}
+  #login h2{font-size:20px;margin-bottom:6px}
+  #login p{color:var(--muted);font-size:14px;margin-bottom:20px}
+
+  .buscador{display:flex;gap:9px;margin-bottom:14px}
+  .buscador input{flex:1}
+
+  .modal{position:fixed;inset:0;background:rgba(18,35,63,.6);z-index:40;
+         display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal .caja{background:#fff;border-radius:16px;padding:24px;
+               max-width:420px;width:100%;max-height:86vh;overflow-y:auto}
+  .modal h3{font-size:18px;margin-bottom:16px}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+         background:var(--navy);color:#fff;padding:13px 20px;border-radius:11px;
+         font-size:14px;font-weight:700;z-index:60;box-shadow:var(--sombra)}
+</style>
+</head>
+<body>
+
+<!-- ==================== Login ==================== -->
+<div id="login">
+  <h2>Administración</h2>
+  <p>Gamificación AMPI Tijuana 2026</p>
+  <div class="aviso aviso-rojo oculto" id="login-err"></div>
+  <div class="campo">
+    <label for="email">Correo</label>
+    <input id="email" type="email" autocomplete="username" placeholder="admin@quantummkt.mx">
+  </div>
+  <div class="campo">
+    <label for="pass">Contraseña</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••">
+  </div>
+  <button class="btn-bloque" id="btn-login">Entrar</button>
+</div>
+
+<!-- ==================== App ==================== -->
+<div id="app" class="oculto">
+  <div class="topbar">
+    <div class="ident">
+      <img id="logo-topbar" alt="" hidden>
+      <div class="marca">Gamificación AMPI<span id="tb-agencia">Quantum Marketing &amp; Advertising</span></div>
+    </div>
+    <div class="der">
+      <div class="vivo"><i></i> En vivo</div>
+      <span id="quien"></span>
+      <button class="btn-chico btn-fantasma" id="btn-salir"
+              style="background:transparent;color:#9db0c9;border-color:#2c4568">Salir</button>
+    </div>
+  </div>
+
+  <div class="contenedor">
+    <div class="tabs">
+      <button class="tab on" data-p="tablero">Tablero</button>
+      <button class="tab" data-p="rifas">Rifas</button>
+      <button class="tab" data-p="asistentes">Asistentes</button>
+      <button class="tab" data-p="modulos">Módulos</button>
+      <button class="tab" data-p="ganadores">Ganadores</button>
+      <button class="tab" data-p="ajustes">Ajustes</button>
+      <button class="tab" data-p="marca">Marca</button>
+      <button class="tab" data-p="modulo">Módulo</button>
+    </div>
+
+    <!-- ---------- Tablero ---------- -->
+    <div class="panel on" id="p-tablero">
+      <div class="kpis">
+        <div class="kpi"><div class="n num" id="k-asis">0</div><div class="etq">Asistentes</div></div>
+        <div class="kpi destaca"><div class="n num" id="k-esc">0</div><div class="etq">Escaneos</div></div>
+        <div class="kpi"><div class="n num" id="k-bol">0</div><div class="etq">Boletos</div></div>
+        <div class="kpi alerta"><div class="n num" id="k-pend">0</div><div class="etq">Sin identificar</div></div>
+        <div class="kpi destaca"><div class="n num" id="k-15">0</div><div class="etq">Últimos 15 min</div></div>
+      </div>
+
+      <div class="dos">
+        <div>
+          <div class="bloque">
+            <h3>Módulos más visitados</h3>
+            <div class="cuerpo"><div class="barras" id="t-expositores"></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="bloque">
+            <h3>Ranking de asistentes</h3>
+            <div class="scroll"><table>
+              <thead><tr><th>Asistente</th><th>Módulos</th><th>Boletos</th></tr></thead>
+              <tbody id="t-ranking"></tbody>
+            </table></div>
+          </div>
+          <div class="bloque">
+            <h3>Sin identificar <span class="chip chip-ambar" id="t-pend-n">0</span></h3>
+            <div class="scroll"><table>
+              <thead><tr><th>Código</th><th>Puntos</th></tr></thead>
+              <tbody id="t-pendientes"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- Rifas ---------- -->
+    <div class="panel" id="p-rifas">
+      <div class="bloque">
+        <h3>Rifas programadas
+          <button class="btn-chico" id="btn-nueva-rifa">Nueva rifa</button>
+        </h3>
+        <div id="lista-rifas"></div>
+      </div>
+    </div>
+
+    <!-- ---------- Asistentes ---------- -->
+    <div class="panel" id="p-asistentes">
+      <div class="buscador">
+        <input id="q-asis" placeholder="Buscar por nombre, teléfono o código">
+        <button class="btn-fantasma" id="btn-buscar">Buscar</button>
+        <button class="btn-fantasma" id="btn-exp-asis">Exportar CSV</button>
+      </div>
+      <div class="bloque"><div class="scroll"><table>
+        <thead><tr><th>Nombre</th><th>Teléfono</th><th>Estado</th>
+                   <th>Módulos</th><th>Boletos</th><th></th></tr></thead>
+        <tbody id="t-asistentes"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ---------- Módulos ---------- -->
+    <div class="panel" id="p-modulos">
+      <div class="bloque">
+        <h3>Módulos del evento
+          <button class="btn-chico" id="btn-nuevo-modulo">Agregar módulo</button>
+        </h3>
+        <div class="scroll"><table>
+          <thead><tr><th>Módulo</th><th>Puntos</th><th>Visitas</th>
+                     <th>Estado</th><th></th></tr></thead>
+          <tbody id="t-modulos"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ---------- Ganadores ---------- -->
+    <div class="panel" id="p-ganadores">
+      <div class="buscador">
+        <button class="btn-fantasma" id="btn-exp-gan">Exportar CSV</button>
+      </div>
+      <div class="bloque"><div class="scroll"><table>
+        <thead><tr><th>Premio</th><th>Ganador</th><th>Teléfono</th>
+                   <th>Folio</th><th>Entregado</th></tr></thead>
+        <tbody id="t-ganadores"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ---------- Ajustes ---------- -->
+    <div class="panel" id="p-ajustes">
+      <div class="bloque">
+        <h3>Reglas del juego</h3>
+        <div class="cuerpo" id="form-config"></div>
+      </div>
+    </div>
+
+    <!-- ---------- Marca ---------- -->
+    <div class="panel" id="p-modulo">
+      <div class="bloque">
+        <h3>Operación del módulo Quantum</h3>
+        <div class="cuerpo">
+          <div id="mod-panorama" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn" href="/etiquetas" target="_blank">Imprimir etiquetas por lote</a>
+            <a class="btn" href="/entrega" target="_blank">Abrir mesa de entrega</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3>Importar la base previa</h3>
+        <div class="cuerpo">
+          <p style="color:var(--muted);font-size:14px;margin-top:0">
+            Arrastra el archivo que te mandó el organizador, o pega su contenido.
+            Se reconocen columnas de nombre, apellido, teléfono, correo, empresa
+            y el identificador del QR si ya lo traen. Primero se muestra qué va a
+            pasar; nada se guarda hasta que confirmes.
+          </p>
+
+          <div id="mod-suelta" style="border:2px dashed #bcc9d8;border-radius:12px;background:#fbfcfe;
+               padding:26px;text-align:center;cursor:pointer;margin-bottom:12px;transition:.15s">
+            <div style="font-weight:700;margin-bottom:4px">Suelta aquí el archivo CSV</div>
+            <div style="font-size:13px;color:var(--muted)">o haz clic para elegirlo</div>
+            <input type="file" id="mod-archivo" accept=".csv,.txt,text/csv" hidden>
+          </div>
+
+          <textarea id="mod-csv" rows="6" placeholder="…o pega aquí el contenido del archivo"
+            style="width:100%;box-sizing:border-box;background:#fff;
+                   color:var(--ink);border:1px solid #c9d4e0;border-radius:10px;
+                   padding:11px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"></textarea>
+
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn" id="mod-revisar">Revisar archivo</button>
+            <button class="btn btn-p" id="mod-confirmar" disabled>Confirmar importación</button>
+            <a class="btn" id="mod-ejemplo" download="ejemplo_ampi.csv"
+               href="data:text/csv;charset=utf-8,%EF%BB%BFNombre,Apellido,Telefono,Email,Empresa%0AMar%C3%ADa,Hern%C3%A1ndez,6641234567,maria@ejemplo.mx,Inmobiliaria Sur%0A">Descargar ejemplo</a>
+          </div>
+
+          <div id="mod-reporte" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="p-marca">
+      <div class="dos">
+        <div class="bloque">
+          <h3>Logotipos</h3>
+          <div class="cuerpo" id="zona-logos"></div>
+        </div>
+        <div class="bloque">
+          <h3>Textos de marca</h3>
+          <div class="cuerpo" id="form-marca-txt"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-credito style="padding-bottom:20px"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var socket = null;
+
+  function api(ruta, opciones){
+    return fetch('/api/admin' + ruta, Object.assign({
+      headers:{'Content-Type':'application/json'}
+    }, opciones||{})).then(function(r){
+      return r.json().catch(function(){ return {}; })
+        .then(function(d){ if(!r.ok) throw new Error(d.error || 'Error'); return d; });
+    });
+  }
+
+  function toast(msg){
+    var t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 2800);
+  }
+
+  function celda(txt){ var td = document.createElement('td'); td.textContent = txt; return td; }
+
+  /* ================= Login ================= */
+  function entrar(){
+    $('login-err').classList.add('oculto');
+    api('/login', { method:'POST', body: JSON.stringify({
+      email: $('email').value.trim(), password: $('pass').value
+    })})
+    .then(function(d){ abrirApp(d.usuario); })
+    .catch(function(e){
+      $('login-err').textContent = e.message;
+      $('login-err').classList.remove('oculto');
+    });
+  }
+  $('btn-login').addEventListener('click', entrar);
+  $('pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
+
+  function abrirApp(usuario){
+    $('login').classList.add('oculto');
+    $('app').classList.remove('oculto');
+    $('quien').textContent = usuario.nombre;
+    aplicarIdentidad();
+    cargarTablero();
+    conectar();
+    setInterval(cargarTablero, 20000);
+  }
+
+  $('btn-salir').addEventListener('click', function(){
+    api('/logout', { method:'POST' }).finally(function(){ location.reload(); });
+  });
+
+  /* ================= Tiempo real ================= */
+  function conectar(){
+    if(typeof io === 'undefined') return;
+    socket = io();
+    socket.on('connect', function(){ socket.emit('tablero:entrar'); });
+    socket.on('stats:update', pintarKpis);
+    socket.on('rifa:ganador', function(d){
+      toast('Ganador de ' + d.rifa.premio + ': ' + d.ganadores[0].nombre);
+      cargarRifas(); cargarGanadores();
+    });
+    socket.on('rifas:cambio', cargarRifas);
+  }
+
+  /* ================= Tablero ================= */
+  function pintarKpis(m){
+    $('k-asis').textContent = m.asistentes;
+    $('k-esc').textContent  = m.escaneos;
+    $('k-bol').textContent  = m.boletos;
+    $('k-pend').textContent = m.pendientes;
+    $('k-15').textContent   = m.escaneos_15min;
+  }
+
+  function cargarTablero(){
+    api('/tablero').then(function(d){
+      pintarKpis(d.metricas);
+
+      var max = Math.max.apply(null, d.expositores.map(function(e){
+        return Number(e.visitas)||0; }).concat([1]));
+      var cont = $('t-expositores'); cont.innerHTML = '';
+      d.expositores.slice(0,12).forEach(function(e){
+        var wrap = document.createElement('div');
+        wrap.className = 'barra-item';
+        var nom = document.createElement('div');
+        nom.className = 'nom'; nom.textContent = e.nombre;
+        var val = document.createElement('div');
+        val.className = 'val'; val.textContent = e.visitas;
+        var via = document.createElement('div');
+        via.className = 'via';
+        var i = document.createElement('i');
+        i.style.width = (Number(e.visitas)/max*100) + '%';
+        via.appendChild(i);
+        wrap.appendChild(nom); wrap.appendChild(val); wrap.appendChild(via);
+        cont.appendChild(wrap);
+      });
+
+      var tr = $('t-ranking'); tr.innerHTML = '';
+      d.ranking.forEach(function(r){
+        var fila = document.createElement('tr');
+        fila.appendChild(celda((r.nombre||'') + ' ' + (r.apellido||'')));
+        fila.appendChild(celda(r.modulos));
+        fila.appendChild(celda(r.boletos));
+        tr.appendChild(fila);
+      });
+
+      var tp = $('t-pendientes'); tp.innerHTML = '';
+      $('t-pend-n').textContent = d.pendientes.length;
+      d.pendientes.forEach(function(p){
+        var fila = document.createElement('tr');
+        fila.appendChild(celda(p.codigo_corto || p.qr_id.slice(0,8) + '…'));
+        fila.appendChild(celda(p.puntos));
+        tp.appendChild(fila);
+      });
+    }).catch(function(){});
+  }
+
+  /* ================= Rifas ================= */
+  function cargarRifas(){
+    api('/rifas').then(function(rifas){
+      var cont = $('lista-rifas'); cont.innerHTML = '';
+      if(!rifas.length){
+        cont.innerHTML = '<div class="cuerpo"><div class="aviso aviso-ambar">No hay rifas programadas.</div></div>';
+        return;
+      }
+      rifas.forEach(function(r){
+        var el = document.createElement('div');
+        el.className = 'rifa-fila';
+
+        var top = document.createElement('div');
+        top.className = 'entre';
+        var izq = document.createElement('div');
+        var pr = document.createElement('div');
+        pr.className = 'premio'; pr.textContent = r.premio;
+        var mt = document.createElement('div');
+        mt.className = 'meta';
+        var hora = new Date(r.hora).toLocaleTimeString('es-MX',
+          {hour:'2-digit', minute:'2-digit'});
+        mt.textContent = hora + ' · ' + r.num_ganadores +
+          (r.num_ganadores === 1 ? ' ganador' : ' ganadores') +
+          (r.valor ? ' · $' + Number(r.valor).toLocaleString('es-MX') : '') +
+          (r.patrocinador ? ' · ' + r.patrocinador : '');
+        izq.appendChild(pr); izq.appendChild(mt);
+
+        var chip = document.createElement('span');
+        var clases = { pendiente:'chip-ambar', finalizada:'chip-verde',
+                       en_curso:'chip-gris', cancelada:'chip-rojo' };
+        chip.className = 'chip ' + (clases[r.estado] || 'chip-gris');
+        chip.textContent = r.estado === 'finalizada'
+          ? r.ganadores + (Number(r.ganadores) === 1 ? ' ganador' : ' ganadores')
+          : r.estado;
+        top.appendChild(izq); top.appendChild(chip);
+        el.appendChild(top);
+
+        if(r.estado === 'pendiente'){
+          var acc = document.createElement('div');
+          acc.className = 'acc';
+          var btn = document.createElement('button');
+          btn.className = 'btn-chico btn-verde';
+          btn.textContent = 'Sortear ahora';
+          btn.onclick = function(){ sortear(r.id, r.premio, btn); };
+          var prev = document.createElement('span');
+          prev.className = 'previa'; prev.textContent = 'Cargando participantes…';
+          api('/rifas/' + r.id + '/previa').then(function(p){
+            prev.textContent = p.personas + ' personas · ' + p.boletos + ' boletos en la urna';
+          }).catch(function(){ prev.textContent = ''; });
+          acc.appendChild(btn); acc.appendChild(prev);
+          el.appendChild(acc);
+        }
+        cont.appendChild(el);
+      });
+    }).catch(function(){});
+  }
+
+  function sortear(id, premio, btn){
+    if(!confirm('¿Sortear "' + premio + '" ahora?\n\nEsta acción no se puede deshacer.')) return;
+    btn.disabled = true; btn.textContent = 'Sorteando…';
+    api('/rifas/' + id + '/sortear', { method:'POST' })
+      .then(function(d){
+        toast('Ganador: ' + d.ganadores.map(function(g){ return g.nombre; }).join(', '));
+        cargarRifas(); cargarGanadores();
+      })
+      .catch(function(e){
+        toast(e.message);
+        btn.disabled = false; btn.textContent = 'Sortear ahora';
+      });
+  }
+
+  $('btn-nueva-rifa').addEventListener('click', function(){
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.innerHTML =
+      '<div class="caja"><h3>Nueva rifa</h3>' +
+      '<div class="campo"><label>Premio</label><input id="n-premio" placeholder="Tablet Samsung"></div>' +
+      '<div class="campo"><label>Valor aproximado (MXN)</label><input id="n-valor" type="number" placeholder="4500"></div>' +
+      '<div class="campo"><label>Hora del sorteo</label><input id="n-hora" type="datetime-local"></div>' +
+      '<div class="campo"><label>Número de ganadores</label><input id="n-gan" type="number" value="1" min="1"></div>' +
+      '<div class="fila"><button class="btn-fantasma" id="n-cancel">Cancelar</button>' +
+      '<button id="n-guardar" style="flex:1">Programar rifa</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('#n-cancel').onclick = function(){ m.remove(); };
+    m.querySelector('#n-guardar').onclick = function(){
+      api('/rifas', { method:'POST', body: JSON.stringify({
+        premio: m.querySelector('#n-premio').value,
+        valor:  m.querySelector('#n-valor').value,
+        hora:   m.querySelector('#n-hora').value,
+        num_ganadores: m.querySelector('#n-gan').value,
+      })}).then(function(){ m.remove(); toast('Rifa programada'); cargarRifas(); })
+        .catch(function(e){ toast(e.message); });
+    };
+  });
+
+  /* ================= Asistentes ================= */
+  function cargarAsistentes(){
+    var q = encodeURIComponent($('q-asis').value.trim());
+    api('/asistentes?q=' + q).then(function(lista){
+      var t = $('t-asistentes'); t.innerHTML = '';
+      lista.forEach(function(a){
+        var fila = document.createElement('tr');
+        fila.appendChild(celda(((a.nombre||'') + ' ' + (a.apellido||'')).trim() || '—'));
+        fila.appendChild(celda(a.telefono || '—'));
+        var td = document.createElement('td');
+        var chip = document.createElement('span');
+        chip.className = 'chip ' + (a.estado === 'verificado' ? 'chip-verde' : 'chip-ambar');
+        chip.textContent = a.estado;
+        td.appendChild(chip); fila.appendChild(td);
+        fila.appendChild(celda(a.modulos));
+        fila.appendChild(celda(a.boletos));
+        fila.appendChild(celda(a.codigo_corto || ''));
+        t.appendChild(fila);
+      });
+    }).catch(function(){});
+  }
+  $('btn-buscar').addEventListener('click', cargarAsistentes);
+  $('q-asis').addEventListener('keydown', function(e){ if(e.key === 'Enter') cargarAsistentes(); });
+  $('btn-exp-asis').addEventListener('click', function(){ location.href = '/api/admin/export/asistentes'; });
+  $('btn-exp-gan').addEventListener('click', function(){ location.href = '/api/admin/export/ganadores'; });
+
+  /* ================= Módulos ================= */
+  var ultimoPin = {};   // PINs recién generados en esta sesión del navegador
+
+  /**
+   * Abre el instructivo ya personalizado con los datos del módulo.
+   * El PIN sólo puede incluirse si se acaba de generar: en la base
+   * está hasheado y no hay forma de recuperarlo.
+   */
+  function abrirInstructivo(x){
+    api('/expositores/' + x.id + '/liga').then(function(d){
+      var url = '/instructivo?modulo=' + encodeURIComponent(x.nombre) +
+                '&t=' + encodeURIComponent(d.token);
+      if(ultimoPin[x.id]) url += '&pin=' + encodeURIComponent(ultimoPin[x.id]);
+      else toast('Genera un PIN nuevo si quieres que aparezca impreso');
+      window.open(url, '_blank');
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  function cargarModulos(){
+    api('/expositores').then(function(lista){
+      var t = $('t-modulos'); t.innerHTML = '';
+      lista.forEach(function(x){
+        var fila = document.createElement('tr');
+        fila.appendChild(celda(x.nombre));
+        fila.appendChild(celda(x.puntos));
+        fila.appendChild(celda(x.visitas));
+        var td = document.createElement('td');
+        var chip = document.createElement('span');
+        chip.className = 'chip ' + (x.activo ? 'chip-verde' : 'chip-gris');
+        chip.textContent = x.activo ? 'activo' : 'inactivo';
+        td.appendChild(chip); fila.appendChild(td);
+        var tdb = document.createElement('td');
+        tdb.style.whiteSpace = 'nowrap';
+
+        var b = document.createElement('button');
+        b.className = 'btn-chico btn-fantasma'; b.textContent = 'Nuevo PIN';
+        b.onclick = function(){
+          api('/expositores/' + x.id + '/pin', { method:'POST' })
+            .then(function(d){
+              ultimoPin[x.id] = d.pin;
+              // El PIN sólo se puede ver aquí: en la base vive hasheado.
+              alert('PIN de ' + d.expositor.nombre + ': ' + d.pin +
+                    '\n\nAnótalo: no se puede volver a consultar.');
+            })
+            .catch(function(e){ toast(e.message); });
+        };
+
+        var bi = document.createElement('button');
+        bi.className = 'btn-chico btn-fantasma';
+        bi.textContent = 'Instructivo';
+        bi.style.marginLeft = '6px';
+        bi.onclick = function(){ abrirInstructivo(x); };
+
+        tdb.appendChild(b); tdb.appendChild(bi); fila.appendChild(tdb);
+        t.appendChild(fila);
+      });
+    }).catch(function(){});
+  }
+
+  $('btn-nuevo-modulo').addEventListener('click', function(){
+    var nombre = prompt('Nombre del módulo:');
+    if(!nombre) return;
+    api('/expositores', { method:'POST', body: JSON.stringify({ nombre: nombre })})
+      .then(function(d){
+        alert('Módulo creado\n\nPIN: ' + d.pin + '\nLiga: ' + location.origin + '/s/' + d.expositor.token);
+        cargarModulos();
+      }).catch(function(e){ toast(e.message); });
+  });
+
+  /* ================= Ganadores ================= */
+  function cargarGanadores(){
+    api('/ganadores').then(function(lista){
+      var t = $('t-ganadores'); t.innerHTML = '';
+      lista.forEach(function(g){
+        var fila = document.createElement('tr');
+        fila.appendChild(celda(g.premio));
+        fila.appendChild(celda(((g.nombre||'') + ' ' + (g.apellido||'')).trim()));
+        fila.appendChild(celda(g.telefono || '—'));
+        fila.appendChild(celda(g.folio || '—'));
+        var td = document.createElement('td');
+        var chk = document.createElement('input');
+        chk.type = 'checkbox'; chk.checked = g.entregado;
+        chk.style.width = 'auto';
+        chk.onchange = function(){
+          api('/ganadores/' + g.id, { method:'PATCH',
+            body: JSON.stringify({ entregado: chk.checked })})
+            .then(function(){ toast(chk.checked ? 'Marcado como entregado' : 'Marcado como pendiente'); })
+            .catch(function(e){ toast(e.message); chk.checked = !chk.checked; });
+        };
+        td.appendChild(chk); fila.appendChild(td);
+        t.appendChild(fila);
+      });
+    }).catch(function(){});
+  }
+
+  /* ================= Ajustes ================= */
+  var ETIQUETAS = {
+    puntos_por_boleto: 'Puntos necesarios por boleto',
+    min_modulos_rifa: 'Módulos mínimos para entrar al sorteo',
+    excluir_ganadores: 'Un ganador queda fuera de las siguientes rifas (si/no)',
+    solo_verificados: 'Sólo participan asistentes identificados (si/no)',
+    nombre_evento: 'Nombre del evento',
+    fecha_evento: 'Fecha del evento',
+  };
+  function cargarConfig(){
+    api('/config').then(function(lista){
+      var f = $('form-config'); f.innerHTML = '';
+      lista.forEach(function(c){
+        var campo = document.createElement('div');
+        campo.className = 'campo';
+        var lb = document.createElement('label');
+        lb.textContent = ETIQUETAS[c.clave] || c.clave;
+        var inp = document.createElement('input');
+        inp.value = c.valor; inp.dataset.clave = c.clave;
+        campo.appendChild(lb); campo.appendChild(inp);
+        f.appendChild(campo);
+      });
+      var b = document.createElement('button');
+      b.textContent = 'Guardar cambios';
+      b.onclick = function(){
+        var cambios = {};
+        f.querySelectorAll('input[data-clave]').forEach(function(i){
+          cambios[i.dataset.clave] = i.value;
+        });
+        api('/config', { method:'PATCH', body: JSON.stringify(cambios) })
+          .then(function(){ toast('Ajustes guardados'); })
+          .catch(function(e){ toast(e.message); });
+      };
+      f.appendChild(b);
+    }).catch(function(){});
+  }
+
+  /* ================= Marca ================= */
+  var ESPACIOS = [
+    { clave:'logo_evento', titulo:'Logo del evento',
+      desc:'Logo de AMPI o del cliente. Aparece en la pantalla de proyección y en el panel del asistente. Se ve mejor en PNG con fondo transparente.',
+      fondo:'f-claro' },
+    { clave:'logo_agencia', titulo:'Logo Quantum — fondos claros',
+      desc:'Versión a color, para el pie de las pantallas con fondo blanco.',
+      fondo:'f-claro' },
+    { clave:'logo_agencia_claro', titulo:'Logo Quantum — fondos oscuros',
+      desc:'Versión con texto blanco, para la proyección y la portada. Si no la subes, se usa la incluida en el sistema.',
+      fondo:'f-oscuro' },
+  ];
+
+  function cargarMarca(){
+    fetch('/api/admin/marca').then(function(r){ return r.json(); })
+      .then(function(estado){
+        var cont = $('zona-logos');
+        cont.innerHTML = '';
+        ESPACIOS.forEach(function(esp){
+          cont.appendChild(construirSlot(esp, estado[esp.clave] || {cargado:false}));
+        });
+      }).catch(function(){});
+    cargarTextosMarca();
+  }
+
+  function construirSlot(esp, est){
+    var slot = document.createElement('div');
+    slot.className = 'logo-slot';
+
+    var h = document.createElement('h4'); h.textContent = esp.titulo;
+    var d = document.createElement('div'); d.className = 'desc'; d.textContent = esp.desc;
+    slot.appendChild(h); slot.appendChild(d);
+
+    var cuerpo = document.createElement('div');
+    slot.appendChild(cuerpo);
+
+    function pintarVacio(){
+      cuerpo.innerHTML = '';
+      var zona = document.createElement('div');
+      zona.className = 'soltar';
+      zona.innerHTML = '<div class="pista">Arrastra el archivo aquí o toca para elegirlo</div>' +
+                       '<div class="formatos">PNG, JPG, WEBP o SVG · máximo 2 MB</div>';
+      conectarZona(zona, esp.clave);
+      cuerpo.appendChild(zona);
+    }
+
+    function pintarCargado(info){
+      cuerpo.innerHTML = '';
+      var v = document.createElement('div'); v.className = 'vista';
+
+      var marco = document.createElement('div');
+      marco.className = 'marco ' + esp.fondo;
+      var img = document.createElement('img');
+      img.src = '/api/marca/' + esp.clave + '?v=' + Date.now();
+      img.alt = esp.titulo;
+      marco.appendChild(img);
+
+      var meta = document.createElement('div'); meta.className = 'meta';
+      var n = document.createElement('div'); n.className = 'n';
+      n.textContent = info.nombre || esp.clave;
+      var s = document.createElement('div'); s.className = 's';
+      s.textContent = Math.round((info.bytes||0)/1024) + ' KB · actualizado ' +
+        new Date(info.actualizado).toLocaleString('es-MX',
+          {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      meta.appendChild(n); meta.appendChild(s);
+
+      var acc = document.createElement('div'); acc.className = 'acc';
+      var bCambiar = document.createElement('button');
+      bCambiar.className = 'btn-chico btn-fantasma'; bCambiar.textContent = 'Cambiar';
+      bCambiar.onclick = function(){ elegirArchivo(esp.clave); };
+      var bQuitar = document.createElement('button');
+      bQuitar.className = 'btn-chico btn-fantasma'; bQuitar.textContent = 'Quitar';
+      bQuitar.onclick = function(){
+        if(!confirm('¿Quitar este logo?')) return;
+        fetch('/api/admin/marca/' + esp.clave, { method:'DELETE' })
+          .then(function(){ toast('Logo eliminado'); cargarMarca(); });
+      };
+      acc.appendChild(bCambiar); acc.appendChild(bQuitar);
+
+      v.appendChild(marco); v.appendChild(meta); v.appendChild(acc);
+      cuerpo.appendChild(v);
+    }
+
+    if(est.cargado) pintarCargado(est); else pintarVacio();
+    return slot;
+  }
+
+  function conectarZona(zona, clave){
+    zona.addEventListener('click', function(){ elegirArchivo(clave); });
+    ['dragenter','dragover'].forEach(function(ev){
+      zona.addEventListener(ev, function(e){
+        e.preventDefault(); zona.classList.add('encima');
+      });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      zona.addEventListener(ev, function(e){
+        e.preventDefault(); zona.classList.remove('encima');
+      });
+    });
+    zona.addEventListener('drop', function(e){
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(f) subirLogo(clave, f);
+    });
+  }
+
+  function elegirArchivo(clave){
+    var inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+    inp.onchange = function(){ if(inp.files[0]) subirLogo(clave, inp.files[0]); };
+    inp.click();
+  }
+
+  function subirLogo(clave, archivo){
+    if(archivo.size > 2*1024*1024){
+      toast('La imagen pesa ' + (archivo.size/1048576).toFixed(1) + ' MB. El máximo es 2 MB.');
+      return;
+    }
+    toast('Subiendo ' + archivo.name + '…');
+    var lector = new FileReader();
+    lector.onload = function(){
+      api('/marca/' + clave, { method:'PUT', body: JSON.stringify({
+        datos: lector.result, nombre: archivo.name,
+      })})
+      .then(function(){ toast('Logo actualizado'); cargarMarca(); })
+      .catch(function(e){ toast(e.message); });
+    };
+    lector.onerror = function(){ toast('No pudimos leer el archivo'); };
+    lector.readAsDataURL(archivo);
+  }
+
+  var TXT_MARCA = {
+    agencia_nombre: 'Nombre de la agencia',
+    agencia_credito: 'Texto del crédito en cada pantalla',
+    agencia_sitio: 'Sitio web de la agencia',
+    evento_sede: 'Sede del evento',
+  };
+  function cargarTextosMarca(){
+    api('/config').then(function(lista){
+      var f = $('form-marca-txt'); f.innerHTML = '';
+      lista.filter(function(c){ return TXT_MARCA[c.clave]; }).forEach(function(c){
+        var campo = document.createElement('div'); campo.className = 'campo';
+        var lb = document.createElement('label'); lb.textContent = TXT_MARCA[c.clave];
+        var inp = document.createElement('input');
+        inp.value = c.valor; inp.dataset.clave = c.clave;
+        campo.appendChild(lb); campo.appendChild(inp); f.appendChild(campo);
+      });
+      var b = document.createElement('button');
+      b.textContent = 'Guardar textos';
+      b.onclick = function(){
+        var cambios = {};
+        f.querySelectorAll('input[data-clave]').forEach(function(i){
+          cambios[i.dataset.clave] = i.value;
+        });
+        api('/config', { method:'PATCH', body: JSON.stringify(cambios) })
+          .then(function(){ toast('Textos actualizados'); aplicarIdentidad(); })
+          .catch(function(e){ toast(e.message); });
+      };
+      f.appendChild(b);
+    }).catch(function(){});
+  }
+
+  /* Logo del cliente en la barra superior, si está cargado */
+  function aplicarIdentidad(){
+    var img = $('logo-topbar');
+    var prueba = new Image();
+    prueba.onload = function(){
+      img.src = '/api/marca/logo_evento?v=' + Date.now();
+      img.hidden = false;
+    };
+    prueba.onerror = function(){ img.hidden = true; };
+    prueba.src = '/api/marca/logo_evento?v=' + Date.now();
+
+    fetch('/api/publico/marca').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d && d.agencia_nombre) $('tb-agencia').textContent = d.agencia_nombre; })
+      .catch(function(){});
+  }
+
+  /* ================= Navegación ================= */
+  var CARGADORES = {
+    tablero: cargarTablero, rifas: cargarRifas, asistentes: cargarAsistentes,
+    modulos: cargarModulos, ganadores: cargarGanadores, ajustes: cargarConfig,
+    marca: cargarMarca, modulo: modPanorama,
+  };
+  /* ================= Módulo: importar y operar ================= */
+  var modUltimoCsv = '';
+
+  function modPanorama(){
+    api('/modulo/panorama').then(function(d){
+      var celdas = [
+        ['Total', d.total],
+        ['De lista previa', d.de_lista_previa],
+        ['Altas en vivo', d.altas_en_vivo],
+        ['Etiquetas impresas', d.etiquetas_impresas],
+        ['Faltan de imprimir', d.etiquetas_pendientes],
+        ['Entregados', d.entregados]
+      ];
+      $('mod-panorama').innerHTML = celdas.map(function(c){
+        return '<div style="flex:1;min-width:120px;background:#fff;' +
+          'border:1px solid #dbe3ec;border-radius:10px;padding:10px 12px">' +
+          '<div style="font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:20px;' +
+          'color:#2f7d32">' + c[1] + '</div>' +
+          '<div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;' +
+          'color:var(--muted);margin-top:2px">' + c[0] + '</div></div>';
+      }).join('');
+    }).catch(function(){});
+  }
+
+  function modReporte(d, simulado){
+    var filas = [];
+    if (simulado) {
+      filas.push(['Listas para dar de alta', d.validas, 'var(--green-bright)']);
+    } else {
+      filas.push(['Nuevos', d.nuevos, '#2f7d32']);
+      filas.push(['Actualizados', d.actualizados, '#2f7d32']);
+      filas.push(['Ya existían', d.sin_cambio, 'var(--muted)']);
+    }
+    filas.push(['Filas leídas', d.leidas, 'var(--muted)']);
+    filas.push(['Rechazadas', d.rechazadas.length,
+                d.rechazadas.length ? 'var(--amber)' : 'var(--muted)']);
+
+    var html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
+      filas.map(function(f){
+        return '<div style="background:#fff;border:1px solid #dbe3ec;' +
+          'border-radius:9px;padding:9px 13px"><span style="font-family:ui-monospace,Menlo,monospace;' +
+          'font-weight:700;font-size:17px;color:' + f[2] + '">' + f[1] + '</span> ' +
+          '<span style="font-size:12px;color:var(--muted)">' + f[0] + '</span></div>';
+      }).join('') + '</div>';
+
+    if (d.rechazadas.length) {
+      var MOTIVOS = {
+        nombre_invalido: 'sin nombre válido',
+        qr_invalido: 'el código QR no tiene el formato correcto',
+        duplicado_en_archivo: 'repetida dentro del mismo archivo'
+      };
+      html += '<div style="background:#fdf3de;color:#6b4e12;border-left:3px solid var(--amber);' +
+        'border-radius:9px;padding:12px 14px"><b>Filas que no se pudieron usar</b>' +
+        '<ul style="margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.7">' +
+        d.rechazadas.slice(0, 12).map(function(x){
+          return '<li>Línea ' + x.linea + ': ' + (MOTIVOS[x.motivo] || x.motivo) + '</li>';
+        }).join('') +
+        (d.rechazadas.length > 12 ? '<li>y ' + (d.rechazadas.length - 12) + ' más…</li>' : '') +
+        '</ul></div>';
+    }
+
+    if (simulado && (d.validas || 0) > 0) {
+      html += '<p style="color:var(--muted);font-size:13px;margin-bottom:0">' +
+        'Nada se ha guardado todavía. Presiona <b>Confirmar importación</b> para aplicarlo.</p>';
+    }
+    $('mod-reporte').innerHTML = html;
+  }
+
+  function modEnviar(confirmar){
+    var csv = $('mod-csv').value.trim();
+    if (!csv) { toast('Primero carga o pega el archivo'); return; }
+    modUltimoCsv = csv;
+    $('mod-reporte').innerHTML = '<span style="color:var(--muted)">Procesando…</span>';
+    api('/importar', {
+      method: 'POST',
+      body: JSON.stringify({ csv: csv, confirmar: !!confirmar })
+    }).then(function(d){
+      modReporte(d, !confirmar);
+      $('mod-confirmar').disabled = !!confirmar || (d.validas || 0) === 0;
+      if (confirmar) {
+        toast('Importación aplicada: ' + d.nuevos + ' nuevos');
+        modPanorama();
+      }
+    }).catch(function(e){
+      var MENSAJES = {
+        archivo_vacio: 'El archivo está vacío.',
+        sin_datos: 'El archivo sólo trae encabezados, sin filas.',
+        demasiadas_filas: 'El archivo excede el máximo de filas permitidas.',
+        sin_columnas_reconocibles: 'No se reconoce ninguna columna. Revisa que tenga al menos una de nombre o identificador.'
+      };
+      $('mod-reporte').innerHTML = '<div style="background:#fdf3de;color:#6b4e12;' +
+        'border-left:3px solid var(--amber);border-radius:9px;padding:12px 14px">' +
+        (MENSAJES[e.message] || e.message) + '</div>';
+      $('mod-confirmar').disabled = true;
+    });
+  }
+
+  (function modInit(){
+    var suelta = $('mod-suelta');
+    var archivo = $('mod-archivo');
+    if (!suelta) return;
+
+    function leer(file){
+      if (!file) return;
+      var fr = new FileReader();
+      fr.onload = function(){
+        $('mod-csv').value = fr.result;
+        $('mod-confirmar').disabled = true;
+        modEnviar(false);          // revisa solo, sin guardar
+      };
+      fr.readAsText(file, 'utf-8');
+    }
+
+    suelta.addEventListener('click', function(){ archivo.click(); });
+    archivo.addEventListener('change', function(){ leer(archivo.files[0]); });
+    ['dragenter','dragover'].forEach(function(ev){
+      suelta.addEventListener(ev, function(e){
+        e.preventDefault(); suelta.style.borderColor = 'var(--green)'; suelta.style.background = '#eef9ee';
+      });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      suelta.addEventListener(ev, function(e){
+        e.preventDefault(); suelta.style.borderColor = '#bcc9d8'; suelta.style.background = '#fbfcfe';
+      });
+    });
+    suelta.addEventListener('drop', function(e){
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) leer(e.dataTransfer.files[0]);
+    });
+
+    $('mod-revisar').addEventListener('click', function(){ modEnviar(false); });
+    $('mod-confirmar').addEventListener('click', function(){
+      if (confirm('Se van a dar de alta los asistentes del archivo.\n\n¿Confirmas?')) modEnviar(true);
+    });
+    $('mod-csv').addEventListener('input', function(){
+      if ($('mod-csv').value.trim() !== modUltimoCsv) $('mod-confirmar').disabled = true;
+    });
+  })();
+
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on'); });
+      document.querySelectorAll('.panel').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      $('p-' + t.dataset.p).classList.add('on');
+      (CARGADORES[t.dataset.p] || function(){})();
+    });
+  });
+
+  /* ================= Arranque ================= */
+  api('/sesion').then(function(d){ abrirApp(d.usuario); }).catch(function(){
+    $('email').focus();
+  });
+})();
+</script>
+<script src="/js/marca.js" data-marca="claro"></script>
+</body>
+</html>

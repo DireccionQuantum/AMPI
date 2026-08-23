@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantalla en vivo · AMPI Tijuana 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<style>
+  /* Diseñada para proyector: todo se lee desde el fondo del salón. */
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0d1b30; --navy-2:#16294a; --green:#5cb85c;
+    --green-bright:#8ce585; --amber:#e8a838;
+  }
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Nunito Sans',system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 700px at 78% 12%, rgba(92,184,92,.16), transparent 62%),
+      radial-gradient(900px 600px at 12% 88%, rgba(36,69,111,.5), transparent 60%),
+      var(--navy);
+    color:#fff;
+  }
+  .escena{height:100vh;display:flex;flex-direction:column;padding:2.4vh 3vw}
+
+  /* ---------- Encabezado ---------- */
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:2vw}
+  .titulo{font-size:2.6vw;font-weight:1000;letter-spacing:-.02em;line-height:1.05}
+  .sub{font-size:1.05vw;font-weight:800;letter-spacing:.16em;
+       text-transform:uppercase;color:var(--green-bright);margin-bottom:.5vh}
+  .reloj{font-size:2.2vw;font-weight:1000;font-variant-numeric:tabular-nums;
+         opacity:.55;letter-spacing:-.01em}
+
+  /* ---------- Cuerpo ---------- */
+  .cuerpo{flex:1;display:grid;grid-template-columns:1.15fr .85fr;
+          gap:2.2vw;margin-top:2.6vh;min-height:0}
+
+  .panelizq{display:flex;flex-direction:column;min-height:0}
+  .rotulo{font-size:.95vw;font-weight:800;letter-spacing:.16em;
+          text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:1.3vh}
+
+  .ranking{flex:1;display:flex;flex-direction:column;gap:.85vh;min-height:0;overflow:hidden}
+  .fila{
+    display:grid;grid-template-columns:3.4vw 1fr auto;align-items:center;gap:1.2vw;
+    background:rgba(255,255,255,.055);border-radius:1vh;padding:1.15vh 1.4vw;
+    border:1px solid rgba(255,255,255,.07);
+  }
+  .fila .pos{font-size:1.5vw;font-weight:1000;color:rgba(255,255,255,.35);
+             text-align:center;font-variant-numeric:tabular-nums}
+  .fila .nom{font-size:1.6vw;font-weight:800;white-space:nowrap;
+             overflow:hidden;text-overflow:ellipsis}
+  .fila .dato{font-size:1.6vw;font-weight:1000;color:var(--green-bright);
+              font-variant-numeric:tabular-nums}
+  .fila:nth-child(1){background:rgba(92,184,92,.16);border-color:rgba(92,184,92,.4)}
+  .fila:nth-child(1) .pos{color:var(--green-bright)}
+
+  /* ---------- Columna derecha ---------- */
+  .paneldere{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
+  .tarjeta{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
+           border-radius:1.4vh;padding:1.9vh 1.6vw}
+
+  .metricas{display:grid;grid-template-columns:1fr 1fr;gap:1.1vw}
+  .met .n{font-size:3.4vw;font-weight:1000;line-height:.92;
+          color:var(--green-bright);font-variant-numeric:tabular-nums;
+          letter-spacing:-.03em}
+  .met .e{font-size:.85vw;font-weight:800;letter-spacing:.14em;
+          text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:.7vh}
+
+  .proxima .premio{font-size:1.9vw;font-weight:1000;line-height:1.15;margin-bottom:.4vh}
+  .proxima .valor{font-size:1.1vw;font-weight:800;color:var(--green-bright)}
+  .reloj-rifa{display:flex;gap:.7vw;margin-top:1.6vh}
+  .rb{flex:1;background:rgba(0,0,0,.28);border-radius:1vh;padding:1.2vh 0;text-align:center}
+  .rb .n{font-size:2.7vw;font-weight:1000;font-variant-numeric:tabular-nums;line-height:1}
+  .rb .u{font-size:.72vw;font-weight:800;letter-spacing:.12em;
+         text-transform:uppercase;opacity:.5;margin-top:.5vh}
+  .urgente .rb{background:rgba(232,168,56,.28)}
+  .urgente .rb .n{color:var(--amber)}
+
+  .patro-linea{display:flex;align-items:center;gap:1vw;margin-top:1.4vh;
+               padding-top:1.2vh;border-top:1px solid rgba(255,255,255,.1)}
+  .patro-linea span{font-size:.85vw;font-weight:800;letter-spacing:.1em;
+                    text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .patro-linea b{font-size:1.15vw;font-weight:1000}
+
+  /* Programa del día: llena la columna y da contexto al público */
+  .agenda{flex:1;min-height:0;display:flex;flex-direction:column}
+  #agenda{flex:1;display:flex;flex-direction:column;gap:.7vh;overflow:hidden}
+  .ag{display:grid;grid-template-columns:4.6vw 1fr auto;align-items:center;
+      gap:1vw;padding:.85vh .4vw;border-bottom:1px solid rgba(255,255,255,.07)}
+  .ag:last-child{border-bottom:none}
+  .ag .hr{font-size:1.15vw;font-weight:1000;font-variant-numeric:tabular-nums;
+          color:rgba(255,255,255,.55)}
+  .ag .pr{font-size:1.15vw;font-weight:700;white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis}
+  .ag .st{font-size:.72vw;font-weight:800;letter-spacing:.09em;
+          text-transform:uppercase;padding:.35vh .7vw;border-radius:99px;
+          background:rgba(255,255,255,.1);color:rgba(255,255,255,.55)}
+  .ag.lista .st{background:rgba(92,184,92,.22);color:var(--green-bright)}
+  .ag.siguiente{background:rgba(255,255,255,.05);border-radius:.7vh}
+  .ag.siguiente .hr,.ag.siguiente .pr{color:#fff}
+
+  /* ---------- Pie ---------- */
+  footer{display:flex;align-items:center;justify-content:space-between;
+         margin-top:2vh;font-size:.85vw;font-weight:800;
+         letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3)}
+  header .ident{display:flex;align-items:center;gap:1.4vw}
+  header .ident img{height:4.2vw;max-width:14vw;width:auto;object-fit:contain;
+                    padding-right:1.4vw;border-right:1px solid rgba(255,255,255,.16)}
+  /* El crédito debe leerse desde el fondo del salón, pero sin competir
+     con el contenido: opacidad media y el logo a tamaño legible. */
+  .q-marca{display:flex;align-items:center;gap:.8vw;text-decoration:none;
+           opacity:.62;transition:opacity .3s}
+  .q-marca:hover{opacity:1}
+  .q-marca span{font-size:.8vw;font-weight:800;letter-spacing:.16em;
+                text-transform:uppercase;color:rgba(255,255,255,.45)}
+  .q-marca img{height:1.7vw;width:auto;display:block}
+
+  /* ---------- Sorteo a pantalla completa ---------- */
+  #sorteo{
+    position:fixed;inset:0;z-index:90;display:none;
+    flex-direction:column;align-items:center;justify-content:center;
+    background:
+      radial-gradient(900px 700px at 50% 42%, rgba(92,184,92,.3), transparent 62%),
+      rgba(8,17,30,.985);
+    text-align:center;padding:4vh 5vw;
+  }
+  #sorteo.ver{display:flex}
+  #s-etq{font-size:1.2vw;font-weight:800;letter-spacing:.24em;
+         text-transform:uppercase;color:var(--green-bright);margin-bottom:1.6vh}
+  #s-premio{font-size:4vw;font-weight:1000;letter-spacing:-.03em;
+            line-height:1.05;margin-bottom:4vh;max-width:80vw}
+
+  /* Ruleta de folios: la tensión antes de revelar */
+  #s-ruleta{height:9vw;overflow:hidden;position:relative;width:min(52vw,900px)}
+  #s-ruleta .pista{position:absolute;width:100%;left:0}
+  #s-ruleta .folio{
+    height:9vw;display:flex;align-items:center;justify-content:center;
+    font-size:5.2vw;font-weight:1000;letter-spacing:.06em;
+    font-variant-numeric:tabular-nums;color:rgba(255,255,255,.85);
+  }
+
+  #s-ganador{display:none}
+  #s-ganador.ver{display:block;animation:aparecer .55s cubic-bezier(.2,1.3,.35,1)}
+  @keyframes aparecer{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+  #s-nombre{font-size:6vw;font-weight:1000;letter-spacing:-.035em;
+            line-height:1;color:var(--green-bright);word-break:break-word}
+  #s-folio{font-size:1.9vw;font-weight:800;letter-spacing:.14em;
+           color:rgba(255,255,255,.6);margin-top:2.2vh}
+  #s-extra{font-size:1.2vw;font-weight:700;color:rgba(255,255,255,.45);margin-top:2.6vh}
+
+  .confeti{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden;display:none}
+  .confeti.ver{display:block}
+  .conf{position:absolute;width:.7vw;height:1.4vw;opacity:.9;
+        animation:caer linear forwards}
+  @keyframes caer{
+    to{transform:translateY(105vh) rotate(720deg);opacity:0}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .conf{display:none}
+    #s-ganador.ver{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="escena">
+  <header>
+    <div class="ident">
+      <img id="logo-evento" alt="" hidden>
+      <div>
+        <div class="sub" id="h-sub">Gamificación en vivo</div>
+        <div class="titulo" id="h-titulo">AMPI Tijuana 2026</div>
+      </div>
+    </div>
+    <div class="reloj" id="h-reloj">--:--</div>
+  </header>
+
+  <div class="cuerpo">
+    <div class="panelizq">
+      <div class="rotulo">Los más activos del evento</div>
+      <div class="ranking" id="ranking"></div>
+    </div>
+
+    <div class="paneldere">
+      <div class="tarjeta metricas">
+        <div class="met"><div class="n" id="k-esc">0</div><div class="e">Visitas a módulos</div></div>
+        <div class="met"><div class="n" id="k-bol">0</div><div class="e">Boletos en juego</div></div>
+      </div>
+
+      <div class="tarjeta proxima" id="tarjeta-rifa">
+        <div class="rotulo">Próxima rifa</div>
+        <div class="premio" id="r-premio">Por anunciar</div>
+        <div class="valor" id="r-valor"></div>
+        <div class="reloj-rifa" id="r-reloj">
+          <div class="rb"><div class="n" id="r-h">--</div><div class="u">horas</div></div>
+          <div class="rb"><div class="n" id="r-m">--</div><div class="u">min</div></div>
+          <div class="rb"><div class="n" id="r-s">--</div><div class="u">seg</div></div>
+        </div>
+        <div class="patro-linea" id="r-patro" style="display:none">
+          <span>Patrocina</span><b id="r-patro-nom"></b>
+        </div>
+      </div>
+
+      <div class="tarjeta agenda">
+        <div class="rotulo">Programa del día</div>
+        <div id="agenda"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div id="pie-izq">Escanea tu código en cada módulo y suma boletos</div>
+    <a class="q-marca" href="https://quantummkt.mx" target="_blank" rel="noopener">
+      <span id="pie-credito">Powered by</span>
+      <img src="/img/quantum-claro-sm.png" alt="Quantum Marketing &amp; Advertising">
+    </a>
+  </footer>
+</div>
+
+<div id="sorteo">
+  <div id="s-etq">Sorteando ahora</div>
+  <div id="s-premio"></div>
+  <div id="s-ruleta"><div class="pista" id="s-pista"></div></div>
+  <div id="s-ganador">
+    <div id="s-nombre"></div>
+    <div id="s-folio"></div>
+    <div id="s-extra"></div>
+  </div>
+</div>
+<div class="confeti" id="confeti"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var proxima = null;
+
+  /* ---------- Reloj ---------- */
+  function reloj(){
+    $('h-reloj').textContent = new Date().toLocaleTimeString('es-MX',
+      { hour:'2-digit', minute:'2-digit' });
+  }
+  reloj(); setInterval(reloj, 10000);
+
+  /* Logos configurables: si el admin subió uno, se usa; si no, el incluido. */
+  (function marcaDinamica(){
+    var evt = new Image();
+    evt.onload = function(){
+      var el = $('logo-evento');
+      el.src = '/api/marca/logo_evento'; el.hidden = false;
+    };
+    evt.src = '/api/marca/logo_evento';
+
+    var ag = new Image();
+    ag.onload = function(){
+      document.querySelector('.q-marca img').src = '/api/marca/logo_agencia_claro';
+    };
+    ag.src = '/api/marca/logo_agencia_claro';
+
+    fetch('/api/publico/marca').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(d && d.agencia_credito){
+          $('pie-credito').textContent = d.agencia_credito.replace(/\s*Quantum.*$/i,'') || 'Powered by';
+        }
+      }).catch(function(){});
+  })();
+
+  /* ---------- Countdown de la próxima rifa ---------- */
+  function tick(){
+    if(!proxima){ return; }
+    var falta = Math.max(0, Math.floor((new Date(proxima.hora) - Date.now())/1000));
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    $('r-h').textContent = pad(Math.floor(falta/3600));
+    $('r-m').textContent = pad(Math.floor(falta%3600/60));
+    $('r-s').textContent = pad(falta%60);
+    $('r-reloj').classList.toggle('urgente', falta <= 300);
+  }
+  setInterval(tick, 1000);
+
+  function pintarAgenda(lista){
+    var cont = $('agenda');
+    cont.innerHTML = '';
+    (lista||[]).slice(0, 7).forEach(function(r, i){
+      var el = document.createElement('div');
+      var finalizada = r.estado === 'finalizada';
+      el.className = 'ag' + (finalizada ? ' lista' : '') +
+                     (!finalizada && proxima && r.id === proxima.id ? ' siguiente' : '');
+      var hr = document.createElement('div');
+      hr.className = 'hr';
+      hr.textContent = new Date(r.hora).toLocaleTimeString('es-MX',
+        { hour:'2-digit', minute:'2-digit', hour12:false });
+      var pr = document.createElement('div');
+      pr.className = 'pr'; pr.textContent = r.premio;
+      var st = document.createElement('div');
+      st.className = 'st'; st.textContent = finalizada ? 'Sorteada' : 'Pendiente';
+      el.appendChild(hr); el.appendChild(pr); el.appendChild(st);
+      cont.appendChild(el);
+    });
+  }
+
+  function pintarProxima(lista, conAgenda){
+    var pend = (lista||[]).filter(function(r){ return r.estado !== 'finalizada'; });
+    proxima = pend[0] || null;
+    // El programa completo sólo se repinta desde el endpoint público:
+    // el socket manda únicamente las pendientes y borraría las ya sorteadas.
+    if(conAgenda) pintarAgenda(lista);
+    if(!proxima){
+      $('r-premio').textContent = 'No hay más rifas programadas';
+      $('r-valor').textContent = '';
+      $('r-patro').style.display = 'none';
+      ['r-h','r-m','r-s'].forEach(function(i){ $(i).textContent = '--'; });
+      return;
+    }
+    $('r-premio').textContent = proxima.premio;
+    $('r-valor').textContent = proxima.valor
+      ? 'Valor $' + Number(proxima.valor).toLocaleString('es-MX') + ' MXN' : '';
+    if(proxima.patrocinador){
+      $('r-patro-nom').textContent = proxima.patrocinador;
+      $('r-patro').style.display = 'flex';
+    } else {
+      $('r-patro').style.display = 'none';
+    }
+    tick();
+  }
+
+  /* ---------- Ranking ---------- */
+  function pintarRanking(lista){
+    var cont = $('ranking');
+    cont.innerHTML = '';
+    var top = (lista||[]).slice(0, 10);
+    if(!top.length){
+      var v = document.createElement('div');
+      v.className = 'fila';
+      v.innerHTML = '<div class="pos">·</div><div class="nom">Esperando los primeros escaneos…</div><div class="dato"></div>';
+      cont.appendChild(v);
+      return;
+    }
+    top.forEach(function(r, i){
+      var el = document.createElement('div');
+      el.className = 'fila';
+      var pos = document.createElement('div');
+      pos.className = 'pos'; pos.textContent = i + 1;
+      var nom = document.createElement('div');
+      nom.className = 'nom';
+      // Apellido abreviado: se ve en pantalla grande sin exponer de más.
+      // El endpoint público ya manda el apellido abreviado como `inicial`.
+      var inicial = r.inicial || (r.apellido ? String(r.apellido).charAt(0) : '');
+      nom.textContent = (r.nombre || '') + (inicial ? ' ' + inicial + '.' : '');
+      var dato = document.createElement('div');
+      dato.className = 'dato'; dato.textContent = r.boletos;
+      el.appendChild(pos); el.appendChild(nom); el.appendChild(dato);
+      cont.appendChild(el);
+    });
+  }
+
+  /* ---------- Animación de sorteo ---------- */
+  function correrRuleta(duracionMs, alFinal){
+    var pista = $('s-pista');
+    pista.innerHTML = '';
+    var muestras = [];
+    for(var i = 0; i < 40; i++){
+      muestras.push('AMPI-' + String(Math.floor(Math.random()*999999)).padStart(6,'0'));
+    }
+    muestras.forEach(function(f){
+      var d = document.createElement('div');
+      d.className = 'folio'; d.textContent = f;
+      pista.appendChild(d);
+    });
+
+    var alto = pista.firstChild.offsetHeight || 100;
+    var total = muestras.length - 1;
+    var inicio = performance.now();
+
+    function paso(ahora){
+      var t = Math.min(1, (ahora - inicio) / duracionMs);
+      // Desaceleración fuerte al final: crea la tensión del sorteo.
+      var e = 1 - Math.pow(1 - t, 3.2);
+      pista.style.transform = 'translateY(' + (-e * total * alto) + 'px)';
+      if(t < 1) requestAnimationFrame(paso);
+      else alFinal();
+    }
+    requestAnimationFrame(paso);
+  }
+
+  function lanzarConfeti(){
+    var c = $('confeti');
+    c.classList.add('ver');
+    c.innerHTML = '';
+    var colores = ['#5cb85c','#8ce585','#e8a838','#ffffff','#7fb2ff'];
+    for(var i = 0; i < 90; i++){
+      var p = document.createElement('div');
+      p.className = 'conf';
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.top = (-10 - Math.random()*20) + 'vh';
+      p.style.background = colores[i % colores.length];
+      p.style.animationDuration = (2.4 + Math.random()*2.2) + 's';
+      p.style.animationDelay = (Math.random()*.7) + 's';
+      c.appendChild(p);
+    }
+    setTimeout(function(){ c.classList.remove('ver'); c.innerHTML = ''; }, 6500);
+  }
+
+  function mostrarSorteo(premio){
+    $('s-premio').textContent = premio || 'Gran premio';
+    $('s-ganador').classList.remove('ver');
+    $('s-ruleta').style.display = 'block';
+    $('sorteo').classList.add('ver');
+  }
+
+  function revelarGanador(d){
+    var g = (d.ganadores || [])[0];
+    if(!g){ $('sorteo').classList.remove('ver'); return; }
+
+    mostrarSorteo(d.rifa.premio);
+    correrRuleta(3800, function(){
+      $('s-ruleta').style.display = 'none';
+      $('s-nombre').textContent = (g.nombre || '') + ' ' + (g.apellido || '');
+      $('s-folio').textContent = g.folio || '';
+
+      var extra = [];
+      if(d.ganadores.length > 1){
+        extra.push('También ganaron: ' + d.ganadores.slice(1).map(function(x){
+          return (x.nombre||'') + ' ' + String(x.apellido||'').charAt(0) + '.';
+        }).join(' · '));
+      }
+      if(d.estadisticas){
+        extra.push(d.estadisticas.personas + ' participantes · ' +
+                   d.estadisticas.boletos + ' boletos en la urna');
+      }
+      $('s-extra').textContent = extra.join('  —  ');
+      $('s-ganador').classList.add('ver');
+      lanzarConfeti();
+
+      setTimeout(function(){ $('sorteo').classList.remove('ver'); }, 16000);
+    });
+  }
+
+  /* ---------- Conexión ---------- */
+  if(typeof io !== 'undefined'){
+    var socket = io();
+    socket.on('connect', function(){ socket.emit('tablero:entrar'); });
+
+    socket.on('stats:update', function(m){
+      $('k-esc').textContent = m.escaneos;
+      $('k-bol').textContent = m.boletos;
+    });
+    socket.on('rifas:proximas', function(l){ pintarProxima(l, false); });
+    socket.on('rifa:iniciada', function(d){ mostrarSorteo(d.premio); });
+    socket.on('rifa:ganador', revelarGanador);
+    socket.on('rifa:sin_participantes', function(){
+      $('sorteo').classList.remove('ver');
+    });
+  }
+
+  /* Datos por consulta periódica: la pantalla no tiene sesión iniciada,
+     así que usa el endpoint público (sin teléfonos ni datos internos). */
+  function traerDatos(){
+    fetch('/api/publico/pantalla')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d) return;
+        $('h-titulo').textContent = d.evento;
+        if(d.sede) $('h-sub').textContent = d.sede;
+        $('k-esc').textContent = d.metricas.escaneos;
+        $('k-bol').textContent = d.metricas.boletos;
+        pintarRanking(d.ranking);
+        pintarProxima(d.rifas, true);
+      })
+      .catch(function(){});
+  }
+  traerDatos();
+  setInterval(traerDatos, 12000);
+})();
+</script>
+</body>
+</html>
