@@ -166,6 +166,33 @@ Total: **193 pruebas**.
 
 ---
 
+## 6-bis. Administrar los stands (expositores) desde el panel
+
+`/admin` → pestaña **Módulos**. Cada fila tiene seis acciones: **Nuevo
+PIN**, **Instructivo**, **Desactivar / Reactivar**, **Editar** y
+**Eliminar**.
+
+**Agregar módulo** da de alta uno nuevo pidiendo nombre, empresa (opcional)
+y los puntos que otorga cada visita. Entrega el PIN y la liga una sola vez
+en pantalla: anótalos ahí, porque después sólo viven cifrados.
+
+**Editar** cambia nombre, empresa y puntos de un stand ya existente. No
+toca su PIN ni su liga ni su historial.
+
+**Desactivar** no borra nada: el historial de puntos y escaneos se
+conserva completo. Lo único que cambia es que el PIN y la liga dejan de
+aceptar accesos de inmediato — ni el expositor puede entrar a escanear, ni
+alguien con la liga vieja puede usarla. Es lo correcto para un stand que
+canceló o llegó tarde.
+
+**Eliminar** borra el stand por completo, pero el sistema sólo lo permite
+si nunca recibió una sola visita. Si ya tiene escaneos registrados, el
+panel lo rechaza y ofrece desactivarlo en su lugar. Esta protección no se
+puede saltar desde la interfaz: existe porque borrar un stand con
+historial arrastraría en cascada los puntos que asistentes reales ya
+ganaron ahí, sin dejar rastro de qué pasó. Un stand mal dado de alta antes
+del evento, en cambio, se puede quitar sin ese riesgo.
+
 ## 7. Referencia de la API
 
 Todas requieren sesión. `soloAdmin` para importar, `soloStaff` para el resto.

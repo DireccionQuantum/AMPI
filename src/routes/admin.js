@@ -146,6 +146,68 @@ module.exports = function adminRoutes(db, io) {
     } catch (err) { next(err); }
   });
 
+  /**
+   * Da de baja o de alta un módulo. Desactivar no borra nada: el histórico
+   * de escaneos y puntos queda intacto, pero su PIN y liga dejan de aceptar
+   * escaneos nuevos. Sirve para un expositor que canceló o llegó tarde.
+   */
+  router.post('/expositores/:id/activo', soloAdmin, async (req, res, next) => {
+    try {
+      const activo = !!(req.body || {}).activo;
+      const { rows } = await db.query(
+        `UPDATE expositores SET activo = $2 WHERE id = $1
+         RETURNING id, nombre, activo`,
+        [req.params.id, activo]
+      );
+      if (!rows.length) return res.status(404).json({ error: 'Módulo no encontrado' });
+      await db.query(
+        `INSERT INTO bitacora (actor, accion, detalle) VALUES ($1,'expositor_activo',$2)`,
+        [req.session.usuario.email, JSON.stringify(rows[0])]
+      ).catch(() => {});
+      res.json({ ok: true, expositor: rows[0] });
+    } catch (err) { next(err); }
+  });
+
+  /**
+   * Elimina un módulo, con una regla que no se puede saltar desde la
+   * interfaz: si ya tiene escaneos registrados, NO se borra de verdad.
+   *
+   * ¿Por qué? La tabla de escaneos tiene ON DELETE CASCADE hacia
+   * expositores. Borrar un módulo con historial borraría en cascada los
+   * puntos que asistentes reales ya ganaron ahí, y eso descuadra su total
+   * sin que quede ningún rastro de qué pasó. Un stand que nunca fue
+   * escaneado (dado de alta por error, o que canceló antes del evento) sí
+   * se puede quitar por completo sin ese riesgo.
+   */
+  router.delete('/expositores/:id', soloAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) return res.status(400).json({ error: 'Id inválido' });
+
+      const visitas = await db.query(
+        'SELECT count(*)::int n FROM escaneos WHERE expositor_id = $1', [id]
+      );
+      if (visitas.rows[0].n > 0) {
+        return res.status(409).json({
+          error: 'Este módulo ya tiene escaneos registrados y no se puede eliminar. ' +
+                 'Desactívalo en su lugar para conservar el historial.',
+          visitas: visitas.rows[0].n,
+        });
+      }
+
+      const { rows } = await db.query(
+        'DELETE FROM expositores WHERE id = $1 RETURNING id, nombre', [id]
+      );
+      if (!rows.length) return res.status(404).json({ error: 'Módulo no encontrado' });
+
+      await db.query(
+        `INSERT INTO bitacora (actor, accion, detalle) VALUES ($1,'eliminar_expositor',$2)`,
+        [req.session.usuario.email, JSON.stringify(rows[0])]
+      ).catch(() => {});
+      res.json({ ok: true, expositor: rows[0] });
+    } catch (err) { next(err); }
+  });
+
   router.post('/expositores/:id/pin', soloAdmin, async (req, res, next) => {
     try {
       const pin = String(crypto.randomInt(1000, 10000));

@@ -15,7 +15,8 @@
     "simular": "node scripts/simular-evento.js",
     "test:import": "node test/importacion.js",
     "test:modulo": "node test/modulo.js",
-    "test:usuarios": "node test/usuarios.js"
+    "test:usuarios": "node test/usuarios.js",
+    "test:expositores": "node test/expositores.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

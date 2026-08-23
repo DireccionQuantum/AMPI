@@ -673,21 +673,99 @@
         bi.style.marginLeft = '6px';
         bi.onclick = function(){ abrirInstructivo(x); };
 
-        tdb.appendChild(b); tdb.appendChild(bi); fila.appendChild(tdb);
+        var bp = document.createElement('button');
+        bp.className = 'btn-chico btn-fantasma'; bp.textContent = x.activo ? 'Desactivar' : 'Reactivar';
+        bp.style.marginLeft = '6px';
+        bp.onclick = function(){
+          var msg = x.activo
+            ? '¿Desactivar "' + x.nombre + '"?\n\nSu PIN y liga dejarán de funcionar de inmediato. ' +
+              'El historial de puntos y escaneos se conserva.'
+            : '¿Reactivar "' + x.nombre + '"? Su PIN volverá a funcionar.';
+          if (!confirm(msg)) return;
+          api('/expositores/' + x.id + '/activo', {
+            method: 'POST', body: JSON.stringify({ activo: !x.activo })
+          }).then(function(){ cargarModulos(); }).catch(function(e){ toast(e.message); });
+        };
+
+        var be = document.createElement('button');
+        be.className = 'btn-chico btn-fantasma'; be.textContent = 'Editar';
+        be.style.marginLeft = '6px';
+        be.onclick = function(){ abrirEdicionModulo(x); };
+
+        var bx = document.createElement('button');
+        bx.className = 'btn-chico btn-fantasma'; bx.textContent = 'Eliminar';
+        bx.style.marginLeft = '6px'; bx.style.color = '#b02a2a';
+        bx.onclick = function(){ eliminarModulo(x); };
+
+        tdb.appendChild(b); tdb.appendChild(bi); tdb.appendChild(bp);
+        tdb.appendChild(be); tdb.appendChild(bx); fila.appendChild(tdb);
         t.appendChild(fila);
       });
     }).catch(function(){});
   }
 
   $('btn-nuevo-modulo').addEventListener('click', function(){
-    var nombre = prompt('Nombre del módulo:');
-    if(!nombre) return;
-    api('/expositores', { method:'POST', body: JSON.stringify({ nombre: nombre })})
-      .then(function(d){
-        alert('Módulo creado\n\nPIN: ' + d.pin + '\nLiga: ' + location.origin + '/s/' + d.expositor.token);
-        cargarModulos();
-      }).catch(function(e){ toast(e.message); });
+    var nombre = prompt('Nombre del módulo (el stand del expositor):');
+    if (!nombre || !nombre.trim()) return;
+    var empresa = prompt('Empresa o giro (opcional, aparece en su etiqueta si aplica):', '') || '';
+    var puntosTxt = prompt('Puntos que da cada visita a este módulo:', '1');
+    var puntos = Math.max(1, parseInt(puntosTxt, 10) || 1);
+    api('/expositores', {
+      method: 'POST',
+      body: JSON.stringify({ nombre: nombre.trim(), empresa: empresa.trim() || null, puntos: puntos })
+    }).then(function(d){
+      alert('Módulo creado: ' + d.expositor.nombre +
+            '\n\nPIN: ' + d.pin +
+            '\nLiga: ' + location.origin + '/s/' + d.expositor.token +
+            '\n\nAnota el PIN ahora: después sólo vive cifrado y no se puede volver a ver.');
+      cargarModulos();
+    }).catch(function(e){ toast(e.message); });
   });
+
+  /** Edición rápida con los mismos prompts que ya usa el resto del panel. */
+  function abrirEdicionModulo(x){
+    var nombre = prompt('Nombre del módulo:', x.nombre);
+    if (nombre === null) return;                 // canceló
+    if (!nombre.trim()) { toast('El nombre no puede quedar vacío'); return; }
+
+    var empresa = prompt('Empresa o giro (déjalo vacío para quitarlo):', x.empresa || '');
+    if (empresa === null) return;
+
+    var puntosTxt = prompt('Puntos que da cada visita:', x.puntos);
+    if (puntosTxt === null) return;
+    var puntos = Math.max(1, parseInt(puntosTxt, 10) || 1);
+
+    api('/expositores/' + x.id, {
+      method: 'PATCH',
+      body: JSON.stringify({ nombre: nombre.trim(), empresa: empresa.trim(), puntos: puntos })
+    }).then(function(){ toast('Módulo actualizado'); cargarModulos(); })
+      .catch(function(e){ toast(e.message); });
+  }
+
+  /**
+   * Eliminar de verdad sólo si el servidor confirma que nunca tuvo
+   * escaneos. Si ya tiene historial, el servidor lo rechaza (409) y aquí
+   * se le ofrece desactivar en su lugar, que es la operación segura.
+   */
+  function eliminarModulo(x){
+    if (!confirm('¿Eliminar "' + x.nombre + '" por completo?\n\n' +
+                 'Esto sólo es posible si el módulo nunca recibió visitas. ' +
+                 'Si ya las tiene, se te ofrecerá desactivarlo en su lugar.')) return;
+
+    api('/expositores/' + x.id, { method: 'DELETE' })
+      .then(function(){ toast('Módulo eliminado'); cargarModulos(); })
+      .catch(function(e){
+        if (/escaneos registrados/.test(e.message)) {
+          if (confirm(e.message + '\n\n¿Quieres desactivarlo en su lugar?')) {
+            api('/expositores/' + x.id + '/activo', {
+              method: 'POST', body: JSON.stringify({ activo: false })
+            }).then(function(){ cargarModulos(); }).catch(function(er){ toast(er.message); });
+          }
+        } else {
+          toast(e.message);
+        }
+      });
+  }
 
   /* ================= Ganadores ================= */
   function cargarGanadores(){
