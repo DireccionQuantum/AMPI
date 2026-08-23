@@ -34,7 +34,7 @@ async function api(ruta, opts = {}) {
   if (set) cookie = set.split(';')[0];
   let cuerpo = null;
   try { cuerpo = await r.json(); } catch (e) { /* respuestas sin json */ }
-  return { status: r.status, body: cuerpo };
+  return { status: r.status, body: cuerpo, cookieCruda: set ? set.split(';')[0] : null };
 }
 
 (async () => {
@@ -247,7 +247,50 @@ async function api(ruta, opts = {}) {
     )).rows[0].n;
     ok(total === 6, 'no hay duplicados tras reimportar', total);
 
+    // ---------------------------------------------------------------
+    seccion('10. El QR de la estación es el mismo de la etiqueta');
+    // Regresión: la estación dibujaba el QR con la liga /p/<token>. Al
+    // escanearlo, el lector le sacaba los primeros 24 de los 32 caracteres
+    // del token y creaba un asistente pendiente vacío, sin darle el punto
+    // a la persona correcta. Un registro fantasma por cada alta.
+    const antesFantasma = (await db.query('SELECT count(*)::int n FROM asistentes')).rows[0].n;
+
+    r = await api('/api/asistente/registro', {
+      method: 'POST',
+      body: JSON.stringify({ nombre: 'Fantasma', apellido: 'Control', telefono: '6650000077' }),
+    });
+    ok(r.status === 200 && /^[a-f0-9]{24}$/.test(r.body.qr_id || ''),
+       'el registro devuelve el qr_id que debe llevar el QR', r.body.qr_id);
+    ok(r.body.token && r.body.token.length === 32, 'y el token es de 32, distinto del qr_id');
+    ok(r.body.qr_id !== r.body.token.slice(0, 24),
+       'los primeros 24 del token NO coinciden con el qr_id: por eso el QR debe llevar el qr_id');
+
+    const qrBueno = r.body.qr_id;
+    const codExpo = (await db.query(
+      'SELECT codigo FROM expositores WHERE activo ORDER BY id LIMIT 1')).rows[0].codigo;
+
+    const ses = await api('/api/scan/login', {
+      method: 'POST', body: JSON.stringify({ codigo: codExpo }),
+    });
+    const ckExpo = ses.cookieCruda;
+
+    const esc = await fetch(BASE + '/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: ckExpo },
+      body: JSON.stringify({ qr: qrBueno }),
+    });
+    const escBody = await esc.json();
+    ok(escBody.resultado === 'ok' && /Fantasma/.test(escBody.mensaje || ''),
+       'escanear ese qr_id da el punto a la persona correcta', escBody);
+
+    const despuesFantasma = (await db.query('SELECT count(*)::int n FROM asistentes')).rows[0].n;
+    ok(despuesFantasma === antesFantasma + 1,
+       'sólo se creó UN asistente, sin registro fantasma',
+       { antes: antesFantasma, despues: despuesFantasma });
+
   } finally {
+    await db.query("DELETE FROM escaneos WHERE asistente_id IN (SELECT id FROM asistentes WHERE nombre = 'Fantasma')");
+    await db.query("DELETE FROM asistentes WHERE nombre = 'Fantasma'");
     await db.query(LIMPIAR);
     await db.end();
   }

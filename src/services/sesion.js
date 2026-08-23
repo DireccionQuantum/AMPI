@@ -184,7 +184,7 @@ async function reemitirComoStaff(client, telefono, parseTelefono) {
   if (!tel) return { ok: false, motivo: 'telefono_invalido' };
 
   const { rows } = await client.query(
-    `SELECT id, nombre, apellido FROM asistentes WHERE telefono = $1`,
+    `SELECT id, qr_id, nombre, apellido FROM asistentes WHERE telefono = $1`,
     [tel]
   );
   if (!rows.length) return { ok: false, motivo: 'no_encontrado' };
@@ -194,6 +194,9 @@ async function reemitirComoStaff(client, telefono, parseTelefono) {
     ok: true,
     token: cred.token,
     codigo: cred.codigo,
+    // El qr_id NO cambia al reemitir: es el mismo que ya trae impreso en su
+    // etiqueta. Se devuelve para que la estación dibuje el QR correcto.
+    qr_id: rows[0].qr_id,
     nombre: rows[0].nombre,
     apellido: rows[0].apellido,
   };

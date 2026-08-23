@@ -259,7 +259,8 @@
           return;
         }
         mostrarListo({
-          nombre: res.d.nombre, codigo: res.d.codigo, token: res.d.token,
+          nombre: res.d.nombre, codigo: res.d.codigo,
+          token: res.d.token, qr_id: res.d.qr_id,
         }, false, true);
       })
       .catch(function(){
@@ -277,10 +278,13 @@
     $('l-quien').textContent = d.nombre ? d.nombre : '';
     $('l-codigo').textContent = d.codigo || '······';
 
-    // El QR apunta a la liga personal: el asistente sólo lo escanea y entra.
-    var liga = location.origin + '/p/' + d.token;
-    if(window.QRCode){
-      QRCode.toDataURL(liga, { width:440, margin:1,
+    // El QR lleva el identificador del asistente, EXACTAMENTE el mismo que
+    // va impreso en su etiqueta. Antes llevaba la liga /p/<token>: al
+    // escanearlo, el lector del expositor le sacaba los primeros 24 de los
+    // 32 caracteres del token y creaba un asistente pendiente vacío, además
+    // de no darle el punto a la persona correcta.
+    if (window.QRCode && d.qr_id) {
+      QRCode.toDataURL(d.qr_id, { width:440, margin:1,
         color:{ dark:'#12233f', light:'#ffffff' } },
         function(err, url){ if(!err) $('qr-listo').src = url; });
     }

@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#12233f">
 <title>Escáner de módulo · AMPI 2026</title>
+<!-- Instalable como app. Importa para la cámara: al abrirse desde el icono
+     de la pantalla de inicio, el permiso queda concedido de forma estable y
+     el navegador deja de preguntarlo en cada apertura. -->
+<link rel="manifest" href="/manifest-scan.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Escáner AMPI">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
@@ -120,6 +127,14 @@
                autocapitalize="characters" spellcheck="false">
       </div>
       <button class="btn-bloque" id="btn-entrar">Entrar</button>
+
+      <!-- Instalar la página como app es lo que hace que el permiso de
+           cámara deje de pedirse en cada apertura. Se lo explicamos aquí
+           porque nadie lo hace por su cuenta. -->
+      <div class="aviso oculto" id="instalar" style="margin-top:18px">
+        <b>Instálalo para no dar permisos cada vez</b><br>
+        <span id="instalar-como"></span>
+      </div>
     </section>
 
     <!-- ================= Escáner ================= -->
@@ -447,6 +462,29 @@
       .catch(function(){});
   }
   arrancar();
+
+  /* ---------- Instalar como app ----------
+     El permiso de cámara se vuelve a pedir en cada apertura cuando la
+     página corre dentro del navegador, sobre todo en Safari de iPhone.
+     Instalada en la pantalla de inicio, el permiso se concede una vez y
+     se queda. Aquí sólo se le dice cómo, según su teléfono. */
+  (function avisoInstalar(){
+    var yaInstalada = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.navigator.standalone === true;
+    if (yaInstalada) return;                    // ya la instaló, no molestamos
+
+    var ua = navigator.userAgent || '';
+    var esIOS = /iPad|iPhone|iPod/.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var caja = document.getElementById('instalar');
+    var txt  = document.getElementById('instalar-como');
+    if (!caja || !txt) return;
+
+    txt.textContent = esIOS
+      ? 'Toca el botón de compartir de Safari y elige “Agregar a pantalla de inicio”. Ábrelo desde ese icono el día del evento.'
+      : 'Abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla de inicio”. Ábrelo desde ese icono el día del evento.';
+    caja.classList.remove('oculto');
+  })();
 
   pintarCola();
   setInterval(function(){ if(navigator.onLine) vaciarCola(); }, 15000);
