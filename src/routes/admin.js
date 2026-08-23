@@ -288,6 +288,48 @@ module.exports = function adminRoutes(db, io) {
   });
 
   // Reemitir liga para alguien que perdió su sesión (capa 3 de recuperación).
+  /**
+   * Elimina los "fantasmas": registros pendientes sin nombre ni teléfono.
+   *
+   * Se generan cuando el escáner lee un código de 24 hex que no pertenece a
+   * nadie. El sistema los crea a propósito (así el punto no se pierde si
+   * alguien llega con un QR que no conocemos), pero si vienen de un error
+   * sólo estorban en las listas.
+   *
+   * Sólo borra los que NO tienen nombre ni teléfono: alguien identificado
+   * nunca se toca, aunque siga pendiente de verificar.
+   */
+  router.post('/asistentes/limpiar-fantasmas', soloAdmin, async (req, res, next) => {
+    try {
+      const { rows } = await db.query(
+        `WITH borrados AS (
+           DELETE FROM asistentes
+            WHERE nombre IS NULL AND telefono IS NULL AND estado = 'pendiente'
+            RETURNING id
+         ) SELECT count(*)::int n FROM borrados`
+      );
+      const n = rows[0].n;
+      if (n) {
+        await db.query(
+          `INSERT INTO bitacora (actor, accion, detalle) VALUES ($1,'limpiar_fantasmas',$2)`,
+          [req.session.usuario.email, JSON.stringify({ eliminados: n })]
+        ).catch(() => {});
+      }
+      res.json({ ok: true, eliminados: n });
+    } catch (err) { next(err); }
+  });
+
+  /** Cuántos fantasmas hay ahora mismo, para avisar en el panel. */
+  router.get('/asistentes/fantasmas', soloStaff, async (req, res, next) => {
+    try {
+      const { rows } = await db.query(
+        `SELECT count(*)::int n FROM asistentes
+          WHERE nombre IS NULL AND telefono IS NULL AND estado = 'pendiente'`
+      );
+      res.json({ fantasmas: rows[0].n });
+    } catch (err) { next(err); }
+  });
+
   router.post('/asistentes/reemitir', soloStaff, async (req, res, next) => {
     try {
       const r = await enTransaccion((client) =>

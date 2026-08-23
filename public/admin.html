@@ -222,6 +222,7 @@
         <input id="q-asis" placeholder="Buscar por nombre, teléfono o código">
         <button class="btn-fantasma" id="btn-buscar">Buscar</button>
         <button class="btn-fantasma" id="btn-exp-asis">Exportar CSV</button>
+        <button class="btn-fantasma" id="btn-fantasmas" hidden></button>
       </div>
       <div class="bloque"><div class="scroll"><table>
         <thead><tr><th>Nombre</th><th>Teléfono</th><th>Estado</th>
@@ -595,7 +596,35 @@
   });
 
   /* ================= Asistentes ================= */
+  /* Registros pendientes sin nombre ni teléfono: se crean cuando el
+     escáner lee un código que no es de nadie. El botón sólo aparece si
+     de verdad hay alguno. */
+  function revisarFantasmas(){
+    api('/asistentes/fantasmas').then(function(d){
+      var b = $('btn-fantasmas');
+      if (d.fantasmas > 0) {
+        b.hidden = false;
+        b.textContent = 'Limpiar ' + d.fantasmas + ' registro' +
+                        (d.fantasmas === 1 ? '' : 's') + ' sin datos';
+      } else {
+        b.hidden = true;
+      }
+    }).catch(function(){});
+  }
+
+  $('btn-fantasmas').addEventListener('click', function(){
+    if (!confirm('Se eliminarán los registros pendientes que no tienen nombre ' +
+                 'ni teléfono.\n\nLos asistentes identificados no se tocan. ¿Continuar?')) return;
+    api('/asistentes/limpiar-fantasmas', { method: 'POST' })
+      .then(function(d){
+        toast(d.eliminados + ' registros eliminados');
+        cargarAsistentes();
+      })
+      .catch(function(e){ toast(e.message); });
+  });
+
   function cargarAsistentes(){
+    revisarFantasmas();
     var q = encodeURIComponent($('q-asis').value.trim());
     api('/asistentes?q=' + q).then(function(lista){
       var t = $('t-asistentes'); t.innerHTML = '';
