@@ -229,7 +229,14 @@ SELECT nombre, apellido, modulos, puntos, boletos
  ORDER BY puntos DESC, modulos DESC, id ASC;
 
 -- Desempeño por expositor.
-CREATE OR REPLACE VIEW v_expositores AS
+--
+-- Se recrea en lugar de usar CREATE OR REPLACE: la migración 004 le agrega
+-- la columna `codigo`, y Postgres no permite que un REPLACE posterior le
+-- quite columnas a una vista existente. Sin este DROP, volver a correr las
+-- migraciones (que es lo que hace el pre-deploy en cada despliegue) falla
+-- con "cannot drop columns from view" y tumba el despliegue completo.
+DROP VIEW IF EXISTS v_expositores;
+CREATE VIEW v_expositores AS
 SELECT x.id, x.nombre, x.empresa, x.puntos, x.activo,
        COUNT(e.id) AS visitas,
        MAX(e.creado_en) AS ultima_visita
