@@ -14,7 +14,7 @@
      grises claros ni colores, que salen sucios o no salen.
      ============================================================ */
 
-  :root{ --ancho:62mm; --alto:50mm; }
+  :root{ --ancho:62mm; --alto:60mm; }
 
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -48,57 +48,65 @@
           filter:brightness(0)}
 
   /* ---------- Cuerpo: nombre + QR ---------- */
-  .cuerpo{flex:1;display:flex;gap:2.6mm;align-items:center;padding:1.6mm 0}
+  /* El nombre y la empresa van a ANCHO COMPLETO, arriba. El QR y el lugar
+     bajan a su propio renglón. Así ningún nombre se recorta: con 37
+     caracteres, el peor del archivo, a 13pt en dos líneas caben 22 por
+     renglón y sobra espacio. */
+  .cuerpo{flex:1;display:flex;flex-direction:column;padding:1.6mm 0;min-height:0}
+  .fila-baja{display:flex;gap:2.6mm;align-items:stretch;margin-top:auto;padding-top:1.4mm}
 
   /* justify-content:center reparte el aire sobrante entre las líneas en
      lugar de dejarlo todo abajo, que era el espacio muerto. */
-  .datos{
-    flex:1;min-width:0;display:flex;flex-direction:column;
-    gap:.7mm;justify-content:center;
-  }
+  .datos{min-width:0;display:flex;flex-direction:column;gap:.9mm}
+  /* Nombre completo, SIN recortes.
+     El peor caso del archivo tiene 37 caracteres; a 13pt en dos líneas
+     caben 22 por renglón, así que entra entero. El tamaño baja por tramos
+     sólo para que los muy largos no se vean apretados. */
   .nombre{
-    font-size:12pt;font-weight:1000;line-height:1.06;
-    letter-spacing:-.01em;
-    /* Dos líneas como máximo: nombres largos se recortan con puntos. */
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    overflow:hidden;
+    font-size:13pt;font-weight:1000;line-height:1.05;
+    letter-spacing:-.015em;
+    overflow-wrap:break-word;
   }
-  .nombre.largo{font-size:9.5pt}
-  .nombre.muylargo{font-size:8pt}
+  .nombre.largo{font-size:11.5pt}
+  .nombre.muylargo{font-size:10pt}
+
+  /* La empresa o cargo también completa. Hay 16 casos de más de 70
+     caracteres y uno de 112: a 6pt en tres líneas caben 52 por renglón.
+     Antes se cortaba con puntos suspensivos en una sola línea. */
   .empresa{
-    font-size:6pt;font-weight:800;letter-spacing:.03em;
-    text-transform:uppercase;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:6.4pt;font-weight:700;letter-spacing:.01em;
+    line-height:1.18;overflow-wrap:break-word;
   }
+  .empresa.larga{font-size:5.8pt}
+  .empresa.muylarga{font-size:5.2pt;line-height:1.14}
   .codigo{
-    font-size:11pt;font-weight:1000;letter-spacing:.16em;
-    font-variant-numeric:tabular-nums;margin-top:.6mm;
+    font-size:8.5pt;font-weight:1000;letter-spacing:.14em;
+    font-variant-numeric:tabular-nums;
   }
-  .codigo-etq{font-size:4.6pt;font-weight:800;letter-spacing:.12em;
-              text-transform:uppercase;margin-top:-.3mm}
+  .codigo-etq{font-size:4.4pt;font-weight:800;letter-spacing:.12em;
+              text-transform:uppercase;display:block}
+  .cod-caja{line-height:1.1}
 
   /* Columna derecha: QR arriba, lugar abajo. Cuando no hay lugar el QR
      crece y ocupa el hueco, para no dejar espacio muerto. */
-  .derecha{flex:0 0 auto;display:flex;flex-direction:column;gap:1mm;align-items:center}
+  .derecha{flex:1;display:flex;flex-direction:column;gap:1.2mm;justify-content:center}
   .qr{flex:0 0 auto;display:grid;place-items:center}
 
   /* El lugar es lo que más se mira en el gafete: quien orienta a la gente
      lo lee de lejos, sin pedirle que se acerque. */
   .lugar{
-    border:.5mm solid #000;padding:.7mm 1.6mm;text-align:center;
-    width:22mm;line-height:1;
+    border:.5mm solid #000;padding:1.1mm 2mm;line-height:1;
   }
   .lugar .et{
     display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
     text-transform:uppercase;
   }
   .lugar .v{
-    display:block;font-size:12pt;font-weight:1000;letter-spacing:.01em;
-    margin-top:.3mm;font-variant-numeric:tabular-nums;
+    display:block;font-size:17pt;font-weight:1000;letter-spacing:.01em;
+    margin-top:.5mm;font-variant-numeric:tabular-nums;
   }
   /* Sin lugar asignado: el QR se agranda y llena el espacio. */
   .etiqueta.sin-lugar .qr img{width:26mm;height:26mm}
-  .etiqueta.sin-lugar .datos .nombre{font-size:13pt}
   .qr img{
     width:22mm;height:22mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
@@ -116,7 +124,7 @@
                    text-transform:uppercase;white-space:nowrap}
   /* brightness(0) vuelve negro cualquier píxel opaco conservando la
      transparencia. En térmico un logo a color sale como gris punteado. */
-  .pie .marca img{height:3.4mm;width:auto;display:block;filter:brightness(0)}
+  .pie .marca img{height:4.2mm;width:auto;display:block;filter:brightness(0)}
 
   /* ---------- Controles (sólo pantalla) ---------- */
   .panel{
@@ -146,7 +154,7 @@
     }
     /* El tamaño de página debe coincidir EXACTO con la etiqueta,
        si no la QL deja franjas en blanco o parte el diseño. */
-    @page{ size:62mm 50mm; margin:0; }
+    @page{ size:62mm 60mm; margin:0; }
   }
 </style>
 </head>
@@ -165,14 +173,19 @@
     <div class="datos">
       <div class="nombre" id="e-nombre">Nombre del asistente</div>
       <div class="empresa" id="e-empresa" hidden></div>
-      <div class="codigo" id="e-codigo">······</div>
-      <div class="codigo-etq">Código</div>
     </div>
-    <div class="derecha">
+
+    <div class="fila-baja">
       <div class="qr"><img id="e-qr" alt="Código QR"></div>
-      <div class="lugar" id="e-lugar" hidden>
-        <span class="et">Fila · Asiento</span>
-        <span class="v" id="e-lugar-v"></span>
+      <div class="derecha">
+        <div class="lugar" id="e-lugar" hidden>
+          <span class="et">Fila · Asiento</span>
+          <span class="v" id="e-lugar-v"></span>
+        </div>
+        <div class="cod-caja">
+          <span class="codigo-etq">Código</span>
+          <span class="codigo" id="e-codigo">······</span>
+        </div>
       </div>
     </div>
   </div>
@@ -245,12 +258,24 @@
     // Si sólo vino un campo con todo junto, lo usamos tal cual.
     if (!visible) visible = String(nombre || '').trim();
     $('e-nombre').textContent = visible;
-    if (visible.length > 22) $('e-nombre').className = 'nombre muylargo';
-    else if (visible.length > 15) $('e-nombre').className = 'nombre largo';
+    // Umbrales medidos contra el archivo real: a 13pt caben 22 caracteres
+    // por renglón y el nombre usa dos, así que 30 entra holgado.
+    if (visible.length > 30) $('e-nombre').className = 'nombre muylargo';
+    else if (visible.length > 24) $('e-nombre').className = 'nombre largo';
+    else $('e-nombre').className = 'nombre';
   }
 
   if (codigo) $('e-codigo').textContent = codigo;
-  if (empresa) { $('e-empresa').textContent = empresa; $('e-empresa').hidden = false; }
+  if (empresa) {
+    $('e-empresa').textContent = empresa;
+    $('e-empresa').hidden = false;
+    // Igual que el nombre: el tamaño baja para que quepa completa, en vez
+    // de cortar con puntos suspensivos.
+    $('e-empresa').className = 'empresa' +
+      (empresa.length > 80 ? ' muylarga' : (empresa.length > 46 ? ' larga' : ''));
+  } else {
+    $('e-empresa').hidden = true;
+  }
 
   // El lugar asignado. Sin él, la clase 'sin-lugar' agranda el QR y el
   // nombre para que no quede un hueco vacío en la etiqueta.

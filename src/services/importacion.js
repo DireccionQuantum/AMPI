@@ -342,6 +342,16 @@ async function importar(client, texto, opts = {}) {
         campos.push(`fila = $${++n}`);    vals.push(f.fila);
         campos.push(`asiento = $${++n}`); vals.push(f.asiento);
       }
+
+      // Estar en la lista del organizador ES la verificación: esa persona
+      // está confirmada, aunque su registro se haya creado antes por un
+      // escaneo suelto o por una importación que se cayó a medias.
+      //
+      // Sin esto quedaban como 'pendiente' para siempre y el tablero las
+      // reportaba como sin identificar, aunque tuvieran nombre y lugar.
+      if (existente.estado === 'pendiente') {
+        campos.push(`estado = 'verificado'`);
+      }
       if (campos.length) {
         await client.query(
           `UPDATE asistentes SET ${campos.join(', ')}, datos_en = COALESCE(datos_en, now()) WHERE id = $1`,
