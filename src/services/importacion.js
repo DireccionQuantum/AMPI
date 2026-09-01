@@ -70,6 +70,11 @@ const ALIAS = {
   telefono: ['telefono', 'tel', 'celular', 'movil', 'phone', 'whatsapp'],
   email:    ['email', 'correo', 'correoelectronico', 'mail'],
   empresa:  ['empresa', 'compania', 'organizacion', 'inmobiliaria', 'company'],
+  // Lugar asignado en el salón. "numa" cubre la columna "NUM A" del
+  // archivo de Summit, que trae fila y asiento juntos ("AAA 12").
+  fila:     ['fila', 'row', 'seccion', 'zona'],
+  asiento:  ['asiento', 'seat', 'silla', 'lugar', 'numasiento'],
+  numa:     ['numa', 'numeroasiento', 'filaasiento'],
 };
 
 /** Mapea los encabezados reales del archivo a nuestros campos. */
@@ -120,6 +125,9 @@ function leerCsv(texto) {
       telefono: get('telefono'),
       email: get('email'),
       empresa: get('empresa'),
+      fila: get('fila'),
+      asiento: get('asiento'),
+      numa: get('numa'),
     });
   }
   return { columnas: mapa, encabezados, filas };
@@ -133,6 +141,42 @@ function limpiarEmpresa(raw) {
   if (typeof raw !== 'string') return null;
   const v = raw.trim().replace(/\s+/g, ' ');
   return v.length >= 2 && v.length <= 80 ? v.slice(0, 80) : null;
+}
+
+/**
+ * Interpreta el lugar asignado.
+ *
+ * Acepta las dos formas del archivo de Summit: columnas FILA y ASIENTO
+ * separadas, o una sola columna "NUM A" que trae ambas juntas ("AAA 12").
+ * Si vienen las dos, mandan las separadas.
+ *
+ * La fila se normaliza a mayúsculas sin espacios: en el archivo aparecen
+ * como AAA, AA, A … G, y un espacio de más al final rompería el orden.
+ */
+function parseLugar(f) {
+  const limpiaFila = (v) => {
+    const s = String(v == null ? '' : v).trim().toUpperCase();
+    return /^[A-Z]{1,4}$/.test(s) ? s : null;
+  };
+  const limpiaAsiento = (v) => {
+    const n = parseInt(String(v == null ? '' : v).trim(), 10);
+    return Number.isInteger(n) && n > 0 && n <= 999 ? n : null;
+  };
+
+  let fila = limpiaFila(f.fila);
+  let asiento = limpiaAsiento(f.asiento);
+
+  if ((!fila || !asiento) && f.numa) {
+    // "AAA 12", "AAA-12" o "AAA12"
+    const m = String(f.numa).trim().toUpperCase().match(/^([A-Z]{1,4})\s*[-· ]?\s*(\d{1,3})$/);
+    if (m) {
+      fila = fila || m[1];
+      asiento = asiento || parseInt(m[2], 10);
+    }
+  }
+
+  // Un lugar a medias no sirve: o se sabe fila y asiento, o no hay lugar.
+  return (fila && asiento) ? { fila, asiento } : { fila: null, asiento: null };
 }
 
 /**
@@ -167,6 +211,7 @@ function prepararFila(f) {
     telefono: parseTelefono(f.telefono),
     email: limpiarEmail(f.email),
     empresa: limpiarEmpresa(f.empresa),
+    ...parseLugar(f),
   };
 }
 
@@ -226,14 +271,14 @@ async function importar(client, texto, opts = {}) {
     let existente = null;
     if (f.qr_id) {
       const r = await client.query(
-        'SELECT id, nombre, apellido, telefono, email, empresa, codigo_corto, estado FROM asistentes WHERE qr_id = $1',
+        'SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado FROM asistentes WHERE qr_id = $1',
         [f.qr_id]
       );
       existente = r.rows[0] || null;
     }
     if (!existente && f.telefono) {
       const r = await client.query(
-        'SELECT id, nombre, apellido, telefono, email, empresa, codigo_corto, estado FROM asistentes WHERE telefono = $1',
+        'SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado FROM asistentes WHERE telefono = $1',
         [f.telefono]
       );
       existente = r.rows[0] || null;
@@ -244,7 +289,7 @@ async function importar(client, texto, opts = {}) {
     // Sin esto, cada reimportación creaba un duplicado silencioso.
     if (!existente && !f.telefono) {
       const r = await client.query(
-        `SELECT id, nombre, apellido, telefono, email, empresa, codigo_corto, estado
+        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado
            FROM asistentes
           WHERE unaccent_simple(coalesce(nombre,'')) = unaccent_simple($1)
             AND unaccent_simple(coalesce(apellido,'')) = unaccent_simple($2)
@@ -262,6 +307,14 @@ async function importar(client, texto, opts = {}) {
       let n = 1;
       for (const k of ['nombre', 'apellido', 'telefono', 'email', 'empresa']) {
         if (!existente[k] && f[k]) { campos.push(`${k} = $${++n}`); vals.push(f[k]); }
+      }
+      // El lugar sí se sobrescribe, a diferencia del resto. Es el dato que
+      // más cambia: AMPI reacomoda el salón hasta el último día, y al
+      // reimportar la lista corregida debe ganar la versión nueva.
+      if (f.fila && f.asiento &&
+          (existente.fila !== f.fila || existente.asiento !== f.asiento)) {
+        campos.push(`fila = $${++n}`);    vals.push(f.fila);
+        campos.push(`asiento = $${++n}`); vals.push(f.asiento);
       }
       if (campos.length) {
         await client.query(
@@ -284,10 +337,11 @@ async function importar(client, texto, opts = {}) {
         const r = await client.query(
           `INSERT INTO asistentes
              (qr_id, codigo_corto, nombre, apellido, telefono, email, empresa,
-              estado, origen, datos_en)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'verificado','csv', now())
-           RETURNING id, qr_id, codigo_corto, nombre, apellido, empresa`,
-          [qr, codigo, f.nombre, f.apellido, f.telefono, f.email, f.empresa]
+              fila, asiento, estado, origen, datos_en)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'verificado','csv', now())
+           RETURNING id, qr_id, codigo_corto, nombre, apellido, empresa, fila, asiento`,
+          [qr, codigo, f.nombre, f.apellido, f.telefono, f.email, f.empresa,
+           f.fila, f.asiento]
         );
         insertado = r.rows[0];
       } catch (e) {

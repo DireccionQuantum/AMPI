@@ -44,7 +44,15 @@ function parseTelefono(raw) {
 
 function limpiarNombre(raw) {
   if (typeof raw !== 'string') return null;
-  const v = raw.trim().replace(/\s+/g, ' ');
+  // Caracteres invisibles que se cuelan al copiar de Word, WhatsApp o una
+  // web: unión de palabras, espacios de ancho cero, marcas de dirección y
+  // el espacio duro. En el archivo de Summit un nombre venía con U+2060
+  // al inicio y era rechazado como inválido sin que se viera nada raro.
+  const v = raw
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
   if (v.length < 2 || v.length > 60) return null;
   return /^[\p{L}][\p{L}\s'’.-]*$/u.test(v) ? v : null;
 }

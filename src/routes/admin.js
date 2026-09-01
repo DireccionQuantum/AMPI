@@ -620,6 +620,7 @@ module.exports = function adminRoutes(db, io) {
       const lista = await modulo.paraImprimir(db, {
         filtro: req.query.filtro === 'todos' ? 'todos' : 'pendientes',
         limite: req.query.limite,
+        orden: req.query.orden,          // el servicio valida contra su lista
       });
       res.json({ total: lista.length, etiquetas: lista });
     } catch (err) { next(err); }
@@ -633,7 +634,7 @@ module.exports = function adminRoutes(db, io) {
         return res.status(400).json({ error: 'Id inválido' });
       }
       const { rows } = await db.query(
-        `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto
+        `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto, fila, asiento
            FROM asistentes WHERE id = $1`, [id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'No encontrado' });

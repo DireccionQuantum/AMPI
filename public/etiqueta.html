@@ -50,7 +50,12 @@
   /* ---------- Cuerpo: nombre + QR ---------- */
   .cuerpo{flex:1;display:flex;gap:2.6mm;align-items:center;padding:1.6mm 0}
 
-  .datos{flex:1;min-width:0;display:flex;flex-direction:column;gap:.8mm}
+  /* justify-content:center reparte el aire sobrante entre las líneas en
+     lugar de dejarlo todo abajo, que era el espacio muerto. */
+  .datos{
+    flex:1;min-width:0;display:flex;flex-direction:column;
+    gap:.7mm;justify-content:center;
+  }
   .nombre{
     font-size:12pt;font-weight:1000;line-height:1.06;
     letter-spacing:-.01em;
@@ -72,7 +77,28 @@
   .codigo-etq{font-size:4.6pt;font-weight:800;letter-spacing:.12em;
               text-transform:uppercase;margin-top:-.3mm}
 
+  /* Columna derecha: QR arriba, lugar abajo. Cuando no hay lugar el QR
+     crece y ocupa el hueco, para no dejar espacio muerto. */
+  .derecha{flex:0 0 auto;display:flex;flex-direction:column;gap:1mm;align-items:center}
   .qr{flex:0 0 auto;display:grid;place-items:center}
+
+  /* El lugar es lo que más se mira en el gafete: quien orienta a la gente
+     lo lee de lejos, sin pedirle que se acerque. */
+  .lugar{
+    border:.5mm solid #000;padding:.7mm 1.6mm;text-align:center;
+    width:22mm;line-height:1;
+  }
+  .lugar .et{
+    display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .lugar .v{
+    display:block;font-size:12pt;font-weight:1000;letter-spacing:.01em;
+    margin-top:.3mm;font-variant-numeric:tabular-nums;
+  }
+  /* Sin lugar asignado: el QR se agranda y llena el espacio. */
+  .etiqueta.sin-lugar .qr img{width:26mm;height:26mm}
+  .etiqueta.sin-lugar .datos .nombre{font-size:13pt}
   .qr img{
     width:22mm;height:22mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
@@ -142,7 +168,13 @@
       <div class="codigo" id="e-codigo">······</div>
       <div class="codigo-etq">Código</div>
     </div>
-    <div class="qr"><img id="e-qr" alt="Código QR"></div>
+    <div class="derecha">
+      <div class="qr"><img id="e-qr" alt="Código QR"></div>
+      <div class="lugar" id="e-lugar" hidden>
+        <span class="et">Fila · Asiento</span>
+        <span class="v" id="e-lugar-v"></span>
+      </div>
+    </div>
   </div>
 
   <div class="pie">
@@ -179,6 +211,8 @@
   var apellido = (q.get('apellido') || '').trim();
   var codigo  = q.get('codigo') || '';
   var empresa = (q.get('empresa') || '').trim();
+  var fila    = (q.get('fila') || '').trim();
+  var asiento = (q.get('asiento') || '').trim();
   var auto    = q.get('auto') === '1';
   var porId   = q.get('id');   // la mesa de entrega manda sólo el id
 
@@ -217,6 +251,13 @@
 
   if (codigo) $('e-codigo').textContent = codigo;
   if (empresa) { $('e-empresa').textContent = empresa; $('e-empresa').hidden = false; }
+
+  // El lugar asignado. Sin él, la clase 'sin-lugar' agranda el QR y el
+  // nombre para que no quede un hueco vacío en la etiqueta.
+  var hayLugar = fila && asiento;
+  $('e-lugar').hidden = !hayLugar;
+  $('etiqueta').classList.toggle('sin-lugar', !hayLugar);
+  if (hayLugar) $('e-lugar-v').textContent = fila + ' · ' + asiento;
   }
   pintarDatos();
 
@@ -245,7 +286,7 @@
   function dibujarQr() {
     if (!qr || !window.QRCode) return;
     QRCode.toDataURL(qr, {
-      width: 600,
+      width: 700,
       margin: 1,
       errorCorrectionLevel: 'M',
       color: { dark: '#000000', light: '#ffffff' }
@@ -271,6 +312,8 @@
         apellido = a.apellido || '';
         codigo = a.codigo_corto || '';
         empresa = a.empresa || '';
+        fila = a.fila || '';
+        asiento = a.asiento != null ? String(a.asiento) : '';
         pintarDatos();
         dibujarQr();
       })

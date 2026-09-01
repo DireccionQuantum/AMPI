@@ -40,6 +40,7 @@ async function buscar(db, termino) {
 
   const { rows } = await db.query(
     `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto, telefono,
+            fila, asiento,
             estado, origen, etiqueta_impresa_en, entregado_en, entregado_por
        FROM asistentes
       WHERE ${condiciones}
@@ -78,14 +79,37 @@ async function desentregar(db, id) {
  * Lista para imprimir etiquetas.
  * @param {string} filtro  'pendientes' | 'todos'
  */
-async function paraImprimir(db, { filtro = 'pendientes', limite = LOTE_MAX } = {}) {
+/**
+ * Cómo se ordena la tira que sale de la impresora.
+ *
+ * Importa más de lo que parece: la tira sale en el orden que pidamos y
+ * así queda apilada sobre la mesa. Si se van a repartir buscando por
+ * nombre, ordenar por nombre evita revolver el montón cada vez.
+ *
+ *   nombre   → alfabético por nombre de pila
+ *   apellido → alfabético por apellido (el de siempre)
+ *   lugar    → recorriendo el salón, fila por fila
+ *   captura  → como se importaron, útil para cotejar contra el archivo
+ */
+const ORDENES = {
+  nombre:   `unaccent_simple(nombre) NULLS LAST, unaccent_simple(coalesce(apellido,''))`,
+  apellido: `unaccent_simple(coalesce(apellido,'')) NULLS LAST, unaccent_simple(nombre)`,
+  lugar:    `orden_fila(fila), asiento NULLS LAST, unaccent_simple(nombre)`,
+  captura:  `id`,
+};
+
+async function paraImprimir(db, { filtro = 'pendientes', limite = LOTE_MAX, orden = 'nombre' } = {}) {
   const lim = Math.min(Math.max(parseInt(limite, 10) || LOTE_MAX, 1), LOTE_MAX);
   const cond = filtro === 'todos' ? '' : 'WHERE etiqueta_impresa_en IS NULL';
+  // El orden viene del navegador: se toma de la lista blanca y nunca se
+  // concatena lo que llegue, o sería una puerta abierta a inyección.
+  const porOrden = ORDENES[orden] || ORDENES.nombre;
   const { rows } = await db.query(
-    `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto, etiqueta_impresa_en
+    `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto,
+            fila, asiento, etiqueta_impresa_en
        FROM asistentes
        ${cond}
-      ORDER BY apellido NULLS LAST, nombre
+      ORDER BY ${porOrden}
       LIMIT ${lim}`
   );
   return rows;
@@ -115,6 +139,7 @@ async function panorama(db) {
 }
 
 module.exports = {
+  ORDENES,
   normalizar,
   buscar,
   entregar,
