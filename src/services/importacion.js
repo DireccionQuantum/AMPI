@@ -359,6 +359,18 @@ async function importar(client, texto, opts = {}) {
     for (let intento = 0; intento < 6 && !insertado; intento++) {
       const qr = f.qr_id || generarQrId();
       const codigo = generarCodigoCorto();
+
+      // SAVEPOINT antes de intentar.
+      //
+      // En PostgreSQL, CUALQUIER error dentro de una transacción la aborta
+      // entera: las siguientes consultas devuelven "current transaction is
+      // aborted" hasta el ROLLBACK. Sin este punto de retorno, la primera
+      // colisión de código corto tumbaba toda la importación aunque el
+      // catch pareciera manejarla.
+      //
+      // Con SAVEPOINT sólo se deshace el intento fallido y el bucle puede
+      // reintentar con otro código.
+      await client.query('SAVEPOINT alta_asistente');
       try {
         const r = await client.query(
           `INSERT INTO asistentes
@@ -369,8 +381,10 @@ async function importar(client, texto, opts = {}) {
           [qr, codigo, f.nombre, f.apellido, f.telefono, f.email, f.empresa,
            f.fila, f.asiento]
         );
+        await client.query('RELEASE SAVEPOINT alta_asistente');
         insertado = r.rows[0];
       } catch (e) {
+        await client.query('ROLLBACK TO SAVEPOINT alta_asistente');
         if (e.code !== '23505') throw e;      // sólo reintentamos por colisión
         if (f.qr_id) {                        // el qr del archivo ya existe: no insistir
           resumen.sin_cambio++;
