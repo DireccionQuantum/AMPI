@@ -236,19 +236,37 @@ async function importar(client, texto, opts = {}) {
   const rechazadas = preparadas.filter((f) => !f.ok);
 
   // Duplicados dentro del propio archivo (pasa más seguido de lo que uno cree).
+  //
+  // El teléfono NO sirve por sí solo para detectarlos: en la lista de
+  // Summit cinco personas de Next Bienes Raíces y tres de Notaría 8
+  // comparten el conmutador de su oficina, y se rechazaban como si fueran
+  // la misma persona. Ocho asistentes reales se habrían quedado fuera.
+  //
+  // Se considera duplicado cuando coincide el qr_id, o cuando coinciden
+  // nombre, apellido Y teléfono: ahí sí es la misma persona capturada dos
+  // veces, no dos compañeros de trabajo.
   const vistosQr = new Set();
-  const vistosTel = new Set();
+  const vistosPersona = new Set();
   const aInsertar = [];
   const duplicadosArchivo = [];
+
+  const clavePersona = (f) => [
+    (f.nombre || '').toLowerCase(),
+    (f.apellido || '').toLowerCase(),
+    f.telefono || '',
+  ].join('|');
+
   for (const f of validas) {
     const claveQr = f.qr_id;
-    const claveTel = f.telefono;
-    if ((claveQr && vistosQr.has(claveQr)) || (claveTel && vistosTel.has(claveTel))) {
+    const persona = f.telefono ? clavePersona(f) : null;
+
+    if ((claveQr && vistosQr.has(claveQr)) ||
+        (persona && vistosPersona.has(persona))) {
       duplicadosArchivo.push({ linea: f.linea, motivo: 'duplicado_en_archivo' });
       continue;
     }
     if (claveQr) vistosQr.add(claveQr);
-    if (claveTel) vistosTel.add(claveTel);
+    if (persona) vistosPersona.add(persona);
     aInsertar.push(f);
   }
 
@@ -276,10 +294,18 @@ async function importar(client, texto, opts = {}) {
       );
       existente = r.rows[0] || null;
     }
+    // Mismo criterio que arriba: el teléfono solo no identifica a nadie
+    // cuando varias personas comparten el conmutador de su oficina. Se
+    // exige que también coincida el nombre.
     if (!existente && f.telefono) {
       const r = await client.query(
-        'SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado FROM asistentes WHERE telefono = $1',
-        [f.telefono]
+        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento,
+                codigo_corto, estado
+           FROM asistentes
+          WHERE telefono = $1
+            AND unaccent_simple(coalesce(nombre,'')) = unaccent_simple($2)
+          LIMIT 1`,
+        [f.telefono, f.nombre]
       );
       existente = r.rows[0] || null;
     }

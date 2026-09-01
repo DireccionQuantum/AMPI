@@ -61,6 +61,16 @@ console.log('  nombre más largo:', largo.nombre, largo.apellido, '·', (largo.n
 const emp = validas.filter(f=>f.empresa).reduce((a,b)=> b.empresa.length>a.empresa.length?b:a);
 chk(emp.empresa.length<=80, 'la empresa se recorta a 80 caracteres', emp.empresa.length);
 
+console.log('\n=== 6. Compañeros que comparten el teléfono de la oficina ===');
+// Ocho personas del archivo real comparten conmutador: cinco de Next
+// Bienes Raíces y tres de Notaría 8. Antes se rechazaban como duplicadas.
+const mismos = validas.filter(f => f.telefono === '6644051513');
+chk(mismos.length === 5, 'las 5 de Next Bienes Raíces siguen siendo válidas', mismos.length);
+const notaria = validas.filter(f => f.telefono === '6646289769');
+chk(notaria.length === 3, 'y las 3 de Notaría 8', notaria.length);
+const nombres = new Set(mismos.map(f => f.nombre + ' ' + f.apellido));
+chk(nombres.size === 5, 'con nombres distintos entre sí', [...nombres]);
+
 console.log('\n'+'='.repeat(52));
 console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
 console.log('='.repeat(52));

@@ -35,7 +35,22 @@ Después, desde el panel, importar el archivo de Summit. Reimportar la
 lista corregida sobrescribe el lugar: es el dato que más cambia, porque
 el salón se reacomoda hasta el último día.
 
-## Un arreglo que salió en el camino
+## Dos arreglos que salieron con el archivo real
+
+### Compañeros que comparten teléfono
+
+El importador rechazaba como duplicadas a ocho personas: cinco de Next
+Bienes Raíces y tres de Notaría 8. No eran duplicados — comparten el
+conmutador de su oficina.
+
+La regla anterior consideraba duplicado cualquier teléfono repetido.
+Ahora se exige que coincidan nombre, apellido Y teléfono. El mismo
+criterio se aplicó a la búsqueda contra la base, que también habría
+confundido a un compañero con la persona buscada.
+
+Sin este arreglo, ocho asistentes reales se quedaban fuera de la lista.
+
+### Caracteres invisibles en un nombre
 
 Un nombre del archivo venía con caracteres invisibles (`U+2060`, unión de
 palabras) que se cuelan al copiar desde Word o WhatsApp. El importador lo
