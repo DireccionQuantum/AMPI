@@ -25,6 +25,17 @@ orden, así queda apilada igual sobre la mesa.
 **La mesa de entrega ve el lugar** al buscar a la persona, para poder
 decirle dónde sentarse al entregarle su gafete.
 
+## Contactos de cada stand
+
+Pestaña nueva en el panel: **Contactos**. Lista cada módulo con cuántas
+personas escanearon su código, y cuántas dejaron teléfono o correo.
+
+Cada módulo se descarga por separado, porque cada expositor sólo tiene
+derecho a los contactos que él mismo levantó, no al padrón completo.
+
+El archivo trae: nombre, apellidos, empresa, teléfono, correo, lugar
+asignado y la hora en que visitó el stand. En hora de Tijuana, no UTC.
+
 ## Cómo aplicarlo
 
 ```

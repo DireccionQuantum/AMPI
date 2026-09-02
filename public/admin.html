@@ -167,6 +167,7 @@
       <button class="tab" data-p="ajustes">Ajustes</button>
       <button class="tab" data-p="marca">Marca</button>
       <button class="tab" data-p="modulo">Módulo</button>
+      <button class="tab" data-p="contactos">Contactos</button>
       <button class="tab" data-p="usuarios">Usuarios</button>
     </div>
 
@@ -242,6 +243,32 @@
                      <th>Estado</th><th></th></tr></thead>
           <tbody id="t-modulos"></tbody>
         </table></div>
+      </div>
+    </div>
+
+    <!-- ---------- Contactos por módulo ---------- -->
+    <div class="panel" id="p-contactos">
+      <div class="bloque">
+        <h3>Contactos de cada stand <span id="c-resumen"></span></h3>
+        <div class="cuerpo">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+            Las personas que escanearon el código de cada módulo. Es lo que se
+            le entrega al expositor al terminar el evento: sólo sus propios
+            contactos, no el padrón completo.
+          </p>
+          <table>
+            <thead><tr>
+              <th>Módulo</th><th>Contactos</th><th>Con teléfono</th>
+              <th>Con correo</th><th></th>
+            </tr></thead>
+            <tbody id="t-contactos"></tbody>
+          </table>
+          <div style="margin-top:16px">
+            <a class="btn-fantasma" href="/api/admin/exportar/escaneos.csv">
+              Descargar todos los escaneos en un solo archivo
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1046,7 +1073,49 @@
     tablero: cargarTablero, rifas: cargarRifas, asistentes: cargarAsistentes,
     modulos: cargarModulos, ganadores: cargarGanadores, ajustes: cargarConfig,
     marca: cargarMarca, modulo: modPanorama, usuarios: cargarUsuarios,
+    contactos: cargarContactos,
   };
+
+  /* ================= Contactos por módulo ================= */
+
+  /**
+   * Lo que se le entrega a cada expositor al terminar el evento: los
+   * contactos que él mismo levantó. Se muestra cuántos trae cada uno y
+   * cuántos dejaron teléfono o correo, que es lo que de verdad le sirve
+   * para dar seguimiento.
+   */
+  function cargarContactos(){
+    api('/exportar/modulos').then(function(d){
+      var t = $('t-contactos'); t.innerHTML = '';
+      var conDatos = d.modulos.filter(function(m){ return m.contactos > 0; });
+      var total = d.modulos.reduce(function(a,m){ return a + m.contactos; }, 0);
+      $('c-resumen').textContent =
+        conDatos.length + ' de ' + d.modulos.length + ' módulos · ' + total + ' visitas';
+
+      d.modulos.forEach(function(m){
+        var fila = document.createElement('tr');
+        if (!m.contactos) fila.style.opacity = '.5';
+        fila.appendChild(celda(m.nombre + (m.empresa ? ' · ' + m.empresa : '')));
+        fila.appendChild(celda(String(m.contactos)));
+        fila.appendChild(celda(m.contactos ? String(m.con_telefono) : '—'));
+        fila.appendChild(celda(m.contactos ? String(m.con_correo) : '—'));
+
+        var td = document.createElement('td');
+        if (m.contactos) {
+          var a = document.createElement('a');
+          a.className = 'btn-fantasma';
+          a.href = '/api/admin/exportar/modulo/' + m.id + '.csv';
+          a.textContent = 'Descargar';
+          td.appendChild(a);
+        } else {
+          td.textContent = 'Sin visitas';
+        }
+        fila.appendChild(td);
+        t.appendChild(fila);
+      });
+    }).catch(function(e){ toast(e.message || 'No se pudo cargar'); });
+  }
+
   /* ================= Módulo: importar y operar ================= */
   var modUltimoCsv = '';
 

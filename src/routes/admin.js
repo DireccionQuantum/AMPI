@@ -546,6 +546,84 @@ module.exports = function adminRoutes(db, io) {
     } catch (err) { next(err); }
   });
 
+  /**
+   * Los contactos de un módulo, para entregárselos al expositor.
+   *
+   * Es el entregable que más le importa a quien patrocinó un stand: la
+   * lista de personas que se acercaron y escanearon su código. Se genera
+   * uno por módulo, no la lista completa, porque cada expositor sólo
+   * tiene derecho a los contactos que él mismo levantó.
+   */
+  router.get('/exportar/modulo/:id.csv', soloAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Id inválido' });
+      }
+
+      const ex = await db.query(
+        'SELECT nombre, empresa FROM expositores WHERE id = $1', [id]
+      );
+      if (!ex.rows[0]) return res.status(404).json({ error: 'Módulo no encontrado' });
+
+      const { rows } = await db.query(
+        `SELECT a.nombre, a.apellido, a.empresa, a.telefono, a.email,
+                a.fila, a.asiento,
+                to_char(e.creado_en AT TIME ZONE 'America/Tijuana',
+                        'DD/MM/YYYY HH24:MI') AS visita
+           FROM escaneos e
+           JOIN asistentes a ON a.id = e.asistente_id
+          WHERE e.expositor_id = $1
+          ORDER BY e.creado_en`,
+        [id]
+      );
+
+      const col = [
+        ['nombre', 'Nombre'], ['apellido', 'Apellidos'], ['empresa', 'Empresa'],
+        ['telefono', 'Teléfono'], ['email', 'Correo'],
+        ['fila', 'Fila'], ['asiento', 'Asiento'], ['visita', 'Visitó el stand'],
+      ];
+      const esc = (v) => {
+        if (v == null) return '';
+        const s = String(v);
+        return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const csv = [
+        col.map((c) => c[1]).join(','),
+        ...rows.map((r) => col.map((c) => esc(r[c[0]])).join(',')),
+      ].join('\n');
+
+      // El nombre del archivo lleva el del módulo: cuando el organizador
+      // descarga veinte, tiene que saber cuál es cuál sin abrirlos.
+      const limpio = (ex.rows[0].nombre || 'modulo')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition',
+        `attachment; filename="contactos-${limpio}.csv"`);
+      res.send('\uFEFF' + csv);
+    } catch (err) { next(err); }
+  });
+
+  /** Cuántos contactos levantó cada módulo, para la pantalla de entrega. */
+  router.get('/exportar/modulos', soloStaff, async (req, res, next) => {
+    try {
+      const { rows } = await db.query(
+        `SELECT x.id, x.nombre, x.empresa, x.activo,
+                count(e.id)::int AS contactos,
+                count(a.telefono)::int AS con_telefono,
+                count(a.email)::int AS con_correo
+           FROM expositores x
+           LEFT JOIN escaneos e ON e.expositor_id = x.id
+           LEFT JOIN asistentes a ON a.id = e.asistente_id
+          GROUP BY x.id, x.nombre, x.empresa, x.activo
+          ORDER BY count(e.id) DESC, x.nombre`
+      );
+      res.json({ modulos: rows });
+    } catch (err) { next(err); }
+  });
+
   // ==================== Módulo Quantum: importar, imprimir, entregar ====
 
   /**
