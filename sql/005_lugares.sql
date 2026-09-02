@@ -26,7 +26,10 @@ CREATE INDEX IF NOT EXISTS asistentes_lugar_idx
 
 -- El panorama del módulo ahora también dice cuántos traen lugar, para
 -- detectar de un vistazo si faltó asignar a alguien.
-CREATE OR REPLACE VIEW v_operacion_modulo AS
+-- DROP antes de crear: la vista cambia de columnas entre
+-- migraciones y CREATE OR REPLACE sólo admite la misma forma.
+DROP VIEW IF EXISTS v_operacion_modulo;
+CREATE VIEW v_operacion_modulo AS
 SELECT
   count(*)::int                                                AS total,
   count(*) FILTER (WHERE origen = 'csv')::int                  AS de_lista_previa,

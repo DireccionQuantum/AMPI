@@ -41,7 +41,10 @@ CREATE INDEX IF NOT EXISTS asistentes_impresa_idx  ON asistentes (etiqueta_impre
 CREATE INDEX IF NOT EXISTS asistentes_entrega_idx  ON asistentes (entregado_en);
 
 -- Panorama de la operación del módulo, en una sola consulta.
-CREATE OR REPLACE VIEW v_operacion_modulo AS
+-- DROP antes de crear: la vista cambia de columnas entre
+-- migraciones y CREATE OR REPLACE sólo admite la misma forma.
+DROP VIEW IF EXISTS v_operacion_modulo;
+CREATE VIEW v_operacion_modulo AS
 SELECT
   count(*)::int                                                         AS total,
   count(*) FILTER (WHERE origen = 'csv')::int                           AS de_lista_previa,

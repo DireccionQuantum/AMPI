@@ -91,6 +91,18 @@ importa, y el apellido porque es lo que identifica a alguien en la mesa.
 El lote tiene un selector con las filas del salón y cuántas etiquetas
 faltan en cada una, para ir armando los carnets por secciones.
 
+### Las migraciones fallaban al recrear vistas
+
+Síntoma: `cannot drop columns from view` (código 42P16) al correr
+`npm run migrate`.
+
+Causa: `CREATE OR REPLACE VIEW` sólo funciona si la vista conserva
+exactamente las mismas columnas. `v_operacion_modulo` se redefine en
+tres migraciones distintas, agregando una columna cada vez, y
+`v_expositores` en dos.
+
+Arreglo: `DROP VIEW IF EXISTS` antes de cada creación.
+
 ## Cómo aplicarlo
 
 ```

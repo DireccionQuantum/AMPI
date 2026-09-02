@@ -23,7 +23,10 @@ COMMENT ON COLUMN asistentes.sin_qr IS
 -- Los que no llevan QR quedan fuera del sorteo. Se filtra aquí, en la
 -- vista que ya alimenta las rifas, para no tener que recordarlo en cada
 -- consulta que se escriba después.
-CREATE OR REPLACE VIEW v_elegibles_rifa AS
+-- DROP antes de crear: la vista cambia de columnas entre
+-- migraciones y CREATE OR REPLACE sólo admite la misma forma.
+DROP VIEW IF EXISTS v_elegibles_rifa;
+CREATE VIEW v_elegibles_rifa AS
 SELECT a.id, a.nombre, a.apellido, a.empresa, a.codigo_corto
   FROM asistentes a
  WHERE NOT a.sin_qr
@@ -31,7 +34,10 @@ SELECT a.id, a.nombre, a.apellido, a.empresa, a.codigo_corto
 
 -- El panorama del módulo distingue unos de otros: al imprimir por lote
 -- conviene saber cuántas etiquetas llevan código y cuántas no.
-CREATE OR REPLACE VIEW v_operacion_modulo AS
+-- DROP antes de crear: la vista cambia de columnas entre
+-- migraciones y CREATE OR REPLACE sólo admite la misma forma.
+DROP VIEW IF EXISTS v_operacion_modulo;
+CREATE VIEW v_operacion_modulo AS
 SELECT
   count(*)::int                                                AS total,
   count(*) FILTER (WHERE origen = 'csv')::int                  AS de_lista_previa,
