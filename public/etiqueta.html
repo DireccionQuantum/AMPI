@@ -309,19 +309,44 @@
    * para que cualquier cámara lo lea al vuelo.
    */
   function dibujarQr() {
-    if (!qr || !window.QRCode) return;
+    if (!qr || !window.QRCode) { listoParaImprimir(); return; }
     QRCode.toDataURL(qr, {
       width: 700,
       margin: 1,
       errorCorrectionLevel: 'M',
       color: { dark: '#000000', light: '#ffffff' }
     }, function(err, url){
-      if (err) return;
-      $('e-qr').src = url;
-      // Sólo imprimimos cuando el QR ya está dibujado: si no,
-      // sale una etiqueta con el hueco en blanco.
-      if (auto) setTimeout(function(){ window.print(); }, 350);
+      if (err) { listoParaImprimir(); return; }
+      var img = $('e-qr');
+
+      // Se espera a que la imagen CARGUE, no sólo a asignarle la fuente.
+      // Con un simple retraso, si el navegador tardaba más de lo previsto
+      // la hoja salía en blanco: se imprimía antes de tener nada dibujado.
+      img.onload  = listoParaImprimir;
+      img.onerror = listoParaImprimir;
+      img.src = url;
+      // Por si la imagen venía en caché y onload ya no se dispara.
+      if (img.complete && img.naturalWidth) listoParaImprimir();
     });
+  }
+
+  /**
+   * Dispara la impresión cuando la etiqueta está realmente lista.
+   *
+   * Espera además a las tipografías: si se imprime antes de que carguen,
+   * el texto sale con la fuente de reserva o directamente en blanco.
+   * `once` evita imprimir dos veces cuando onload y complete coinciden.
+   */
+  var yaImprimio = false;
+  function listoParaImprimir() {
+    if (!auto || yaImprimio) return;
+    yaImprimio = true;
+    var arranca = function(){ setTimeout(function(){ window.print(); }, 250); };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(arranca).catch(arranca);
+    } else {
+      arranca();
+    }
   }
 
   if (porId) {
@@ -344,6 +369,8 @@
       })
       .catch(function(){
         $('e-nombre').textContent = 'No encontrado';
+        // Ni siquiera con error se deja la ventana colgada esperando.
+        listoParaImprimir();
       });
   } else {
     dibujarQr();

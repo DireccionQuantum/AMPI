@@ -252,10 +252,21 @@
         var img = new Image();
         img.src = url;
         img.alt = '';
+
+        // Se descuenta cuando la imagen CARGA, no cuando se le asigna la
+        // fuente. Generar el dato del QR y dibujarlo son dos cosas
+        // distintas: habilitar el botón antes sacaba etiquetas con el
+        // cuadro en blanco, y con 185 la diferencia se nota.
+        var listo = function () {
+          pendientesQr--;
+          if (pendientesQr <= 0) btnImp.disabled = lista.length === 0;
+        };
+        img.onload = listo;
+        img.onerror = listo;      // una que falle no debe colgar el lote
+
         caja.innerHTML = '';
         caja.appendChild(img);
-        pendientesQr--;
-        if (pendientesQr <= 0) btnImp.disabled = lista.length === 0;
+        if (img.complete && img.naturalWidth) listo();   // venía en caché
       });
     });
   }
@@ -278,10 +289,19 @@
       });
   }
 
+  /** Espera a las fuentes antes de imprimir: sin ellas el texto sale en
+      blanco o con la tipografía de reserva. */
+  function imprimirCuandoListo() {
+    var arranca = function () { setTimeout(function () { window.print(); }, 200); };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(arranca).catch(arranca);
+    } else { arranca(); }
+  }
+
   btnImp.addEventListener('click', function () {
     if (!lote.length) return;
     var ids = lote.map(function (a) { return a.id; });
-    window.print();
+    imprimirCuandoListo();
     // Se pregunta después de imprimir: si la impresora falló, no se marca.
     setTimeout(function () {
       if (!confirm('¿Se imprimieron bien las ' + ids.length + ' etiquetas?\n\n' +

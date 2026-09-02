@@ -36,6 +36,22 @@ derecho a los contactos que él mismo levantó, no al padrón completo.
 El archivo trae: nombre, apellidos, empresa, teléfono, correo, lugar
 asignado y la hora en que visitó el stand. En hora de Tijuana, no UTC.
 
+## Las etiquetas salían en blanco
+
+Síntoma: en pantalla se veía bien, al imprimir salía la hoja vacía.
+
+Causa: el código asignaba la imagen del QR y llamaba a imprimir 350 ms
+después. Asignar `img.src` y tener la imagen dibujada son dos momentos
+distintos: si el navegador tardaba más, se imprimía antes de que hubiera
+nada que imprimir.
+
+Arreglo: se espera al evento `onload` de la imagen, y además a que las
+tipografías terminen de cargar. Sin esto último el texto puede salir con
+la fuente de reserva o en blanco.
+
+El lote tenía el mismo defecto y también quedó corregido; ahí era más
+probable, porque son 185 imágenes en lugar de una.
+
 ## Cómo aplicarlo
 
 ```
