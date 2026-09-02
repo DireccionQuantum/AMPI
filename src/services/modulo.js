@@ -111,8 +111,15 @@ async function paraImprimir(db, {
   if (filtro !== 'todos') cond.push('etiqueta_impresa_en IS NULL');
   if (fila) {
     const f = String(fila).trim().toUpperCase();
-    if (/^[A-Z]{1,4}$/.test(f)) { args.push(f); cond.push(`upper(fila) = $${args.length}`); }
-    else if (f === 'SIN') cond.push('fila IS NULL');
+    // 'SIN' va PRIMERO: también cumple el patrón de letras, y si se
+    // evaluara después buscaría una fila llamada "SIN" que no existe.
+    // Por eso el filtro de los que no tienen asiento no devolvía nada.
+    if (f === 'SIN') {
+      cond.push('fila IS NULL');
+    } else if (/^[A-Z]{1,4}$/.test(f)) {
+      args.push(f);
+      cond.push(`upper(fila) = $${args.length}`);
+    }
   }
   const donde = cond.length ? 'WHERE ' + cond.join(' AND ') : '';
 

@@ -205,10 +205,21 @@ function prepararFila(f) {
   let apellido = limpiarNombre(f.apellido);
 
   // El archivo trae "Juan Pérez de la Torre" en una sola columna.
+  //
+  // Los títulos van CON el nombre de pila, no solos. Antes "Lic. René A.
+  // Madrigal" quedaba como nombre="Lic." y apellido="René A. Madrigal":
+  // los tres abogados de Notaría 8 terminaban con el mismo nombre y el
+  // sistema los confundía entre sí al reimportar.
   if (nombre && !apellido && nombre.includes(' ')) {
-    const partes = nombre.split(' ');
-    nombre = partes[0];
-    apellido = partes.slice(1).join(' ');
+    const partes = nombre.split(' ').filter(Boolean);
+    const esTitulo = (p) =>
+      /^(lic|ing|mtra|mtro|dr|dra|c\.?p|arq|prof|sr|sra|srta)\.?$/i.test(p);
+
+    let corte = 1;                       // por omisión, la primera palabra
+    if (partes.length > 2 && esTitulo(partes[0])) corte = 2;   // título + nombre
+
+    nombre = partes.slice(0, corte).join(' ');
+    apellido = partes.slice(corte).join(' ');
   }
 
   if (!nombre) return { ok: false, linea: f.linea, motivo: 'nombre_invalido' };
@@ -322,8 +333,9 @@ async function importar(client, texto, opts = {}) {
            FROM asistentes
           WHERE telefono = $1
             AND unaccent_simple(coalesce(nombre,'')) = unaccent_simple($2)
+            AND unaccent_simple(coalesce(apellido,'')) = unaccent_simple($3)
           LIMIT 1`,
-        [f.telefono, f.nombre]
+        [f.telefono, f.nombre, f.apellido || '']
       );
       existente = r.rows[0] || null;
     }

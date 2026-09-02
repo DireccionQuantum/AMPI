@@ -102,6 +102,60 @@ validas.forEach((f) => {
 chk([...claves.values()].every((n) => n === 1),
     'ninguna persona repetida de verdad: el índice único es viable');
 
+console.log('\n=== 7. Títulos en el nombre ===');
+// "Lic. René A. Madrigal" quedaba como nombre="Lic.": los tres abogados
+// de Notaría 8 terminaban con el mismo nombre y el sistema los confundía
+// al reimportar. El título va con el nombre de pila.
+[
+  ['Lic. René A. Madrigal', 'Lic. René'],
+  ['Lic. Manuel Madrigal', 'Lic. Manuel'],
+  ['Dra. Haydee Mendoza', 'Dra. Haydee'],
+  ['C.P. Yolanda Arroyo Rivera', 'C.P. Yolanda'],
+  ['Marco Antonio Briseño Aguayo', 'Marco'],     // sin título, sin cambio
+  ['Uria Amor', 'Uria'],
+].forEach(([entrada, esperado]) => {
+  const f = imp.prepararFila({ linea: 1, nombre: entrada });
+  chk(f.nombre === esperado, `«${entrada}» → nombre «${esperado}»`, f.nombre);
+});
+
+// Nadie de Notaría 8 debe compartir nombre con otro
+const notaria = validas.filter((f) => (f.empresa || '').toUpperCase().includes('NOTARIA'));
+const nombresN = new Set(notaria.map((f) => f.nombre));
+chk(nombresN.size === notaria.length,
+    'los 3 de Notaría 8 tienen nombres distintos entre sí', [...nombresN]);
+
+console.log('\n=== 8. Filtro por fila del salón ===');
+// 'SIN' también cumple el patrón de letras: si se evalúa después de la
+// rama general, busca una fila llamada "SIN" y no devuelve a nadie.
+(function () {
+  const consultas = [];
+  const falso = {
+    query(sql, args) {
+      consultas.push({ sql: sql.replace(/\s+/g, ' '), args: args || [] });
+      return Promise.resolve({ rows: [] });
+    },
+  };
+  const pruebas = [
+    ['SIN', 'fila IS NULL', 0],
+    ['E', 'upper(fila) = $1', 1],
+    ['AAA', 'upper(fila) = $1', 1],
+  ];
+  pruebas.forEach(([fila, esperado, nArgs]) => {
+    consultas.length = 0;
+    mod.paraImprimir(falso, { filtro: 'todos', fila });
+    const c = consultas[0];
+    chk(c && c.sql.indexOf(esperado) >= 0 && c.args.length === nArgs,
+        `filtro «${fila}» → ${esperado}`, c && c.sql.match(/WHERE[^]*?ORDER/));
+  });
+})();
+
+// Las 12 personas sin asiento sí tienen código: su etiqueta lleva QR.
+const sinAsiento = validas.filter((f) => !f.fila || !f.asiento);
+chk(sinAsiento.length === 12, '12 personas sin asiento', sinAsiento.length);
+chk(sinAsiento.every((f) => !f.sin_qr),
+    'todas llevan QR: sólo les falta el lugar',
+    sinAsiento.filter((f) => f.sin_qr).map((f) => f.nombre));
+
 console.log('\n' + '='.repeat(54));
 console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
 console.log('='.repeat(54));
