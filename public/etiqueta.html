@@ -28,7 +28,7 @@
 
 :root{
   --ancho: 62mm;
-  --alto: 52mm;
+  --alto: 48mm;
   --margen: 1.8mm;
 }
 
@@ -168,6 +168,15 @@ body{
     page-break-inside:avoid; break-inside:avoid;
     page-break-after:avoid; break-after:avoid;
   }
+  /* Nada dentro de la etiqueta puede saltar de página.
+     El pie se iba solo a la segunda hoja porque el navegador lo trataba
+     como un bloque independiente: al no caber por unas décimas, lo movía
+     completo. Con esto se queda pegado al resto pase lo que pase. */
+  .etiqueta *{
+    page-break-inside:avoid; break-inside:avoid;
+    page-break-before:avoid; break-before:avoid;
+    page-break-after:avoid; break-after:avoid;
+  }
 }
 </style>
 </head>
@@ -210,7 +219,7 @@ body{
 
 <div class="panel">
   <h2>Etiqueta del asistente</h2>
-  <p>Vista previa a tamaño real: 62 × 52 mm, para rollo continuo DK-2205
+  <p>Vista previa a tamaño real: 62 × 48 mm, para rollo continuo DK-2205
      en impresora Brother QL.</p>
   <button onclick="window.print()">Imprimir etiqueta</button>
   <div class="nota">
