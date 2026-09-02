@@ -43,7 +43,7 @@
   /* ---------- La etiqueta ---------- */
   .hoja{display:flex;flex-wrap:wrap;gap:12px}
   .eti{
-    width:62mm;height:55mm;background:#fff;color:#000;
+    width:62mm;height:52mm;background:#fff;color:#000;
     border-radius:3px;padding:2.2mm 1.6mm;display:flex;flex-direction:column;
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
@@ -136,14 +136,14 @@
     /* Sin size: el papel del diálogo manda. Si el CSS pidiera una medida
        distinta a la configurada, cada etiqueta se partiría en dos hojas. */
     @page{ margin:0 }
-    html,body{margin:0;padding:0;background:#fff}
+    html,body{margin:0;padding:0;background:#fff;width:62mm}
     .barra,.aviso,.vacio,.eti-ya{display:none !important}
     .zona{padding:0;margin:0;max-width:none}
     .hoja{display:block;gap:0}
     /* Altura fija con recorte, igual que la etiqueta individual: sin ella
        el contenido crece y el pie se parte en hojas aparte. */
     .eti{
-      width:62mm; height:55mm; overflow:hidden;
+      width:62mm; height:52mm; overflow:hidden;
       border:0; border-radius:0; margin:0; padding:2mm 1.6mm;
       box-shadow:none; display:flex; flex-direction:column;
       page-break-inside:avoid; break-inside:avoid;
@@ -194,7 +194,7 @@
 
 <div class="aviso" id="aviso">
   Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
-  diálogo sea el personalizado de <b>62 × 55 mm</b> con márgenes en cero. La tira sale en el orden que elijas
+  diálogo sea el personalizado de <b>62 × 52 mm</b> con márgenes en cero. La tira sale en el orden que elijas
   arriba, así queda apilada en ese mismo orden sobre la mesa. Al terminar te
   preguntamos si marcamos el lote como impreso.
 </div>
@@ -403,6 +403,23 @@
       setTimeout(function () { imprimirUnaAUna(i + 1); }, 900);
     }, 250);
   }
+
+  /* Igual que la etiqueta individual: la barra y los avisos salen del DOM
+     al imprimir. Ocultarlos con CSS no basta, Chrome los sigue contando
+     para la altura del documento y agrega una hoja al final. */
+  var fuera = [];
+  window.addEventListener('beforeprint', function () {
+    fuera = [];
+    Array.prototype.slice.call(document.body.children).forEach(function (el) {
+      if (el.classList.contains('zona') || el.tagName === 'SCRIPT') return;
+      fuera.push([el, el.nextSibling]);
+      el.parentNode.removeChild(el);
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    fuera.forEach(function (par) { document.body.insertBefore(par[0], par[1]); });
+    fuera = [];
+  });
 
   btnImp.addEventListener('click', function () {
     if (!lote.length) return;

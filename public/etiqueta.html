@@ -154,23 +154,32 @@ body{
      distinto al configurado hace que el navegador pagine. */
   @page{ margin:0 }
 
-  /* La clave para que salga UNA sola hoja.
-     Un elemento en el flujo normal genera páginas aunque tenga recorte:
-     si su contenido mide más que el papel, el navegador crea otra hoja.
-     Sacándolo del flujo con position:fixed deja de participar en la
-     paginación, y el documento pasa a tener una sola página por
-     definición. Lo que no quepa se recorta y ya. */
-  html,body{
-    background:#fff; margin:0; padding:0; display:block;
-    width:62mm; height:auto; min-height:0; overflow:hidden;
+  /* UNA SOLA HOJA.
+     Safari decide cuántas páginas necesita por la altura del documento,
+     no por la del contenido visible. Aunque todo esté oculto o recortado,
+     si <html> o <body> miden más que el papel, crea otra hoja.
+     Por eso aquí se les fija una altura MENOR que el papel y se recorta
+     lo que sobre: así no queda nada que paginar.
+     No se usa position:fixed porque Safari repite esos elementos en cada
+     página en vez de sacarlos del flujo. */
+  html{
+    background:#fff; margin:0; padding:0;
+    width:62mm; height:52mm; max-height:52mm; overflow:hidden;
   }
-  body > *{ display:none !important }
+  body{
+    background:#fff; margin:0; padding:0; display:block;
+    width:62mm; height:52mm; max-height:52mm; overflow:hidden;
+  }
+  /* Segunda defensa, por si el navegador no dispara beforeprint. */
+  body > *{ display:none !important; height:0 !important; overflow:hidden !important }
   body > .etiqueta{
     display:flex !important;
-    position:fixed; top:0; left:0;
-    width:62mm; height:55mm; overflow:hidden;
-    border:none; margin:0;
+    width:62mm; height:52mm !important; max-height:52mm; overflow:hidden !important;
+    border:none; margin:0; padding:1.8mm;
+    page-break-inside:avoid; break-inside:avoid;
+    page-break-after:avoid; break-after:avoid;
   }
+  .etiqueta *{ page-break-inside:avoid; break-inside:avoid }
 }
 </style>
 </head>
@@ -337,6 +346,32 @@ body{
     $('e-logo').hidden = false;
   };
   probe.src = '/api/marca/logo_evento';
+
+  /* ---------- Al imprimir: sólo la etiqueta en el documento ----------
+     Ocultar con CSS no basta. Chrome sigue considerando los elementos
+     ocultos al calcular la altura del documento y termina generando una
+     hoja de más. Se sacan del DOM antes de imprimir y se devuelven al
+     terminar. */
+  var guardados = [];
+
+  function soloEtiqueta() {
+    guardados = [];
+    Array.prototype.slice.call(document.body.children).forEach(function (el) {
+      if (el.id === 'etiqueta' || el.tagName === 'SCRIPT') return;
+      guardados.push([el, el.nextSibling]);
+      el.parentNode.removeChild(el);
+    });
+  }
+
+  function devolver() {
+    guardados.forEach(function (par) {
+      document.body.insertBefore(par[0], par[1]);
+    });
+    guardados = [];
+  }
+
+  window.addEventListener('beforeprint', soloEtiqueta);
+  window.addEventListener('afterprint', devolver);
 
   /* ---------- Arranque ---------- */
   if (porId) {
