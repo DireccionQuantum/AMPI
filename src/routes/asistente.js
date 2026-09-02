@@ -39,13 +39,21 @@ module.exports = function asistenteRoutes(db, io) {
       const esStaff = !!(req.session && req.session.usuario &&
         ['admin', 'staff'].includes(req.session.usuario.rol));
 
+      // Marcar a alguien sin QR sólo lo puede hacer el personal: desde el
+      // formulario público cualquiera podría excluirse del sorteo, o peor,
+      // excluir a otro.
+      const sinQr = esStaff && (req.body || {}).sin_qr === true;
+
       const r = await enTransaccion(async (client) => {
-        const reg = await v.registrarNuevo(client, req.body || {});
+        const reg = await v.registrarNuevo(client, req.body || {}, { sinQr });
         if (!reg.ok) return reg;
         if (reg.yaExistia && !esStaff) return reg;   // sin credenciales
 
         const id = reg.id || (await client.query(
           'SELECT id FROM asistentes WHERE qr_id = $1', [reg.qr_id])).rows[0].id;
+        // Prensa e invitados no escanean ni consultan puntos: no se les
+        // emite credencial de acceso.
+        if (reg.sin_qr) return { ...reg, id };
         const cred = await sesion.emitirCredenciales(client, id);
         return { ...reg, token: cred.token, codigo: cred.codigo };
       });
@@ -63,6 +71,7 @@ module.exports = function asistenteRoutes(db, io) {
       res.json({
         ok: true,
         yaExistia: r.yaExistia,
+        sin_qr: !!r.sin_qr,
         qr_id: r.qr_id,
         token: r.token,
         codigo: r.codigo,

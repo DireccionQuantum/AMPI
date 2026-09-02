@@ -132,6 +132,21 @@ teléfono, que sí distingue un duplicado real de dos compañeros.
 
 **Hay que correr `npm run migrate` antes de reimportar.**
 
+## Alta de prensa e invitados sin QR
+
+En la estación de registro hay una casilla: **Prensa o invitado de
+honor**. Marcarla da de alta a la persona sin código, así que no visita
+módulos ni participa en las rifas.
+
+Sólo aparece con sesión de personal. Desde el formulario público
+cualquiera podría auto-excluirse del sorteo, o peor, excluir a otro.
+
+La casilla se reinicia después de cada alta: lo normal es el asistente
+con código, y dejarla marcada haría que el siguiente se registrara mal.
+
+En la pantalla de confirmación no se muestra código ni QR, con un aviso
+de «Prensa · sin código» para que el personal no intente dárselo.
+
 ## Cómo aplicarlo
 
 ```

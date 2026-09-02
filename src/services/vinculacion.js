@@ -179,14 +179,29 @@ async function vincularDatos(client, qrId, entrada) {
  * Si el teléfono ya existe, devolvemos la cuenta existente en lugar
  * de crear una segunda — en eventos la gente se registra dos veces.
  */
-async function registrarNuevo(client, entrada) {
+/**
+ * Da de alta a una persona en el evento.
+ *
+ * `opts.sinQr` marca a prensa e invitados de honor: reciben carnet con su
+ * nombre impreso, pero no visitan módulos ni participan en las rifas.
+ * Sólo el personal autenticado puede activarlo — si viniera del
+ * formulario público, cualquiera podría auto-excluirse del sorteo o, peor,
+ * marcar a otros.
+ */
+async function registrarNuevo(client, entrada, opts = {}) {
   const v = validarDatos(entrada);
   if (v.errores) return { ok: false, errores: v.errores };
   const d = v.datos;
+  const sinQr = opts.sinQr === true;
 
+  // Se busca por teléfono Y nombre: en una oficina varias personas
+  // comparten el conmutador y no son la misma persona.
   const existente = await client.query(
-    `SELECT qr_id FROM asistentes WHERE telefono = $1`,
-    [d.telefono]
+    `SELECT qr_id FROM asistentes
+      WHERE telefono = $1
+        AND unaccent_simple(coalesce(nombre,'')) = unaccent_simple($2)
+      LIMIT 1`,
+    [d.telefono, d.nombre]
   );
   if (existente.rows.length) {
     return {
@@ -203,17 +218,21 @@ async function registrarNuevo(client, entrada) {
     try {
       const { rows } = await client.query(
         `INSERT INTO asistentes
-                (qr_id, nombre, apellido, telefono, email, empresa, origen)
-         VALUES ($1, $2, $3, $4, $5, $6, 'stand')
-         RETURNING id, qr_id`,
-        [qrId, d.nombre, d.apellido, d.telefono, d.email, d.empresa]
+                (qr_id, nombre, apellido, telefono, email, empresa, sin_qr, origen)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'stand')
+         RETURNING id, qr_id, sin_qr`,
+        [qrId, d.nombre, d.apellido, d.telefono, d.email, d.empresa, sinQr]
       );
-      return { ok: true, yaExistia: false, id: rows[0].id, qr_id: rows[0].qr_id };
+      return { ok: true, yaExistia: false, id: rows[0].id,
+               qr_id: rows[0].qr_id, sin_qr: rows[0].sin_qr };
     } catch (err) {
       if (err.code !== '23505') throw err;
       // Carrera con otro registro del mismo teléfono: devolvemos el suyo.
       const otra = await client.query(
-        `SELECT qr_id FROM asistentes WHERE telefono = $1`, [d.telefono]
+        `SELECT qr_id FROM asistentes
+          WHERE telefono = $1
+            AND unaccent_simple(coalesce(nombre,'')) = unaccent_simple($2)
+          LIMIT 1`, [d.telefono, d.nombre]
       );
       if (otra.rows.length) {
         return {

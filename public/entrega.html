@@ -51,6 +51,35 @@
     font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--green-bright);
     margin-top:4px;letter-spacing:.06em;
   }
+  /* Línea del correo en la tarjeta: se toca para capturarlo. */
+  .p-mail{
+    font-size:13px;margin-top:3px;cursor:pointer;
+    color:var(--ink);display:inline-block;
+  }
+  .p-mail:hover{text-decoration:underline}
+  .p-falta{color:var(--muted);font-style:italic}
+
+  /* Panel para pedir el correo. */
+  .modal{
+    position:fixed;inset:0;z-index:80;background:rgba(10,18,32,.55);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-caja{
+    background:#fff;border-radius:16px;padding:22px;width:100%;max-width:400px;
+    box-shadow:0 16px 48px rgba(0,0,0,.3);
+  }
+  .modal-caja h3{font-size:17px;font-weight:800;color:var(--ink)}
+  .modal-ay{font-size:13px;color:var(--muted);margin:6px 0 14px;line-height:1.5}
+  .modal-caja input{
+    width:100%;padding:14px;font-size:17px;border:1px solid var(--line);
+    border-radius:10px;font-family:inherit;
+  }
+  .modal-caja input:focus{outline:none;border-color:var(--green);
+    box-shadow:0 0 0 3px rgba(92,184,92,.18)}
+  .modal-err{color:#c62828;font-size:13px;margin-top:7px;min-height:17px}
+  .modal-acc{display:flex;gap:9px;margin-top:12px}
+  .modal-acc .b{flex:1}
+
   .p-tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
   .tag{
     font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;
@@ -168,7 +197,15 @@
       '<div class="p-datos">' +
         '<div class="p-nom">' + esc(nom) + '</div>' +
         (a.empresa ? '<div class="p-emp">' + esc(a.empresa) + '</div>' : '') +
-        '<div class="p-cod">' + esc(a.codigo_corto || '') + '</div>' +
+        '<div class="p-cod">' + esc(a.codigo_corto || '') +
+          (a.fila && a.asiento
+            ? ' · <b>' + esc(a.fila) + '-' + a.asiento + '</b>' : '') +
+        '</div>' +
+        '<div class="p-mail" data-acc="correo">' +
+          (a.email
+            ? '✉ ' + esc(a.email)
+            : '<span class="p-falta">＋ Agregar correo</span>') +
+        '</div>' +
         '<div class="p-tags">' + tags + '</div>' +
       '</div>' +
       '<div class="p-acc">' +
@@ -211,6 +248,79 @@
       });
   }
 
+  /**
+   * Panel para capturar el correo de una persona.
+   *
+   * Se abre al tocar la línea del correo en su tarjeta. Puede guardarse,
+   * o cerrarse y entregar el carnet sin él: en la fila del evento no
+   * siempre hay tiempo de pedirlo, y detener la entrega por eso sería
+   * peor que quedarse sin el dato.
+   */
+  function pedirCorreo(id, fila) {
+    var nombre = fila.querySelector('.p-nom').textContent;
+    var actual = (fila.querySelector('.p-mail').textContent || '')
+      .replace(/^[✉＋]\s*/, '').replace('Agregar correo', '').trim();
+
+    var caja = document.createElement('div');
+    caja.className = 'modal';
+    caja.innerHTML =
+      '<div class="modal-caja">' +
+        '<h3>Correo de ' + esc(nombre) + '</h3>' +
+        '<p class="modal-ay">Si no lo tiene a la mano, puedes entregar el ' +
+          'carnet y capturarlo después.</p>' +
+        '<input type="email" id="mail-input" inputmode="email" ' +
+          'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+          'placeholder="correo@ejemplo.com" value="' + esc(actual) + '">' +
+        '<div class="modal-err" id="mail-err"></div>' +
+        '<div class="modal-acc">' +
+          '<button class="b b-s" id="mail-omitir">Ahora no</button>' +
+          '<button class="b b-p" id="mail-guardar">Guardar</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(caja);
+
+    var campo = caja.querySelector('#mail-input');
+    var err = caja.querySelector('#mail-err');
+    setTimeout(function () { campo.focus(); campo.select(); }, 50);
+
+    function cerrar() { caja.remove(); }
+
+    caja.addEventListener('click', function (ev) {
+      if (ev.target === caja) cerrar();
+    });
+    caja.querySelector('#mail-omitir').addEventListener('click', cerrar);
+
+    function guardar() {
+      var valor = campo.value.trim();
+      var btn = caja.querySelector('#mail-guardar');
+      btn.disabled = true;
+      err.textContent = '';
+      fetch('/api/admin/modulo/asistente/' + id + '/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email: valor }),
+      })
+        .then(function (r) {
+          return r.json().then(function (d) { if (!r.ok) throw d; return d; });
+        })
+        .then(function () {
+          cerrar();
+          buscar();          // se recarga para ver el correo en la tarjeta
+        })
+        .catch(function (d) {
+          btn.disabled = false;
+          err.textContent = (d && d.error) || 'No se pudo guardar';
+        });
+    }
+
+    caja.querySelector('#mail-guardar').addEventListener('click', guardar);
+    campo.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') guardar();
+      if (ev.key === 'Escape') cerrar();
+    });
+  }
+
   q.addEventListener('input', function () {
     clearTimeout(timer);
     timer = setTimeout(buscar, 180);
@@ -229,6 +339,11 @@
 
     if (acc === 'imprimir') {
       window.open('/etiqueta?id=' + id + '&auto=1', '_blank', 'width=420,height=380');
+      return;
+    }
+
+    if (acc === 'correo') {
+      pedirCorreo(id, fila);
       return;
     }
 

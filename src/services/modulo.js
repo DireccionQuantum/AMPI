@@ -40,7 +40,7 @@ async function buscar(db, termino) {
 
   const { rows } = await db.query(
     `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto, telefono,
-            fila, asiento,
+            email, fila, asiento, sin_qr,
             estado, origen, etiqueta_impresa_en, entregado_en, entregado_por
        FROM asistentes
       WHERE ${condiciones}

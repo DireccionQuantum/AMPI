@@ -58,6 +58,28 @@
   .modo button{flex:1;font-size:14px;padding:12px;background:#fff;
                color:var(--muted);border:1.5px solid var(--line)}
   .modo button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  /* Casilla de prensa e invitados. Sólo aparece con sesión de personal:
+     desde el formulario público nadie debe poder auto-excluirse. */
+  .opcion{
+    display:flex;gap:10px;align-items:flex-start;
+    background:#f4f7fa;border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin:4px 0 14px;cursor:pointer;
+  }
+  .opcion input{margin-top:2px;width:18px;height:18px;flex-shrink:0}
+  .opcion span{font-size:13px;color:var(--muted);line-height:1.45}
+  .opcion b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+
+  /* Prensa e invitados: sin QR ni código a la vista. Mostrarles un código
+     haría que el personal intentara dárselo. */
+  .medios #qr-listo,
+  .medios #l-codigo,
+  .medios .codigo-etq{display:none !important}
+  .medios .quien::after{
+    content:'Prensa · sin código';
+    display:block;margin-top:8px;font-size:12px;font-weight:800;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--amber);
+  }
 </style>
 </head>
 <body>
@@ -117,6 +139,14 @@
                  placeholder="664 123 4567" enterkeyhint="done">
           <div class="error-txt" id="e-telefono"></div>
         </div>
+        <label class="opcion" id="caja-medios">
+          <input type="checkbox" id="sin-qr">
+          <span>
+            <b>Prensa o invitado de honor</b>
+            Recibe carnet con su nombre, pero sin código: no visita
+            módulos ni participa en las rifas.
+          </span>
+        </label>
         <button class="btn-bloque" id="btn-registrar">Registrar y generar código</button>
       </div>
 
@@ -216,6 +246,7 @@
       nombre: $('nombre').value,
       apellido: $('apellido').value,
       telefono: $('telefono').value,
+      sin_qr: $('sin-qr').checked,
     }).then(function(res){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
 
@@ -236,6 +267,9 @@
       }
       registrados++;
       $('c-hoy').textContent = registrados;
+      // La casilla se reinicia: lo normal es el asistente con código, y
+      // dejarla marcada haría que el siguiente se registrara mal.
+      $('sin-qr').checked = false;
       mostrarListo(res.d, res.d.yaExistia);
     }).catch(function(){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
@@ -278,12 +312,21 @@
     $('l-quien').textContent = d.nombre ? d.nombre : '';
     $('l-codigo').textContent = d.codigo || '······';
 
+    // Prensa e invitados no llevan código: mostrarles uno confundiría al
+    // personal, que intentaría dárselo. En su lugar se indica qué hacer.
+    var esMedios = !!d.sin_qr;
+    document.getElementById('p-listo').classList.toggle('medios', esMedios);
+    if (esMedios) {
+      $('l-titulo').textContent = 'Registrado sin código';
+      $('l-codigo').textContent = '—';
+    }
+
     // El QR lleva el identificador del asistente, EXACTAMENTE el mismo que
     // va impreso en su etiqueta. Antes llevaba la liga /p/<token>: al
     // escanearlo, el lector del expositor le sacaba los primeros 24 de los
     // 32 caracteres del token y creaba un asistente pendiente vacío, además
     // de no darle el punto a la persona correcta.
-    if (window.QRCode && d.qr_id) {
+    if (window.QRCode && d.qr_id && !d.sin_qr) {
       QRCode.toDataURL(d.qr_id, { width:440, margin:1,
         color:{ dark:'#12233f', light:'#ffffff' } },
         function(err, url){ if(!err) $('qr-listo').src = url; });

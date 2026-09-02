@@ -693,6 +693,40 @@ module.exports = function adminRoutes(db, io) {
   });
 
   /** Lista de etiquetas por imprimir. */
+  /**
+   * Guarda el correo de un asistente desde la mesa de entrega.
+   *
+   * Se separa de "entregar" a propósito: en el evento no siempre hay
+   * tiempo de pedir el correo, y obligarlo detendría la fila. Aquí se
+   * puede capturar antes, después, o nunca.
+   */
+  router.post('/modulo/asistente/:id/email', soloStaff, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Id inválido' });
+      }
+      const crudo = String((req.body || {}).email || '').trim().toLowerCase();
+
+      // Vacío borra el correo: sirve para corregir una captura errónea.
+      let email = null;
+      if (crudo) {
+        if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(crudo) || crudo.length > 120) {
+          return res.status(422).json({ error: 'Ese correo no parece válido' });
+        }
+        email = crudo;
+      }
+
+      const { rows } = await db.query(
+        `UPDATE asistentes SET email = $2 WHERE id = $1
+         RETURNING id, nombre, apellido, email`,
+        [id, email]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'No encontrado' });
+      res.json({ ok: true, asistente: rows[0] });
+    } catch (err) { next(err); }
+  });
+
   /** Filas del salón con su avance de impresión, para el selector. */
   router.get('/modulo/filas', soloStaff, async (req, res, next) => {
     try {
