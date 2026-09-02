@@ -53,7 +53,7 @@
      caracteres, el peor del archivo, a 13pt en dos líneas caben 22 por
      renglón y sobra espacio. */
   .cuerpo{flex:1;display:flex;flex-direction:column;padding:1.6mm 0;min-height:0}
-  .fila-baja{display:flex;gap:2.6mm;align-items:stretch;margin-top:auto;padding-top:1.4mm}
+  .fila-baja{display:flex;gap:2.4mm;align-items:stretch;margin-top:auto;padding-top:1.1mm}
 
   /* justify-content:center reparte el aire sobrante entre las líneas en
      lugar de dejarlo todo abajo, que era el espacio muerto. */
@@ -120,7 +120,7 @@
     margin-top:.5mm;font-variant-numeric:tabular-nums;
   }
   /* Sin lugar asignado: el QR se agranda y llena el espacio. */
-  .etiqueta.sin-lugar .qr img{width:25mm;height:25mm}
+  .etiqueta.sin-lugar .qr img{width:22mm;height:22mm}
 
   /* ---------- Invitados de honor, sin código ----------
      No visitan módulos ni entran a rifas, así que su etiqueta lleva sólo
@@ -132,26 +132,33 @@
   .etiqueta.sin-codigo .lugar{ padding:2.2mm 3mm }
   .etiqueta.sin-codigo .lugar .v{ font-size:26pt }
   .etiqueta.sin-codigo .lugar .et{ font-size:5.4pt }
+  .etiqueta.sin-codigo .instruccion{ display:none }
   .qr img{
-    width:22mm;height:22mm;display:block;
+    width:19mm;height:19mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
     image-rendering:pixelated;
   }
 
   /* ---------- Pie ---------- */
+  /* El pie lleva sólo la marca, centrada. Antes compartía renglón con la
+     instrucción y con padding-right para despegarla del borde, y entre
+     las dos cosas el logo se salía de la etiqueta. */
   .pie{
-    display:flex;align-items:center;justify-content:space-between;
-    gap:2mm;padding-top:1mm;border-top:.3mm solid #000;
-    /* El logo se separa del borde: pegado al margen se perdía al cortar. */
-    padding-right:2.5mm;
+    display:flex;align-items:center;justify-content:center;
+    gap:1.4mm;padding-top:1.2mm;margin-top:auto;
+    border-top:.3mm solid #000;
   }
-  .pie .instruccion{font-size:5pt;font-weight:800;letter-spacing:.02em;line-height:1.2}
+  /* La instrucción vive ahora en la cabecera, debajo de la fecha. */
+  .instruccion{
+    font-size:4.6pt;font-weight:700;letter-spacing:.03em;
+    text-transform:uppercase;margin-top:.5mm;color:#222;
+  }
   .pie .marca{display:flex;align-items:center;gap:1.2mm}
-  .pie .marca span{font-size:4.2pt;font-weight:800;letter-spacing:.1em;
+  .pie .marca span{font-size:4.4pt;font-weight:800;letter-spacing:.1em;
                    text-transform:uppercase;white-space:nowrap}
   /* brightness(0) vuelve negro cualquier píxel opaco conservando la
      transparencia. En térmico un logo a color sale como gris punteado. */
-  .pie .marca img{height:3.4mm;width:auto;display:block;filter:brightness(0)}
+  .pie .marca img{height:4mm;width:auto;display:block;filter:brightness(0)}
 
   /* ---------- Controles (sólo pantalla) ---------- */
   .panel{
@@ -204,6 +211,7 @@
     <div>
       <div class="nom" id="e-evento">AMPI Tijuana 2026</div>
       <div class="fecha" id="e-fecha">2 y 3 de septiembre</div>
+      <div class="instruccion" id="e-instruccion">Muestra este código en cada módulo</div>
     </div>
     <img id="e-logo" alt="" hidden>
   </div>
@@ -230,7 +238,6 @@
   </div>
 
   <div class="pie">
-    <div class="instruccion">Muestra este código<br>en cada módulo</div>
     <div class="marca">
       <span>Powered by</span>
       <img src="/img/quantum-h-sm.png" alt="Quantum Marketing">
@@ -354,6 +361,8 @@
   $('e-lugar').hidden = !hayLugar;
   $('etiqueta').classList.toggle('sin-lugar', !hayLugar);
   $('etiqueta').classList.toggle('sin-codigo', sinQr);
+  // Quien no lleva código no tiene nada que mostrar en los módulos.
+  if ($('e-instruccion')) $('e-instruccion').hidden = sinQr;
   if (hayLugar) $('e-lugar-v').textContent = fila + ' · ' + asiento;
   }
   pintarDatos();
