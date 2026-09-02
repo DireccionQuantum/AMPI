@@ -1,445 +1,302 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Etiqueta del asistente · AMPI 2026</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,600;6..12,800;6..12,1000&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  /* ============================================================
-     Etiqueta 62 × 50 mm para Brother QL con rollo continuo DK-2205.
-     Impresión térmica: TODO va en negro puro sobre blanco. Nada de
-     grises claros ni colores, que salen sucios o no salen.
-     ============================================================ */
+/* =====================================================================
+   Etiqueta del gafete · AMPI Realty Summit 2026
+   Brother QL-800 con rollo continuo DK-2205 (62 mm de ancho)
 
-  :root{ --ancho:62mm; --alto:55mm; }
+   Reconstruida de cero. La versión anterior acumulaba parches de varias
+   sesiones y el pie terminaba partiéndose en hojas aparte.
 
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:'Nunito Sans',system-ui,sans-serif;
-    background:#e8ecf0;color:#000;
-    display:flex;flex-direction:column;align-items:center;
-    padding:24px 16px;gap:18px;
+   Las dos reglas que evitan eso:
+
+     1. UNA SOLA CAJA imprimible. En modo impresión se oculta todo lo que
+        no sea la etiqueta, incluidos los controles de pantalla. Si algo
+        más queda visible, el navegador le da su propia hoja.
+
+     2. ALTURA FIJA CON RECORTE. El papel configurado mide 62 × 58 mm,
+        pero la QL se reserva unos milímetros al cortar. La etiqueta se
+        fija en 52 mm y recorta lo que sobre: nunca desborda.
+
+   Todo en negro puro: la impresión térmica no tiene medios tonos.
+   ===================================================================== */
+
+:root{
+  --ancho: 62mm;
+  --alto: 52mm;
+  --margen: 1.8mm;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#eef1f5;font-family:'Archivo',Arial,sans-serif}
+body{
+  min-height:100vh;padding:26px 16px 60px;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+}
+
+/* ---------------- La etiqueta ---------------- */
+.etiqueta{
+  width:var(--ancho); height:var(--alto);
+  background:#fff; color:#000;
+  padding:var(--margen);
+  overflow:hidden;                 /* nada se sale, pase lo que pase */
+  display:flex; flex-direction:column;
+  border:1px solid #c9d3dc;        /* sólo se ve en pantalla */
+}
+
+/* Cabecera: evento, fecha e instrucción */
+.cab{
+  border-bottom:.35mm solid #000; padding-bottom:.9mm; flex-shrink:0;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:1.5mm;
+}
+.cab .evento{font-size:7.4pt;font-weight:800;line-height:1.1;letter-spacing:-.01em}
+.cab .fecha{font-size:5.2pt;font-weight:600;margin-top:.4mm;letter-spacing:.02em}
+.cab .aviso{
+  font-size:4.4pt;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;margin-top:.5mm;color:#222;
+}
+.cab img{height:5.5mm;width:auto;display:block;flex-shrink:0;filter:brightness(0)}
+
+/* Nombre y empresa: ancho completo, arriba */
+.datos{flex-shrink:0;padding-top:1.2mm}
+.nombre{
+  font-size:11pt;font-weight:900;line-height:1.04;letter-spacing:-.015em;
+  overflow-wrap:break-word;
+}
+.nombre.largo{font-size:9.8pt}
+.nombre.corto{font-size:8.6pt}
+.empresa{
+  font-size:5.8pt;font-weight:700;line-height:1.14;margin-top:.7mm;
+  overflow-wrap:break-word;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+/* QR y lugar, en el mismo renglón */
+.medio{
+  flex:1; min-height:0; display:flex; gap:2.2mm; align-items:center;
+  padding:1.2mm 0;
+}
+.qr{width:17mm;height:17mm;flex-shrink:0;line-height:0}
+.qr img{width:17mm;height:17mm;display:block;image-rendering:pixelated}
+
+.lado{flex:1;min-width:0;display:flex;flex-direction:column;gap:.9mm;justify-content:center}
+
+/* El lugar es lo que más se mira: quien orienta lo lee de lejos. */
+.lugar{border:.45mm solid #000;padding:.9mm 1.8mm;line-height:1}
+.lugar .et{
+  display:block;font-size:4.2pt;font-weight:800;letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.lugar .v{
+  display:block;font-size:14pt;font-weight:900;margin-top:.3mm;
+  font-variant-numeric:tabular-nums;letter-spacing:.01em;
+}
+.codigo .et{
+  display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.codigo .v{display:block;font-size:7.4pt;font-weight:900;letter-spacing:.13em}
+
+/* Pie: la marca del proveedor, centrada */
+.pie{
+  flex-shrink:0; border-top:.3mm solid #000; padding-top:.8mm;
+  display:flex; align-items:center; justify-content:center; gap:1.2mm;
+}
+.pie span{
+  font-size:4.2pt;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;white-space:nowrap;
+}
+.pie img{height:3.4mm;width:auto;display:block;filter:brightness(0)}
+
+/* ---------------- Sin código (invitados de honor) ----------------
+   No visitan módulos ni entran a rifas: su etiqueta lleva sólo nombre,
+   cargo y asiento, con el lugar ocupando todo el espacio del QR. */
+.etiqueta.sin-codigo .qr,
+.etiqueta.sin-codigo .codigo,
+.etiqueta.sin-codigo .cab .aviso{display:none}
+.etiqueta.sin-codigo .lugar{padding:2mm 3mm}
+.etiqueta.sin-codigo .lugar .v{font-size:24pt}
+.etiqueta.sin-codigo .lugar .et{font-size:5pt}
+
+/* Sin lugar asignado: el QR crece y ocupa el hueco. */
+.etiqueta.sin-lugar .lugar{display:none}
+.etiqueta.sin-lugar .qr,
+.etiqueta.sin-lugar .qr img{width:22mm;height:22mm}
+
+/* ---------------- Controles, sólo en pantalla ---------------- */
+.panel{
+  background:#fff;border:1px solid #dde4ea;border-radius:12px;
+  padding:20px 22px;max-width:420px;width:100%;
+  box-shadow:0 4px 16px rgba(16,24,40,.08);
+}
+.panel h2{font-size:16px;font-weight:800;color:#111}
+.panel p{font-size:13px;color:#55606d;margin-top:5px;line-height:1.55}
+.panel button{
+  margin-top:14px;background:#111;color:#fff;border:none;border-radius:9px;
+  padding:12px 22px;font-family:'Archivo';font-size:12.5px;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+}
+.panel button:hover{background:#333}
+.nota{
+  margin-top:14px;font-size:12px;color:#54606e;line-height:1.6;
+  background:#f7f9fb;border-radius:9px;padding:11px 13px;
+}
+.nota b{color:#1e2933}
+
+/* ---------------- Impresión ---------------- */
+@media print{
+  /* Sin @page size: el tamaño lo pone el papel del diálogo. Declarar uno
+     distinto al configurado hace que el navegador pagine. */
+  @page{ margin:0 }
+
+  html,body{
+    background:#fff; margin:0; padding:0; display:block;
+    width:auto; height:auto; min-height:0;
   }
-
-  .etiqueta{
-    width:var(--ancho);height:var(--alto);
-    background:#fff;color:#000;
-    padding:2.2mm 1.6mm;
-    display:flex;flex-direction:column;
-    /* El borde sólo se ve en pantalla, nunca al imprimir. */
-    border:1px solid #c9d3dc;
-    overflow:hidden;
+  /* Todo lo que no sea la etiqueta desaparece. Sin esto, cualquier
+     elemento suelto se lleva su propia hoja: de ahí salían las páginas
+     de más con el logo cortado. */
+  body > *{ display:none !important }
+  body > .etiqueta{
+    display:flex !important;
+    border:none;
+    page-break-inside:avoid; break-inside:avoid;
+    page-break-after:avoid; break-after:avoid;
   }
-
-  /* ---------- Encabezado del evento ---------- */
-  .ev{
-    display:flex;align-items:center;justify-content:space-between;
-    gap:2mm;padding-bottom:1.2mm;border-bottom:.4mm solid #000;
-  }
-  .ev .nom{
-    font-size:6.4pt;font-weight:1000;letter-spacing:.06em;
-    text-transform:uppercase;line-height:1.1;
-  }
-  .ev .fecha{font-size:5.4pt;font-weight:800;letter-spacing:.04em}
-  .ev img{height:5mm;max-width:20mm;object-fit:contain;display:block;
-          filter:brightness(0)}
-
-  /* ---------- Cuerpo: nombre + QR ---------- */
-  /* El nombre y la empresa van a ANCHO COMPLETO, arriba. El QR y el lugar
-     bajan a su propio renglón. Así ningún nombre se recorta: con 37
-     caracteres, el peor del archivo, a 13pt en dos líneas caben 22 por
-     renglón y sobra espacio. */
-  .cuerpo{flex:1;display:flex;flex-direction:column;padding:1.6mm 0;min-height:0}
-  .fila-baja{display:flex;gap:2.4mm;align-items:stretch;margin-top:auto;padding-top:1.1mm}
-
-  /* justify-content:center reparte el aire sobrante entre las líneas en
-     lugar de dejarlo todo abajo, que era el espacio muerto. */
-  .datos{min-width:0;display:flex;flex-direction:column;gap:.9mm}
-  /* Nombre completo, SIN recortes.
-     El peor caso del archivo tiene 37 caracteres; a 13pt en dos líneas
-     caben 22 por renglón, así que entra entero. El tamaño baja por tramos
-     sólo para que los muy largos no se vean apretados. */
-  /* Tamaños calculados para 50 mm de alto: el nombre más largo del
-     archivo tiene 37 caracteres y a 11pt caben 25 por renglón, así que
-     entra completo en dos líneas. */
-  /* Calculado para 55 mm de alto: el nombre más largo del archivo tiene
-     37 caracteres y a 12pt caben 23 por renglón, así que entra completo
-     en dos líneas sin recortarse. */
-  .nombre{
-    font-size:11pt;font-weight:1000;line-height:1.05;
-    letter-spacing:-.015em;
-    overflow-wrap:break-word;
-  }
-  .nombre.largo{font-size:9.8pt}
-  .nombre.muylargo{font-size:8.6pt}
-
-  /* La empresa o cargo también completa. Hay 16 casos de más de 70
-     caracteres y uno de 112: a 6pt en tres líneas caben 52 por renglón.
-     Antes se cortaba con puntos suspensivos en una sola línea. */
-  /* El cargo más largo tiene 112 caracteres: a 5.4pt caben 115 en dos
-     líneas, así que también entra sin recortarse. */
-  /* El cargo más largo tiene 112 caracteres: a 5.4pt caben 115 en dos
-     líneas, de modo que tampoco se corta. */
-  .empresa{
-    font-size:6pt;font-weight:700;letter-spacing:.01em;
-    line-height:1.14;overflow-wrap:break-word;
-    /* Hasta tres renglones: el cargo más largo tiene 112 caracteres y en
-       dos no cabría a este tamaño. */
-    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-  .empresa.larga{font-size:5.6pt}
-  .empresa.muylarga{font-size:5.2pt;line-height:1.1}
-  .codigo{
-    font-size:8.5pt;font-weight:1000;letter-spacing:.14em;
-    font-variant-numeric:tabular-nums;
-  }
-  .codigo-etq{font-size:4.4pt;font-weight:800;letter-spacing:.12em;
-              text-transform:uppercase;display:block}
-  .cod-caja{line-height:1.1}
-
-  /* Columna derecha: QR arriba, lugar abajo. Cuando no hay lugar el QR
-     crece y ocupa el hueco, para no dejar espacio muerto. */
-  .derecha{flex:1;display:flex;flex-direction:column;gap:1.2mm;justify-content:center}
-  .qr{flex:0 0 auto;display:grid;place-items:center}
-
-  /* El lugar es lo que más se mira en el gafete: quien orienta a la gente
-     lo lee de lejos, sin pedirle que se acerque. */
-  .lugar{
-    border:.5mm solid #000;padding:1.1mm 2mm;line-height:1;
-  }
-  .lugar .et{
-    display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
-    text-transform:uppercase;
-  }
-  .lugar .v{
-    display:block;font-size:19pt;font-weight:1000;letter-spacing:.01em;
-    margin-top:.5mm;font-variant-numeric:tabular-nums;
-  }
-  /* Sin lugar asignado: el QR se agranda y llena el espacio. */
-  .etiqueta.sin-lugar .qr img{width:20mm;height:20mm}
-
-  /* ---------- Invitados de honor, sin código ----------
-     No visitan módulos ni entran a rifas, así que su etiqueta lleva sólo
-     nombre, cargo y asiento. El lugar ocupa todo el ancho y se agranda:
-     es lo único que necesitan ver al llegar a su fila. */
-  .etiqueta.sin-codigo .qr,
-  .etiqueta.sin-codigo .cod-caja{ display:none }
-  .etiqueta.sin-codigo .derecha{ flex:1 }
-  .etiqueta.sin-codigo .lugar{ padding:2.2mm 3mm }
-  .etiqueta.sin-codigo .lugar .v{ font-size:26pt }
-  .etiqueta.sin-codigo .lugar .et{ font-size:5.4pt }
-  .etiqueta.sin-codigo .instruccion{ display:none }
-  .qr img{
-    width:17.5mm;height:17.5mm;display:block;
-    /* image-rendering nítido: un QR interpolado no escanea bien. */
-    image-rendering:pixelated;
-  }
-
-  /* ---------- Pie ---------- */
-  /* El pie lleva sólo la marca, centrada. Antes compartía renglón con la
-     instrucción y con padding-right para despegarla del borde, y entre
-     las dos cosas el logo se salía de la etiqueta. */
-  .pie{
-    display:flex;align-items:center;justify-content:center;
-    gap:1.2mm;padding-top:.9mm;margin-top:auto;
-    border-top:.3mm solid #000;
-  }
-  /* La instrucción vive ahora en la cabecera, debajo de la fecha. */
-  .instruccion{
-    font-size:4.6pt;font-weight:700;letter-spacing:.03em;
-    text-transform:uppercase;margin-top:.5mm;color:#222;
-  }
-  .pie .marca{display:flex;align-items:center;gap:1.2mm}
-  .pie .marca span{font-size:4.4pt;font-weight:800;letter-spacing:.1em;
-                   text-transform:uppercase;white-space:nowrap}
-  /* brightness(0) vuelve negro cualquier píxel opaco conservando la
-     transparencia. En térmico un logo a color sale como gris punteado. */
-  .pie .marca img{height:3.6mm;width:auto;display:block;filter:brightness(0)}
-
-  /* ---------- Controles (sólo pantalla) ---------- */
-  .panel{
-    background:#fff;border:1px solid #dde4ea;border-radius:12px;
-    padding:18px;width:100%;max-width:420px;
-  }
-  .panel h2{font-size:15px;font-weight:1000;margin-bottom:4px;color:#12233f}
-  .panel p{font-size:13px;color:#6b7b8f;line-height:1.5;margin-bottom:14px}
-  .panel button{
-    width:100%;font-family:inherit;font-size:15px;font-weight:800;
-    color:#fff;background:#12233f;border:none;border-radius:10px;
-    padding:13px;cursor:pointer;
-  }
-  .panel .aviso{
-    background:#fff8e6;border:1px solid #f0d99a;border-radius:9px;
-    padding:11px 13px;font-size:12.5px;color:#7a5a12;line-height:1.5;margin-top:12px;
-  }
-  .panel .aviso b{display:block;margin-bottom:2px}
-
-  /* ---------- Impresión ---------- */
-  @media print{
-    /* =====================================================================
-       Brother QL-800 · rollo continuo DK-2205 de 62 mm
-
-       Sin giros ni trucos: la página se declara con las mismas medidas
-       que la etiqueta y se deja que el controlador haga lo suyo. Las
-       pruebas impresas confirmaron que así sale bien orientada; girarla
-       desde el CSS sólo la descuadraba.
-
-       En el diálogo de macOS hay que elegir el tamaño de papel de 62 mm
-       con márgenes en cero y escala al 100 %.
-       ===================================================================== */
-    /* No se declara @page size a propósito.
-       El tamaño lo pone el papel elegido en el diálogo, y si el CSS pide
-       una medida distinta el navegador pagina y el pie se va a una
-       segunda hoja. Dejándolo libre, la etiqueta se adapta al papel que
-       haya configurado, sea 55, 58 o 60 mm. */
-    @page{ margin:0; }
-
-    html,body{ margin:0; padding:0; background:#fff; display:block }
-    .panel,.solo-pantalla{ display:none !important }
-
-    /* Altura FIJA con recorte.
-       Sin altura, el contenido crece sin límite y el pie se parte en
-       varias hojas: eso fue lo que sacó el logo a una página aparte. Con
-       altura fija y overflow:hidden, todo queda dentro de una sola
-       etiqueta pase lo que pase. */
-    .etiqueta{
-      width:62mm; height:53mm; overflow:hidden;
-      border:none; margin:0; padding:2mm 1.6mm;
-      display:flex; flex-direction:column;
-      page-break-inside:avoid; page-break-after:avoid;
-    }
-    /* Nada después de la etiqueta debe generar una hoja más. */
-    body > *:not(.etiqueta){ display:none !important }
-  }
-
+}
 </style>
 </head>
 <body>
 
 <div class="etiqueta" id="etiqueta">
-  <div class="ev">
+  <div class="cab">
     <div>
-      <div class="nom" id="e-evento">AMPI Tijuana 2026</div>
+      <div class="evento" id="e-evento">AMPI Tijuana 2026</div>
       <div class="fecha" id="e-fecha">2 y 3 de septiembre</div>
-      <div class="instruccion" id="e-instruccion">Muestra este código en cada módulo</div>
+      <div class="aviso" id="e-instruccion">Muestra este código en cada módulo</div>
     </div>
     <img id="e-logo" alt="" hidden>
   </div>
 
-  <div class="cuerpo">
-    <div class="datos">
-      <div class="nombre" id="e-nombre">Nombre del asistente</div>
-      <div class="empresa" id="e-empresa" hidden></div>
-    </div>
+  <div class="datos">
+    <div class="nombre" id="e-nombre">Nombre del asistente</div>
+    <div class="empresa" id="e-empresa" hidden></div>
+  </div>
 
-    <div class="fila-baja">
-      <div class="qr"><img id="e-qr" alt="Código QR"></div>
-      <div class="derecha">
-        <div class="lugar" id="e-lugar" hidden>
-          <span class="et">Fila · Asiento</span>
-          <span class="v" id="e-lugar-v"></span>
-        </div>
-        <div class="cod-caja">
-          <span class="codigo-etq">Código</span>
-          <span class="codigo" id="e-codigo">······</span>
-        </div>
+  <div class="medio">
+    <div class="qr"><img id="e-qr" alt=""></div>
+    <div class="lado">
+      <div class="lugar" id="e-lugar" hidden>
+        <span class="et">Fila · Asiento</span>
+        <span class="v" id="e-lugar-v"></span>
+      </div>
+      <div class="codigo" id="e-codigo-caja">
+        <span class="et">Código</span>
+        <span class="v" id="e-codigo">······</span>
       </div>
     </div>
   </div>
 
   <div class="pie">
-    <div class="marca">
-      <span>Powered by</span>
-      <img src="/img/quantum-h-sm.png" alt="Quantum Marketing">
-    </div>
+    <span>Powered by</span>
+    <img src="/img/quantum-h-sm.png" alt="Quantum Marketing">
   </div>
 </div>
 
-<div class="panel solo-pantalla">
+<div class="panel">
   <h2>Etiqueta del asistente</h2>
-  <p>Vista previa a tamaño real: 62 × 55 mm, para rollo continuo DK-2205
+  <p>Vista previa a tamaño real: 62 × 52 mm, para rollo continuo DK-2205
      en impresora Brother QL.</p>
   <button onclick="window.print()">Imprimir etiqueta</button>
-  <div class="aviso">
-    <b>Configuración de impresión (macOS)</b>
-    La etiqueta se adapta al papel que elijas, así que basta con que el
-    tamaño personalizado tenga <b>62 mm de ancho</b> y los cuatro
-    márgenes en <b>0</b>. Escala <b>100 %</b>, sin encabezados ni pies.
-    Si sale en dos hojas, sube un poco el alto del papel.
-    Guárdalo como preconfiguración para no repetirlo cada vez.
+  <div class="nota">
+    <b>Configuración de impresión.</b> El tamaño de papel debe tener
+    <b>62 mm de ancho</b> y los márgenes en <b>0</b>, con escala al
+    <b>100 %</b> y sin encabezados ni pies. Guárdalo como
+    preconfiguración para no repetirlo.
   </div>
 </div>
 
 <script src="/lib/qrcode.min.js"></script>
 <script>
-(function(){
+(function () {
   'use strict';
-  var $ = function(id){ return document.getElementById(id); };
+  var $ = function (id) { return document.getElementById(id); };
   var q = new URLSearchParams(location.search);
 
-  var qr      = q.get('qr') || '';
-  var nombre  = (q.get('nombre') || '').trim();
+  var qr       = q.get('qr') || '';
+  var nombre   = (q.get('nombre') || '').trim();
   var apellido = (q.get('apellido') || '').trim();
-  var codigo  = q.get('codigo') || '';
-  var empresa = (q.get('empresa') || '').trim();
-  var fila    = (q.get('fila') || '').trim();
-  var asiento = (q.get('asiento') || '').trim();
-  var auto    = q.get('auto') === '1';
-  var porId   = q.get('id');   // la mesa de entrega manda sólo el id
-  var sinQr   = q.get('sinqr') === '1';
+  var empresa  = (q.get('empresa') || '').trim();
+  var codigo   = q.get('codigo') || '';
+  var fila     = (q.get('fila') || '').trim();
+  var asiento  = (q.get('asiento') || '').trim();
+  var sinQr    = q.get('sinqr') === '1';
+  var auto     = q.get('auto') === '1';
+  var porId    = q.get('id');
 
   /**
-   * Nombre y apellido llegan por separado desde la base, así que no hay
-   * que adivinar dónde terminan los nombres de pila. Para la etiqueta
-   * usamos el primer nombre y el primer apellido, que es como la gente
-   * se presenta. Las partículas ("de la Torre") viajan con el apellido.
-   */
-  function primerNombre(v){
-    return String(v || '').trim().split(/\s+/)[0] || '';
-  }
-  function primerApellido(v){
-    var partes = String(v || '').trim().split(/\s+/).filter(Boolean);
-    if (!partes.length) return '';
-    var out = [partes[0]];
-    var i = 1;
-    // "de", "del", "la"… no son apellidos por sí solos: arrastran el siguiente.
-    while (i < partes.length && /^(de|del|la|las|los|y)$/i.test(out[out.length - 1])) {
-      out.push(partes[i]); i++;
-    }
-    return out.join(' ');
-  }
-
-  function pintarDatos() {
-  var visible = '';
-  if (nombre || apellido) {
-    visible = [primerNombre(nombre), primerApellido(apellido)]
-      .filter(Boolean).join(' ');
-    // Si sólo vino un campo con todo junto, lo usamos tal cual.
-    if (!visible) visible = String(nombre || '').trim();
-    $('e-nombre').textContent = visible;
-    // Nombres muy largos: se recortan a nombre de pila y primer apellido.
-    // En la lista hay títulos (Lic., Ing., Mtra., C.P.) y hasta cuatro
-    // palabras de nombre; a tamaño completo se veían apretados y el
-    // apellido se perdía. Se conserva el título porque en este público
-    // importa.
-    if (visible.length > 26) {
-      var partes = visible.split(' ').filter(Boolean);
-      var titulos = /^(lic|ing|mtra|mtro|dr|dra|c\.?p|arq|prof)\.?$/i;
-      var corto = [];
-      if (partes.length && titulos.test(partes[0])) corto.push(partes.shift());
-      // Nombre de pila (sólo el primero) y PRIMER APELLIDO.
-      //
-      // Los apellidos vienen al final, así que se toma la última palabra
-      // que quede después del nombre. Con "Pedro Alejandro Montejo
-      // Peterson", tomar las dos primeras daría "Pedro Alejandro" y
-      // perdería el apellido, que es justo lo que sirve para identificar
-      // a alguien en una mesa de registro.
-      if (partes.length) corto.push(partes.shift());          // nombre de pila
-      if (partes.length >= 2) {
-        corto.push(partes[partes.length - 2]);                // primer apellido
-      } else if (partes.length === 1) {
-        corto.push(partes[0]);
-      }
-      var propuesta = corto.join(' ');
-      // Sólo se usa si de verdad acorta: si el nombre ya venía corto en
-      // palabras, recortar no ayuda y se prefiere el completo.
-      if (propuesta.length >= 6 && propuesta.length < visible.length) {
-        visible = propuesta;
-        $('e-nombre').textContent = visible;
-      }
-    }
-
-    if (visible.length > 30) $('e-nombre').className = 'nombre muylargo';
-    else if (visible.length > 24) $('e-nombre').className = 'nombre largo';
-    else $('e-nombre').className = 'nombre';
-  }
-
-  if (codigo) $('e-codigo').textContent = codigo;
-  if (empresa) {
-    $('e-empresa').textContent = empresa;
-    $('e-empresa').hidden = false;
-    // Igual que el nombre: el tamaño baja para que quepa completa, en vez
-    // de cortar con puntos suspensivos.
-    $('e-empresa').className = 'empresa' +
-      (empresa.length > 80 ? ' muylarga' : (empresa.length > 46 ? ' larga' : ''));
-  } else {
-    $('e-empresa').hidden = true;
-  }
-
-  // El lugar asignado. Sin él, la clase 'sin-lugar' agranda el QR y el
-  // nombre para que no quede un hueco vacío en la etiqueta.
-  var hayLugar = fila && asiento;
-  $('e-lugar').hidden = !hayLugar;
-  $('etiqueta').classList.toggle('sin-lugar', !hayLugar);
-  $('etiqueta').classList.toggle('sin-codigo', sinQr);
-  // Quien no lleva código no tiene nada que mostrar en los módulos.
-  if ($('e-instruccion')) $('e-instruccion').hidden = sinQr;
-  if (hayLugar) $('e-lugar-v').textContent = fila + ' · ' + asiento;
-  }
-  pintarDatos();
-
-  // Datos del evento
-  fetch('/api/publico/marca')
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){
-      if (!d) return;
-      if (d.nombre_evento) $('e-evento').textContent = d.nombre_evento;
-    })
-    .catch(function(){});
-
-  // Logo del evento, si el administrador ya lo subió
-  var probe = new Image();
-  probe.onload = function(){
-    $('e-logo').src = '/api/marca/logo_evento';
-    $('e-logo').hidden = false;
-  };
-  probe.src = '/api/marca/logo_evento';
-
-  /**
-   * El QR se genera a 600 px con corrección de errores media y sin
-   * margen extra: a 22 mm impresos quedan ~7 px por módulo, de sobra
-   * para que cualquier cámara lo lea al vuelo.
-   */
-  function dibujarQr() {
-    // Los invitados de honor no llevan código: se salta el dibujado y se
-    // pasa directo a imprimir.
-    if (sinQr || !qr || !window.QRCode) { listoParaImprimir(); return; }
-    QRCode.toDataURL(qr, {
-      width: 700,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-      color: { dark: '#000000', light: '#ffffff' }
-    }, function(err, url){
-      if (err) { listoParaImprimir(); return; }
-      var img = $('e-qr');
-
-      // Se espera a que la imagen CARGUE, no sólo a asignarle la fuente.
-      // Con un simple retraso, si el navegador tardaba más de lo previsto
-      // la hoja salía en blanco: se imprimía antes de tener nada dibujado.
-      img.onload  = listoParaImprimir;
-      img.onerror = listoParaImprimir;
-      img.src = url;
-      // Por si la imagen venía en caché y onload ya no se dispara.
-      if (img.complete && img.naturalWidth) listoParaImprimir();
-    });
-  }
-
-  /**
-   * Dispara la impresión cuando la etiqueta está realmente lista.
+   * Nombres muy largos: título, nombre de pila y PRIMER APELLIDO.
    *
-   * Espera además a las tipografías: si se imprime antes de que carguen,
-   * el texto sale con la fuente de reserva o directamente en blanco.
-   * `once` evita imprimir dos veces cuando onload y complete coinciden.
+   * En esta lista hay títulos (Lic., Ing., Mtra., C.P.) y hasta cuatro
+   * palabras de nombre. Tomar las dos primeras dejaría "Pedro Alejandro"
+   * y perdería el apellido, que es justo lo que sirve para identificar a
+   * alguien en la mesa de registro.
    */
+  function acortar(v) {
+    if (!v || v.length <= 26) return v;
+    var partes = v.split(' ').filter(Boolean);
+    var titulos = /^(lic|ing|mtra|mtro|dr|dra|c\.?p|arq|prof)\.?$/i;
+    var corto = [];
+    if (partes.length && titulos.test(partes[0])) corto.push(partes.shift());
+    if (partes.length) corto.push(partes.shift());
+    if (partes.length >= 2) corto.push(partes[partes.length - 2]);
+    else if (partes.length === 1) corto.push(partes[0]);
+    var x = corto.join(' ');
+    return (x.length >= 6 && x.length < v.length) ? x : v;
+  }
+
+  function pintar() {
+    var completo = acortar([nombre, apellido].filter(Boolean).join(' '));
+    $('e-nombre').textContent = completo || '—';
+    $('e-nombre').className = 'nombre' +
+      (completo.length > 30 ? ' corto' : (completo.length > 22 ? ' largo' : ''));
+
+    if (empresa) {
+      $('e-empresa').textContent = empresa;
+      $('e-empresa').hidden = false;
+    } else {
+      $('e-empresa').hidden = true;
+    }
+
+    $('e-codigo').textContent = codigo || '······';
+
+    var hayLugar = !!(fila && asiento);
+    $('e-lugar').hidden = !hayLugar;
+    if (hayLugar) $('e-lugar-v').textContent = fila + ' · ' + asiento;
+
+    $('etiqueta').classList.toggle('sin-lugar', !hayLugar);
+    $('etiqueta').classList.toggle('sin-codigo', sinQr);
+
+    document.title = 'Etiqueta ' + (codigo || completo);
+  }
+
+  /* ---------- Impresión ---------- */
   var yaImprimio = false;
-  function listoParaImprimir() {
+
+  /**
+   * Se imprime cuando la etiqueta está lista de verdad: con la imagen
+   * del QR cargada y las tipografías resueltas. Con un retraso fijo, si
+   * el navegador tardaba un poco más salía la hoja en blanco.
+   */
+  function listo() {
     if (!auto || yaImprimio) return;
     yaImprimio = true;
-    var arranca = function(){ setTimeout(function(){ window.print(); }, 250); };
+    var arranca = function () { setTimeout(function () { window.print(); }, 250); };
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(arranca).catch(arranca);
     } else {
@@ -447,31 +304,63 @@
     }
   }
 
+  function dibujarQr() {
+    // Los invitados de honor no llevan código: se pasa directo.
+    if (sinQr || !qr || !window.QRCode) { listo(); return; }
+    QRCode.toDataURL(qr, {
+      width: 700, margin: 1, errorCorrectionLevel: 'M',
+      color: { dark: '#000000', light: '#ffffff' },
+    }, function (err, url) {
+      if (err) { listo(); return; }
+      var img = $('e-qr');
+      img.onload = listo;
+      img.onerror = listo;
+      img.src = url;
+      if (img.complete && img.naturalWidth) listo();   // venía en caché
+    });
+  }
+
+  /* ---------- Marca del evento ---------- */
+  fetch('/api/publico/marca')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (d && d.nombre_evento) $('e-evento').textContent = d.nombre_evento;
+    })
+    .catch(function () {});
+
+  var probe = new Image();
+  probe.onload = function () {
+    $('e-logo').src = '/api/marca/logo_evento';
+    $('e-logo').hidden = false;
+  };
+  probe.src = '/api/marca/logo_evento';
+
+  /* ---------- Arranque ---------- */
   if (porId) {
-    // Modo mesa de entrega: los datos se piden al servidor, que es la
-    // única fuente confiable. Así el practicante no puede imprimir una
-    // etiqueta con datos alterados desde la barra de direcciones.
+    // Los datos se piden al servidor, que es la única fuente confiable:
+    // así nadie imprime una etiqueta alterada desde la barra de
+    // direcciones.
     fetch('/api/admin/modulo/asistente/' + encodeURIComponent(porId),
           { credentials: 'same-origin' })
-      .then(function(r){ if (!r.ok) throw new Error('no'); return r.json(); })
-      .then(function(a){
+      .then(function (r) { if (!r.ok) throw new Error('no'); return r.json(); })
+      .then(function (a) {
         qr = a.qr_id || '';
         nombre = a.nombre || '';
         apellido = a.apellido || '';
-        codigo = a.codigo_corto || '';
         empresa = a.empresa || '';
+        codigo = a.codigo_corto || '';
         fila = a.fila || '';
         asiento = a.asiento != null ? String(a.asiento) : '';
         sinQr = !!a.sin_qr;
-        pintarDatos();
+        pintar();
         dibujarQr();
       })
-      .catch(function(){
+      .catch(function () {
         $('e-nombre').textContent = 'No encontrado';
-        // Ni siquiera con error se deja la ventana colgada esperando.
-        listoParaImprimir();
+        listo();
       });
   } else {
+    pintar();
     dibujarQr();
   }
 })();

@@ -43,7 +43,7 @@
   /* ---------- La etiqueta ---------- */
   .hoja{display:flex;flex-wrap:wrap;gap:12px}
   .eti{
-    width:62mm;height:55mm;background:#fff;color:#000;
+    width:62mm;height:52mm;background:#fff;color:#000;
     border-radius:3px;padding:2.2mm 1.6mm;display:flex;flex-direction:column;
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
@@ -81,7 +81,7 @@
   /* Columna derecha: QR arriba, lugar abajo. Mismo criterio que la
      etiqueta individual, para que la tira y las sueltas se vean igual. */
   .eti-dcha{flex:1;display:flex;flex-direction:column;gap:1.2mm;justify-content:center}
-  .eti-qr{width:17.5mm;height:17.5mm;flex-shrink:0}
+  .eti-qr{width:17mm;height:17mm;flex-shrink:0}
   .eti-qr canvas,.eti-qr img{width:100%;height:100%;display:block}
 
   .eti-lugar{border:.5mm solid #000;padding:1.1mm 2mm;line-height:1}
@@ -94,7 +94,7 @@
     font-variant-numeric:tabular-nums;
   }
   /* Sin lugar: el QR crece y ocupa el espacio, sin dejar hueco. */
-  .eti.sin-lugar .eti-qr{width:20mm;height:20mm}
+  .eti.sin-lugar .eti-qr{width:22mm;height:22mm}
 
   /* Invitados de honor: sin QR ni código, con el asiento en grande. */
   .eti.sin-codigo .eti-qr,
@@ -111,7 +111,7 @@
   }
   .eti-pie span{font-size:4.4pt;font-weight:800;letter-spacing:.1em;
                 text-transform:uppercase;white-space:nowrap}
-  .eti-pie img{height:3.6mm;width:auto;display:block;filter:brightness(0)}
+  .eti-pie img{height:3.4mm;width:auto;display:block;filter:brightness(0)}
 
   .eti-instruccion{
     font-size:4.6pt;font-weight:700;letter-spacing:.03em;
@@ -143,7 +143,7 @@
     /* Altura fija con recorte, igual que la etiqueta individual: sin ella
        el contenido crece y el pie se parte en hojas aparte. */
     .eti{
-      width:62mm; height:53mm; overflow:hidden;
+      width:62mm; height:52mm; overflow:hidden;
       border:0; border-radius:0; margin:0; padding:2mm 1.6mm;
       box-shadow:none; display:flex; flex-direction:column;
       page-break-inside:avoid; break-inside:avoid;
@@ -183,7 +183,7 @@
 
 <div class="aviso" id="aviso">
   Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
-  diálogo sea el personalizado de <b>62 × 55 mm</b> con márgenes en cero. La tira sale en el orden que elijas
+  diálogo sea el personalizado de <b>62 × 52 mm</b> con márgenes en cero. La tira sale en el orden que elijas
   arriba, así queda apilada en ese mismo orden sobre la mesa. Al terminar te
   preguntamos si marcamos el lote como impreso.
 </div>
