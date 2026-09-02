@@ -147,6 +147,31 @@ con código, y dejarla marcada haría que el siguiente se registrara mal.
 En la pantalla de confirmación no se muestra código ni QR, con un aviso
 de «Prensa · sin código» para que el personal no intente dárselo.
 
+## Día 2: cortesías de patrocinadores
+
+97 lugares más, en asientos del 21 en adelante de las filas existentes y
+en las filas nuevas H e I. No chocan con los del día 1.
+
+De ésos, 85 son cortesías sin nombre: su etiqueta lleva la **empresa**
+donde iría el nombre. Al entregarlas, la persona dice de qué empresa
+viene, se busca en el sistema y se le capturan sus datos ahí mismo.
+
+La búsqueda de la mesa de entrega ya cubre empresa, así que funciona sin
+cambios.
+
+### Botón «Dar asiento»
+
+En la mesa de entrega, quien no tenga lugar muestra este botón: se elige
+la fila y el sistema asigna el primer asiento libre. Va con la fila
+bloqueada, así que dos mesas asignando a la vez no repiten número.
+
+### Razones sociales con números
+
+«NOT 32» y «EJE 11» se rechazaban al importar porque la validación sólo
+aceptaba letras. Nueve carnets se quedaban fuera. Ahora se aceptan
+dígitos, aunque el nombre debe seguir empezando con letra para que un
+teléfono mal pegado no pase como válido.
+
 ## Cómo aplicarlo
 
 ```

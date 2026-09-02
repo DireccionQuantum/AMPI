@@ -54,7 +54,12 @@ function limpiarNombre(raw) {
     .trim()
     .replace(/\s+/g, ' ');
   if (v.length < 2 || v.length > 60) return null;
-  return /^[\p{L}][\p{L}\s'’.-]*$/u.test(v) ? v : null;
+  // Se aceptan dígitos porque muchas razones sociales los llevan:
+  // "NOT 32", "EJE 11", "Grupo 4S". Antes se rechazaban y esos carnets
+  // se quedaban fuera de la importación.
+  // El primer carácter sigue siendo una letra, para que un teléfono mal
+  // pegado en la columna del nombre no pase como válido.
+  return /^[\p{L}][\p{L}\p{N}\s'’.,&/-]*$/u.test(v) ? v : null;
 }
 
 function limpiarEmail(raw) {

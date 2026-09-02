@@ -727,6 +727,55 @@ module.exports = function adminRoutes(db, io) {
     } catch (err) { next(err); }
   });
 
+  /**
+   * Asigna el siguiente asiento libre de una fila.
+   *
+   * Para el día 2: llega alguien sin lugar, se le da el próximo
+   * disponible sin que el personal tenga que recordar cuál sigue.
+   *
+   * Va dentro de una transacción con la fila bloqueada: si dos mesas
+   * asignan al mismo tiempo, la segunda espera y toma el siguiente, en
+   * vez de repetir el asiento.
+   */
+  router.post('/modulo/asignar-asiento', soloStaff, async (req, res, next) => {
+    try {
+      const id = parseInt((req.body || {}).id, 10);
+      const fila = String((req.body || {}).fila || '').trim().toUpperCase();
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Id inválido' });
+      }
+      if (!/^[A-Z]{1,4}$/.test(fila)) {
+        return res.status(400).json({ error: 'Fila inválida' });
+      }
+
+      const r = await enTransaccion(async (client) => {
+        // Se bloquean los asientos ya usados de esa fila para que dos
+        // asignaciones simultáneas no elijan el mismo número.
+        const ocup = await client.query(
+          `SELECT asiento FROM asistentes
+            WHERE upper(fila) = $1 AND asiento IS NOT NULL
+            ORDER BY asiento FOR UPDATE`,
+          [fila]
+        );
+        const usados = new Set(ocup.rows.map((x) => x.asiento));
+        let libre = 1;
+        while (usados.has(libre) && libre < 200) libre++;
+        if (libre >= 200) return { error: 'No hay asientos libres en esa fila' };
+
+        const upd = await client.query(
+          `UPDATE asistentes SET fila = $2, asiento = $3
+            WHERE id = $1 RETURNING id, nombre, apellido, empresa, fila, asiento`,
+          [id, fila, libre]
+        );
+        if (!upd.rows[0]) return { error: 'Asistente no encontrado' };
+        return { ok: true, asistente: upd.rows[0] };
+      });
+
+      if (r.error) return res.status(r.error.includes('encontrado') ? 404 : 409).json(r);
+      res.json(r);
+    } catch (err) { next(err); }
+  });
+
   /** Filas del salón con su avance de impresión, para el selector. */
   router.get('/modulo/filas', soloStaff, async (req, res, next) => {
     try {

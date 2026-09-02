@@ -212,6 +212,8 @@
         (entregado
           ? '<button class="b b-s" data-acc="deshacer">Deshacer</button>'
           : '<button class="b b-p" data-acc="entregar">Entregar</button>') +
+        (a.fila && a.asiento ? '' :
+          '<button class="b b-s" data-acc="asiento">Dar asiento</button>') +
         '<button class="b b-s" data-acc="imprimir">Imprimir</button>' +
       '</div>' +
     '</div>';
@@ -344,6 +346,33 @@
 
     if (acc === 'correo') {
       pedirCorreo(id, fila);
+      return;
+    }
+
+    if (acc === 'asiento') {
+      var f = prompt('¿En qué fila lo sentamos?\n\n' +
+                     'Se le dará el siguiente asiento libre de esa fila.', 'I');
+      if (!f) return;
+      btn.disabled = true;
+      fetch('/api/admin/modulo/asignar-asiento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ id: id, fila: f.trim() }),
+      })
+        .then(function (r) {
+          return r.json().then(function (d) { if (!r.ok) throw d; return d; });
+        })
+        .then(function (d) {
+          var a = d.asistente;
+          alert('Asiento asignado: ' + a.fila + '-' + a.asiento +
+                '\n\nImprime su etiqueta para que lo lleve consigo.');
+          buscar();
+        })
+        .catch(function (d) {
+          btn.disabled = false;
+          alert((d && d.error) || 'No se pudo asignar');
+        });
       return;
     }
 

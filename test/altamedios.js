@@ -91,6 +91,22 @@ const DATOS = { nombre: 'Laura', apellido: 'Medina', telefono: '6641234567' };
   chk(!r.ok && r.errores && r.errores.email,
       'con correo inválido: avisa en lugar de guardarlo', r.errores);
 
+  console.log('\n=== Empresa opcional ===');
+  c = cliente();
+  r = await v.registrarNuevo(c, DATOS);
+  chk(r.ok && c.insertados[0][5] === null,
+      'sin empresa: se registra igual', c.insertados[0][5]);
+
+  c = cliente();
+  r = await v.registrarNuevo(c, { ...DATOS, empresa: '  Grupo Constructor  ' });
+  chk(c.insertados[0][5] === 'Grupo Constructor',
+      'con empresa: la guarda sin espacios de sobra', c.insertados[0][5]);
+
+  c = cliente();
+  await v.registrarNuevo(c, { ...DATOS, empresa: 'x'.repeat(120) });
+  chk(c.insertados[0][5].length === 80,
+      'una empresa larguísima se recorta a 80', c.insertados[0][5].length);
+
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
   console.log('='.repeat(52));

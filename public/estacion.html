@@ -145,8 +145,15 @@
           <label for="correo">Correo <span class="opc">— opcional</span></label>
           <input id="correo" type="email" inputmode="email" autocomplete="off"
                  autocapitalize="off" autocorrect="off" spellcheck="false"
-                 placeholder="correo@ejemplo.com" enterkeyhint="done">
+                 placeholder="correo@ejemplo.com" enterkeyhint="next">
           <div class="error-txt" id="e-email"></div>
+        </div>
+        <div class="campo">
+          <label for="empresa">Empresa <span class="opc">— opcional</span></label>
+          <input id="empresa" autocomplete="off" autocapitalize="words"
+                 maxlength="80" placeholder="Inmobiliaria, notaría, medio…"
+                 enterkeyhint="done">
+          <div class="error-txt" id="e-empresa"></div>
         </div>
         <label class="opcion" id="caja-medios">
           <input type="checkbox" id="sin-qr">
@@ -239,7 +246,7 @@
 
   /* ---------- Registrar ---------- */
   function limpiarErrores(){
-    ['nombre','apellido','telefono','correo'].forEach(function(c){
+    ['nombre','apellido','telefono','correo','empresa'].forEach(function(c){
       $(c).classList.remove('malo');
       var e = $('e-' + (c === 'correo' ? 'email' : c));
       if (e) e.classList.remove('ver');
@@ -257,6 +264,7 @@
       apellido: $('apellido').value,
       telefono: $('telefono').value,
       email: $('correo').value,
+      empresa: $('empresa').value,
       sin_qr: $('sin-qr').checked,
     }).then(function(res){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
@@ -287,6 +295,7 @@
       // dejarla marcada haría que el siguiente se registrara mal.
       $('sin-qr').checked = false;
       $('correo').value = '';
+      $('empresa').value = '';
       mostrarListo(res.d, res.d.yaExistia);
     }).catch(function(){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
