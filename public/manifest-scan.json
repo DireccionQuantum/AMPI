@@ -3,13 +3,30 @@
   "short_name": "Escáner AMPI",
   "description": "Escanea los códigos de los asistentes que visitan tu módulo.",
   "start_url": "/scan",
-  "scope": "/scan",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#12233f",
   "theme_color": "#12233f",
   "orientation": "portrait",
+  "lang": "es-MX",
   "icons": [
-    { "src": "/img/quantum-atomo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/img/quantum-atomo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    {
+      "src": "/img/scan-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/scan-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/scan-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

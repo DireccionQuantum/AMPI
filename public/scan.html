@@ -9,6 +9,12 @@
      de la pantalla de inicio, el permiso queda concedido de forma estable y
      el navegador deja de preguntarlo en cada apertura. -->
 <link rel="manifest" href="/manifest-scan.json">
+<!-- iPhone no lee el manifiesto: necesita sus propias etiquetas o la
+     pantalla de inicio guarda una captura de la página en vez del ícono. -->
+<link rel="apple-touch-icon" href="/img/scan-apple.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Escáner AMPI">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Escáner AMPI">
@@ -132,8 +138,17 @@
            cámara deje de pedirse en cada apertura. Se lo explicamos aquí
            porque nadie lo hace por su cuenta. -->
       <div class="aviso oculto" id="instalar" style="margin-top:18px">
-        <b>Instálalo para no dar permisos cada vez</b><br>
-        <span id="instalar-como"></span>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <img src="/img/scan-192.png" alt="" width="46" height="46"
+               style="border-radius:11px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.18)">
+          <div>
+            <b>Instálalo para no dar permisos cada vez</b><br>
+            <span id="instalar-como"></span>
+            <span style="display:block;margin-top:6px;opacity:.8">
+              Busca este ícono en tu pantalla de inicio.
+            </span>
+          </div>
+        </div>
       </div>
     </section>
 
