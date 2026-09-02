@@ -48,7 +48,19 @@
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
   }
-  @media print{ .eti{border:0;box-shadow:none} }
+  @media print{
+    .eti{border:0;box-shadow:none}
+    /* Mismo giro que la etiqueta individual: el controlador de la QL-800
+       en macOS saca el contenido girado y se compensa aquí. */
+    @page{ size:55mm 62mm; margin:0 }
+    .hoja{ display:block }
+    .eti{
+      width:62mm; height:55mm;
+      transform: rotate(90deg) translateY(-62mm);
+      transform-origin: top left;
+      page-break-after: always; margin:0;
+    }
+  }
   .eti-top{
     font-size:8pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
     border-bottom:.4mm solid #000;padding-bottom:1.2mm;line-height:1.25;

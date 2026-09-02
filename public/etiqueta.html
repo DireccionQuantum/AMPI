@@ -169,6 +169,21 @@
     /* El tamaño de página debe coincidir EXACTO con la etiqueta,
        si no la QL deja franjas en blanco o parte el diseño. */
     @page{ size:62mm 55mm; margin:0; }
+
+    /* ---- Giro para la QL-800 en macOS ----
+       El controlador saca el contenido girado 90° respecto al papel: el
+       texto corre a lo largo del rollo en vez de a lo ancho. Se compensa
+       girando el diseño en sentido contrario. La página se declara con
+       las medidas invertidas (55 de ancho × 62 de alto) para que, ya
+       girada, quede con los 62 mm de base como se pega en el carnet. */
+    @page{ size:55mm 62mm; margin:0; }
+    body{ width:55mm; height:62mm; position:relative; overflow:hidden }
+    .etiqueta{
+      position:absolute; top:50%; left:50%;
+      width:62mm; height:55mm;
+      transform: translate(-50%,-50%) rotate(90deg);
+      transform-origin: center center;
+    }
   }
 
 </style>
