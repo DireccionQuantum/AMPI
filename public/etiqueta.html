@@ -69,12 +69,12 @@
      37 caracteres y a 12pt caben 23 por renglón, así que entra completo
      en dos líneas sin recortarse. */
   .nombre{
-    font-size:12pt;font-weight:1000;line-height:1.05;
+    font-size:11pt;font-weight:1000;line-height:1.05;
     letter-spacing:-.015em;
     overflow-wrap:break-word;
   }
-  .nombre.largo{font-size:10.5pt}
-  .nombre.muylargo{font-size:9.2pt}
+  .nombre.largo{font-size:9.8pt}
+  .nombre.muylargo{font-size:8.6pt}
 
   /* La empresa o cargo también completa. Hay 16 casos de más de 70
      caracteres y uno de 112: a 6pt en tres líneas caben 52 por renglón.
@@ -120,7 +120,7 @@
     margin-top:.5mm;font-variant-numeric:tabular-nums;
   }
   /* Sin lugar asignado: el QR se agranda y llena el espacio. */
-  .etiqueta.sin-lugar .qr img{width:22mm;height:22mm}
+  .etiqueta.sin-lugar .qr img{width:20mm;height:20mm}
 
   /* ---------- Invitados de honor, sin código ----------
      No visitan módulos ni entran a rifas, así que su etiqueta lleva sólo
@@ -134,7 +134,7 @@
   .etiqueta.sin-codigo .lugar .et{ font-size:5.4pt }
   .etiqueta.sin-codigo .instruccion{ display:none }
   .qr img{
-    width:19mm;height:19mm;display:block;
+    width:17.5mm;height:17.5mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
     image-rendering:pixelated;
   }
@@ -145,7 +145,7 @@
      las dos cosas el logo se salía de la etiqueta. */
   .pie{
     display:flex;align-items:center;justify-content:center;
-    gap:1.4mm;padding-top:1.2mm;margin-top:auto;
+    gap:1.2mm;padding-top:.9mm;margin-top:auto;
     border-top:.3mm solid #000;
   }
   /* La instrucción vive ahora en la cabecera, debajo de la fecha. */
@@ -158,7 +158,7 @@
                    text-transform:uppercase;white-space:nowrap}
   /* brightness(0) vuelve negro cualquier píxel opaco conservando la
      transparencia. En térmico un logo a color sale como gris punteado. */
-  .pie .marca img{height:4mm;width:auto;display:block;filter:brightness(0)}
+  .pie .marca img{height:3.6mm;width:auto;display:block;filter:brightness(0)}
 
   /* ---------- Controles (sólo pantalla) ---------- */
   .panel{
@@ -201,15 +201,19 @@
     html,body{ margin:0; padding:0; background:#fff; display:block }
     .panel,.solo-pantalla{ display:none !important }
 
+    /* Altura FIJA con recorte.
+       Sin altura, el contenido crece sin límite y el pie se parte en
+       varias hojas: eso fue lo que sacó el logo a una página aparte. Con
+       altura fija y overflow:hidden, todo queda dentro de una sola
+       etiqueta pase lo que pase. */
     .etiqueta{
-      width:100%; border:none; margin:0;
-      /* Altura libre: ocupa lo que necesite y nunca fuerza salto. */
-      height:auto; min-height:0;
+      width:62mm; height:53mm; overflow:hidden;
+      border:none; margin:0; padding:2mm 1.6mm;
+      display:flex; flex-direction:column;
       page-break-inside:avoid; page-break-after:avoid;
     }
-    /* El pie se pega al final del contenido, no al fondo de una caja de
-       altura fija que podría no existir. */
-    .etiqueta .pie{ margin-top:1.4mm }
+    /* Nada después de la etiqueta debe generar una hoja más. */
+    body > *:not(.etiqueta){ display:none !important }
   }
 
 </style>
