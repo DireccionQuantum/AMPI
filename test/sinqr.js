@@ -77,6 +77,31 @@ chk(typeof mod.ORDENES === 'object', 'el servicio expone los órdenes');
 chk(mod.ORDENES.lugar !== undefined, 'incluye el orden por lugar del salón');
 chk(typeof mod.filasDelSalon === 'function', 'expone las filas del salón');
 
+console.log('\n=== 6. Compañeros con el mismo teléfono ===');
+// El índice único sobre telefono impedía darlos de alta: seis personas
+// de la fila E se quedaban fuera aunque el importador ya no las
+// rechazara. La migración 007 lo cambia por uno de nombre+apellido+tel.
+const filaE = validas.filter((f) => f.fila === 'E');
+chk(filaE.length === 20, 'la fila E trae sus 20 asientos', filaE.length);
+
+const porTel = new Map();
+validas.forEach((f) => {
+  if (!f.telefono) return;
+  porTel.set(f.telefono, (porTel.get(f.telefono) || 0) + 1);
+});
+const compartidos = [...porTel.values()].filter((n) => n > 1).length;
+chk(compartidos === 2, 'hay 2 teléfonos compartidos por varias personas', compartidos);
+
+// Nadie repite nombre+apellido+teléfono: el índice nuevo es viable.
+const claves = new Map();
+validas.forEach((f) => {
+  if (!f.telefono) return;
+  const k = [(f.nombre || '').toLowerCase(), (f.apellido || '').toLowerCase(), f.telefono].join('|');
+  claves.set(k, (claves.get(k) || 0) + 1);
+});
+chk([...claves.values()].every((n) => n === 1),
+    'ninguna persona repetida de verdad: el índice único es viable');
+
 console.log('\n' + '='.repeat(54));
 console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
 console.log('='.repeat(54));

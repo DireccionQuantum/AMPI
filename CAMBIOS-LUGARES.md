@@ -118,6 +118,20 @@ hubiera, pero los 27 invitados de honor no generan imagen. Nunca llegaba
 a cero y el botón no se habilitaba. Ahora sólo cuenta las que sí llevan
 código.
 
+### La base bloqueaba los teléfonos compartidos
+
+Seis personas de la fila E no entraban aunque el importador ya no las
+rechazara: `ix_asis_tel` era un índice ÚNICO sobre `telefono`, así que
+PostgreSQL impedía dos registros con el mismo número.
+
+Los compañeros de una oficina registran el conmutador de su empresa:
+cinco de Next Bienes Raíces y tres de Notaría 8 en esta lista.
+
+La migración 007 lo cambia por un índice único de nombre + apellido +
+teléfono, que sí distingue un duplicado real de dos compañeros.
+
+**Hay que correr `npm run migrate` antes de reimportar.**
+
 ## Cómo aplicarlo
 
 ```
