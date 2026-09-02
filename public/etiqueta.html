@@ -14,7 +14,7 @@
      grises claros ni colores, que salen sucios o no salen.
      ============================================================ */
 
-  :root{ --ancho:62mm; --alto:42mm; }
+  :root{ --ancho:62mm; --alto:55mm; }
 
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -27,7 +27,7 @@
   .etiqueta{
     width:var(--ancho);height:var(--alto);
     background:#fff;color:#000;
-    padding:1.6mm;
+    padding:2.2mm 1.6mm;
     display:flex;flex-direction:column;
     /* El borde sólo se ve en pantalla, nunca al imprimir. */
     border:1px solid #c9d3dc;
@@ -52,8 +52,8 @@
      bajan a su propio renglón. Así ningún nombre se recorta: con 37
      caracteres, el peor del archivo, a 13pt en dos líneas caben 22 por
      renglón y sobra espacio. */
-  .cuerpo{flex:1;display:flex;flex-direction:column;padding:1mm 0;min-height:0}
-  .fila-baja{display:flex;gap:2.4mm;align-items:stretch;margin-top:auto;padding-top:1mm}
+  .cuerpo{flex:1;display:flex;flex-direction:column;padding:1.6mm 0;min-height:0}
+  .fila-baja{display:flex;gap:2.6mm;align-items:stretch;margin-top:auto;padding-top:1.4mm}
 
   /* justify-content:center reparte el aire sobrante entre las líneas en
      lugar de dejarlo todo abajo, que era el espacio muerto. */
@@ -69,12 +69,12 @@
      37 caracteres y a 12pt caben 23 por renglón, así que entra completo
      en dos líneas sin recortarse. */
   .nombre{
-    font-size:11pt;font-weight:1000;line-height:1.05;
+    font-size:12pt;font-weight:1000;line-height:1.05;
     letter-spacing:-.015em;
     overflow-wrap:break-word;
   }
-  .nombre.largo{font-size:9.6pt}
-  .nombre.muylargo{font-size:8.4pt}
+  .nombre.largo{font-size:10.5pt}
+  .nombre.muylargo{font-size:9.2pt}
 
   /* La empresa o cargo también completa. Hay 16 casos de más de 70
      caracteres y uno de 112: a 6pt en tres líneas caben 52 por renglón.
@@ -109,18 +109,18 @@
   /* El lugar es lo que más se mira en el gafete: quien orienta a la gente
      lo lee de lejos, sin pedirle que se acerque. */
   .lugar{
-    border:.45mm solid #000;padding:.8mm 1.6mm;line-height:1;
+    border:.5mm solid #000;padding:1.1mm 2mm;line-height:1;
   }
   .lugar .et{
     display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
     text-transform:uppercase;
   }
   .lugar .v{
-    display:block;font-size:15pt;font-weight:1000;letter-spacing:.01em;
+    display:block;font-size:19pt;font-weight:1000;letter-spacing:.01em;
     margin-top:.5mm;font-variant-numeric:tabular-nums;
   }
   /* Sin lugar asignado: el QR se agranda y llena el espacio. */
-  .etiqueta.sin-lugar .qr img{width:21mm;height:21mm}
+  .etiqueta.sin-lugar .qr img{width:25mm;height:25mm}
   .qr img{
     width:22mm;height:22mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
@@ -130,7 +130,7 @@
   /* ---------- Pie ---------- */
   .pie{
     display:flex;align-items:center;justify-content:space-between;
-    gap:2mm;padding-top:.8mm;border-top:.3mm solid #000;
+    gap:2mm;padding-top:1mm;border-top:.3mm solid #000;
   }
   .pie .instruccion{font-size:5pt;font-weight:800;letter-spacing:.02em;line-height:1.2}
   .pie .marca{display:flex;align-items:center;gap:1.2mm}
@@ -168,7 +168,7 @@
     }
     /* El tamaño de página debe coincidir EXACTO con la etiqueta,
        si no la QL deja franjas en blanco o parte el diseño. */
-    @page{ size:62mm 42mm; margin:0; }
+    @page{ size:62mm 55mm; margin:0; }
   }
 
 </style>
@@ -216,7 +216,7 @@
 
 <div class="panel solo-pantalla">
   <h2>Etiqueta del asistente</h2>
-  <p>Vista previa a tamaño real: 62 × 42 mm, para rollo continuo DK-2205
+  <p>Vista previa a tamaño real: 62 × 55 mm, para rollo continuo DK-2205
      en impresora Brother QL.</p>
   <button onclick="window.print()">Imprimir etiqueta</button>
   <div class="aviso">

@@ -52,6 +52,19 @@ la fuente de reserva o en blanco.
 El lote tenía el mismo defecto y también quedó corregido; ahí era más
 probable, porque son 185 imágenes en lugar de una.
 
+## Dónde corta la impresora
+
+El largo del corte **lo decide el controlador de la Brother, no el
+diseño**. Se comprobó cambiando el alto de 55 a 42 mm: la tira salió
+igual de larga, sólo con el contenido más chico.
+
+Para que corte a 55 mm hay que crear un tamaño de papel personalizado en
+macOS (Tamaño del papel → Administrar tamaños personalizados): 62 de
+ancho, 55 de alto, márgenes en cero. Y guardarlo como predeterminado.
+
+Si el diálogo de Chrome no muestra esa opción, usar «Imprimir usando el
+diálogo del sistema», que es el nativo de macOS y siempre la tiene.
+
 ## Cómo aplicarlo
 
 ```
