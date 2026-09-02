@@ -78,13 +78,16 @@ body{
 
 /* QR y lugar, en el mismo renglón */
 .medio{
-  flex:1; min-height:0; display:flex; gap:2.2mm; align-items:center;
-  padding:1.2mm 0;
+  flex:1 1 auto; min-height:0; display:flex; gap:2.2mm; align-items:center;
+  padding:1.2mm 0; overflow:hidden;
 }
 .qr{width:17mm;height:17mm;flex-shrink:0;line-height:0}
 .qr img{width:17mm;height:17mm;display:block;image-rendering:pixelated}
 
-.lado{flex:1;min-width:0;display:flex;flex-direction:column;gap:.9mm;justify-content:center}
+.lado{
+  flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;
+  gap:.8mm;justify-content:center;overflow:hidden;
+}
 
 /* El lugar es lo que más se mira: quien orienta lo lee de lejos. */
 .lugar{border:.45mm solid #000;padding:.9mm 1.8mm;line-height:1}
@@ -100,18 +103,25 @@ body{
   display:block;font-size:4pt;font-weight:800;letter-spacing:.12em;
   text-transform:uppercase;
 }
-.codigo .v{display:block;font-size:7.4pt;font-weight:900;letter-spacing:.13em}
+.codigo{flex-shrink:0}
+.codigo .v{
+  display:block;font-size:7.4pt;font-weight:900;letter-spacing:.13em;
+  line-height:1.1;white-space:nowrap;overflow:hidden;
+}
 
 /* Pie: la marca del proveedor, centrada */
+/* El pie reserva su altura con flex-shrink:0 y un alto mínimo: sin eso
+   el bloque de arriba lo invadía y el código quedaba encima del logo. */
 .pie{
-  flex-shrink:0; border-top:.3mm solid #000; padding-top:.8mm;
-  display:flex; align-items:center; justify-content:center; gap:1.2mm;
+  flex:0 0 auto; min-height:6mm;
+  border-top:.3mm solid #000; padding-top:1mm; margin-top:.6mm;
+  display:flex; align-items:center; justify-content:center; gap:1.6mm;
 }
 .pie span{
-  font-size:4.2pt;font-weight:800;letter-spacing:.1em;
+  font-size:5pt;font-weight:800;letter-spacing:.1em;
   text-transform:uppercase;white-space:nowrap;
 }
-.pie img{height:3.4mm;width:auto;display:block;filter:brightness(0)}
+.pie img{height:4.4mm;width:auto;display:block;filter:brightness(0)}
 
 /* ---------------- Sin código (invitados de honor) ----------------
    No visitan módulos ni entran a rifas: su etiqueta lleva sólo nombre,
