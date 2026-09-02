@@ -43,7 +43,7 @@
   /* ---------- La etiqueta ---------- */
   .hoja{display:flex;flex-wrap:wrap;gap:12px}
   .eti{
-    width:62mm;height:48mm;background:#fff;color:#000;
+    width:62mm;height:55mm;background:#fff;color:#000;
     border-radius:3px;padding:2.2mm 1.6mm;display:flex;flex-direction:column;
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
@@ -143,19 +143,24 @@
     /* Altura fija con recorte, igual que la etiqueta individual: sin ella
        el contenido crece y el pie se parte en hojas aparte. */
     .eti{
-      width:62mm; height:48mm; overflow:hidden;
+      width:62mm; height:55mm; overflow:hidden;
       border:0; border-radius:0; margin:0; padding:2mm 1.6mm;
       box-shadow:none; display:flex; flex-direction:column;
       page-break-inside:avoid; break-inside:avoid;
       page-break-after:always; break-after:page;
     }
     .eti:last-child{page-break-after:auto;break-after:auto}
-    /* Nada dentro de la etiqueta salta de página: el pie se iba solo a
-       otra hoja cuando no cabía por décimas. */
+    /* Nada dentro de la etiqueta salta de página. */
     .eti *{
       page-break-inside:avoid; break-inside:avoid;
       page-break-before:avoid; break-before:avoid;
+      page-break-after:avoid; break-after:avoid;
     }
+    /* El contenedor no debe aportar altura propia: cualquier margen o
+       relleno suyo se suma al de las etiquetas y termina generando una
+       hoja de más al final. */
+    .zona, .hoja{ margin:0; padding:0; height:auto; overflow:visible }
+    .hoja::after, .zona::after{ content:none !important }
   }
 </style>
 </head>
@@ -189,7 +194,7 @@
 
 <div class="aviso" id="aviso">
   Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
-  diálogo sea el personalizado de <b>62 × 48 mm</b> con márgenes en cero. La tira sale en el orden que elijas
+  diálogo sea el personalizado de <b>62 × 55 mm</b> con márgenes en cero. La tira sale en el orden que elijas
   arriba, así queda apilada en ese mismo orden sobre la mesa. Al terminar te
   preguntamos si marcamos el lote como impreso.
 </div>
