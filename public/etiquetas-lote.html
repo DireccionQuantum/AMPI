@@ -43,7 +43,7 @@
   /* ---------- La etiqueta ---------- */
   .hoja{display:flex;flex-wrap:wrap;gap:12px}
   .eti{
-    width:62mm;height:60mm;background:#fff;color:#000;
+    width:62mm;height:55mm;background:#fff;color:#000;
     border-radius:3px;padding:3.5mm 4mm;display:flex;flex-direction:column;
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
@@ -62,15 +62,15 @@
   .eti-datos{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
   /* Sin recortes: el nombre más largo del archivo tiene 37 caracteres y
      a 13pt en dos renglones entra completo. */
-  .eti-nom{font-size:13pt;font-weight:900;line-height:1.05;
+  .eti-nom{font-size:12pt;font-weight:900;line-height:1.05;
            letter-spacing:-.015em;overflow-wrap:break-word}
-  .eti-nom.chico{font-size:11.5pt}
-  .eti-nom.mini{font-size:10pt}
+  .eti-nom.chico{font-size:10.5pt}
+  .eti-nom.mini{font-size:9.2pt}
   /* La empresa o cargo también completa, hasta en tres renglones. */
-  .eti-emp{font-size:6.4pt;font-weight:700;margin-top:.9mm;
-           line-height:1.18;overflow-wrap:break-word}
+  .eti-emp{font-size:6.2pt;font-weight:700;margin-top:.9mm;
+           line-height:1.16;overflow-wrap:break-word}
   .eti-emp.larga{font-size:5.8pt}
-  .eti-emp.muylarga{font-size:5.2pt;line-height:1.14}
+  .eti-emp.muylarga{font-size:5.4pt;line-height:1.12}
   .eti-cod{
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:10pt;font-weight:700;letter-spacing:.1em;margin-top:1.5mm;
@@ -79,7 +79,7 @@
   /* Columna derecha: QR arriba, lugar abajo. Mismo criterio que la
      etiqueta individual, para que la tira y las sueltas se vean igual. */
   .eti-dcha{flex:1;display:flex;flex-direction:column;gap:1.2mm;justify-content:center}
-  .eti-qr{width:22mm;height:22mm;flex-shrink:0}
+  .eti-qr{width:21mm;height:21mm;flex-shrink:0}
   .eti-qr canvas,.eti-qr img{width:100%;height:100%;display:block}
 
   .eti-lugar{border:.5mm solid #000;padding:1.1mm 2mm;line-height:1}
@@ -88,16 +88,16 @@
     text-transform:uppercase;
   }
   .eti-lugar span{
-    display:block;font-size:17pt;font-weight:1000;margin-top:.5mm;
+    display:block;font-size:19pt;font-weight:1000;margin-top:.5mm;
     font-variant-numeric:tabular-nums;
   }
   /* Sin lugar: el QR crece y ocupa el espacio, sin dejar hueco. */
-  .eti.sin-lugar .eti-qr{width:26mm;height:26mm}
+  .eti.sin-lugar .eti-qr{width:25mm;height:25mm}
   .eti-pie{
     border-top:.3mm solid #000;padding-top:1.2mm;display:flex;
     justify-content:space-between;align-items:flex-end;font-size:6.5pt;
   }
-  .eti-pie img{height:4.2mm;filter:brightness(0)}   /* logo en negro puro para térmica */
+  .eti-pie img{height:3.4mm;filter:brightness(0)}   /* logo en negro puro para térmica */
 
   /* Marca de ya impresa, sólo en pantalla */
   .eti-ya{
@@ -107,7 +107,7 @@
   }
 
   /* ---------- Impresión ---------- */
-  @page{size:62mm 60mm;margin:0}
+  @page{size:62mm 55mm;margin:0}
   @media print{
     .barra,.aviso,.vacio{display:none !important}
     .zona{padding:0;margin:0;max-width:none}
@@ -146,7 +146,7 @@
 
 <div class="aviso" id="aviso">
   Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
-  diálogo de impresión diga 62 × 60 mm. La tira sale en el orden que elijas
+  diálogo de impresión diga 62 × 55 mm. La tira sale en el orden que elijas
   arriba, así queda apilada en ese mismo orden sobre la mesa. Al terminar te
   preguntamos si marcamos el lote como impreso.
 </div>
@@ -291,6 +291,20 @@
 
   /** Espera a las fuentes antes de imprimir: sin ellas el texto sale en
       blanco o con la tipografía de reserva. */
+  /* Mismo giro que la etiqueta individual, leyendo la preferencia que el
+     operador ya eligió ahí. Si encontró que su impresora necesita giro,
+     el lote debe salir igual. */
+  (function aplicarGiroGuardado() {
+    var g = null;
+    try { g = localStorage.getItem('ampi_girar'); } catch (e) {}
+    if (g !== '1') return;
+    var s = document.createElement('style');
+    s.textContent =
+      '@media print{ @page{ size:55mm 62mm; margin:0 }' +
+      ' .eti{ transform:rotate(-90deg); transform-origin:center center } }';
+    document.head.appendChild(s);
+  })();
+
   function imprimirCuandoListo() {
     var arranca = function () { setTimeout(function () { window.print(); }, 200); };
     if (document.fonts && document.fonts.ready) {
