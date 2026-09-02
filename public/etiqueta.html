@@ -160,29 +160,25 @@
 
   /* ---------- Impresión ---------- */
   @media print{
-    body{background:#fff;padding:0;gap:0;display:block}
-    .panel,.solo-pantalla{display:none !important}
-    .etiqueta{
-      border:none;width:var(--ancho);height:var(--alto);
-      page-break-after:always;
-    }
-    /* El tamaño de página debe coincidir EXACTO con la etiqueta,
-       si no la QL deja franjas en blanco o parte el diseño. */
+    /* =====================================================================
+       Brother QL-800 · rollo continuo DK-2205 de 62 mm
+
+       Sin giros ni trucos: la página se declara con las mismas medidas
+       que la etiqueta y se deja que el controlador haga lo suyo. Las
+       pruebas impresas confirmaron que así sale bien orientada; girarla
+       desde el CSS sólo la descuadraba.
+
+       En el diálogo de macOS hay que elegir el tamaño de papel de 62 mm
+       con márgenes en cero y escala al 100 %.
+       ===================================================================== */
     @page{ size:62mm 55mm; margin:0; }
 
-    /* ---- Giro para la QL-800 en macOS ----
-       El controlador saca el contenido girado 90° respecto al papel: el
-       texto corre a lo largo del rollo en vez de a lo ancho. Se compensa
-       girando el diseño en sentido contrario. La página se declara con
-       las medidas invertidas (55 de ancho × 62 de alto) para que, ya
-       girada, quede con los 62 mm de base como se pega en el carnet. */
-    @page{ size:55mm 62mm; margin:0; }
-    body{ width:55mm; height:62mm; position:relative; overflow:hidden }
+    html,body{ margin:0; padding:0; background:#fff; display:block }
+    .panel,.solo-pantalla{ display:none !important }
+
     .etiqueta{
-      position:absolute; top:50%; left:50%;
-      width:62mm; height:55mm;
-      transform: translate(-50%,-50%) rotate(90deg);
-      transform-origin: center center;
+      width:62mm; height:55mm; border:none;
+      margin:0; page-break-after:always;
     }
   }
 
@@ -235,10 +231,11 @@
      en impresora Brother QL.</p>
   <button onclick="window.print()">Imprimir etiqueta</button>
   <div class="aviso">
-    <b>Antes de la primera impresión</b>
-    En el diálogo de impresión elige la Brother QL, tamaño de papel
-    <b>62 mm</b>, escala <b>100 %</b> y desactiva márgenes y encabezados.
-    Guarda esa configuración como predeterminada.
+    <b>Configuración de impresión (macOS)</b>
+    En <b>Tamaño del papel</b> elige el personalizado de
+    <b>62 × 55 mm</b> con los cuatro márgenes en <b>0</b>.
+    Escala <b>100 %</b>, sin encabezados ni pies de página.
+    Guárdalo como preconfiguración para no repetirlo cada vez.
   </div>
 </div>
 

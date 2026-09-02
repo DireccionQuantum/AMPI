@@ -48,18 +48,6 @@
     box-sizing:border-box;position:relative;overflow:hidden;
     border:1px solid #d8e0e8;box-shadow:0 1px 3px rgba(0,0,0,.07);
   }
-  @media print{
-    .eti{border:0;box-shadow:none}
-    /* Mismo giro que la etiqueta individual: el controlador de la QL-800
-       en macOS saca el contenido girado y se compensa aquí. */
-    @page{ size:55mm 62mm; margin:0 }
-    .hoja{ display:block }
-    .eti{
-      width:62mm; height:55mm;
-      transform: rotate(90deg) translateY(-62mm);
-      transform-origin: top left;
-      page-break-after: always; margin:0;
-    }
   }
   .eti-top{
     font-size:8pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
@@ -123,16 +111,18 @@
   /* ---------- Impresión ---------- */
   @page{size:62mm 55mm;margin:0}
   @media print{
-    .barra,.aviso,.vacio{display:none !important}
+    /* Igual que etiqueta.html: 62 × 55 sin giros. */
+    @page{ size:62mm 55mm; margin:0 }
+    html,body{margin:0;padding:0;background:#fff}
+    .barra,.aviso,.vacio,.eti-ya{display:none !important}
     .zona{padding:0;margin:0;max-width:none}
     .hoja{display:block;gap:0}
     .eti{
-      width:62mm;height:50mm;page-break-after:always;break-after:page;
-      border-radius:0;margin:0;
+      width:62mm; height:55mm; overflow:hidden;
+      border:0; border-radius:0; margin:0; box-shadow:none;
+      page-break-after:always; break-after:page;
     }
     .eti:last-child{page-break-after:auto;break-after:auto}
-    .eti-ya{display:none}
-    body{background:#fff}
   }
 </style>
 </head>
@@ -160,7 +150,7 @@
 
 <div class="aviso" id="aviso">
   Revisa que la impresora tenga rollo de 62 mm y que el tamaño de papel en el
-  diálogo de impresión diga 62 × 55 mm. La tira sale en el orden que elijas
+  diálogo sea el personalizado de <b>62 × 55 mm</b> con márgenes en cero. La tira sale en el orden que elijas
   arriba, así queda apilada en ese mismo orden sobre la mesa. Al terminar te
   preguntamos si marcamos el lote como impreso.
 </div>
