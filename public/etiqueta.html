@@ -121,6 +121,17 @@
   }
   /* Sin lugar asignado: el QR se agranda y llena el espacio. */
   .etiqueta.sin-lugar .qr img{width:25mm;height:25mm}
+
+  /* ---------- Invitados de honor, sin código ----------
+     No visitan módulos ni entran a rifas, así que su etiqueta lleva sólo
+     nombre, cargo y asiento. El lugar ocupa todo el ancho y se agranda:
+     es lo único que necesitan ver al llegar a su fila. */
+  .etiqueta.sin-codigo .qr,
+  .etiqueta.sin-codigo .cod-caja{ display:none }
+  .etiqueta.sin-codigo .derecha{ flex:1 }
+  .etiqueta.sin-codigo .lugar{ padding:2.2mm 3mm }
+  .etiqueta.sin-codigo .lugar .v{ font-size:26pt }
+  .etiqueta.sin-codigo .lugar .et{ font-size:5.4pt }
   .qr img{
     width:22mm;height:22mm;display:block;
     /* image-rendering nítido: un QR interpolado no escanea bien. */
@@ -131,6 +142,8 @@
   .pie{
     display:flex;align-items:center;justify-content:space-between;
     gap:2mm;padding-top:1mm;border-top:.3mm solid #000;
+    /* El logo se separa del borde: pegado al margen se perdía al cortar. */
+    padding-right:2.5mm;
   }
   .pie .instruccion{font-size:5pt;font-weight:800;letter-spacing:.02em;line-height:1.2}
   .pie .marca{display:flex;align-items:center;gap:1.2mm}
@@ -190,7 +203,7 @@
   <div class="ev">
     <div>
       <div class="nom" id="e-evento">AMPI Tijuana 2026</div>
-      <div class="fecha" id="e-fecha">3 de septiembre</div>
+      <div class="fecha" id="e-fecha">2 y 3 de septiembre</div>
     </div>
     <img id="e-logo" alt="" hidden>
   </div>
@@ -255,6 +268,7 @@
   var asiento = (q.get('asiento') || '').trim();
   var auto    = q.get('auto') === '1';
   var porId   = q.get('id');   // la mesa de entrega manda sólo el id
+  var sinQr   = q.get('sinqr') === '1';
 
   /**
    * Nombre y apellido llegan por separado desde la base, así que no hay
@@ -285,8 +299,38 @@
     // Si sólo vino un campo con todo junto, lo usamos tal cual.
     if (!visible) visible = String(nombre || '').trim();
     $('e-nombre').textContent = visible;
-    // Umbrales medidos contra el archivo real: a 13pt caben 22 caracteres
-    // por renglón y el nombre usa dos, así que 30 entra holgado.
+    // Nombres muy largos: se recortan a nombre de pila y primer apellido.
+    // En la lista hay títulos (Lic., Ing., Mtra., C.P.) y hasta cuatro
+    // palabras de nombre; a tamaño completo se veían apretados y el
+    // apellido se perdía. Se conserva el título porque en este público
+    // importa.
+    if (visible.length > 26) {
+      var partes = visible.split(' ').filter(Boolean);
+      var titulos = /^(lic|ing|mtra|mtro|dr|dra|c\.?p|arq|prof)\.?$/i;
+      var corto = [];
+      if (partes.length && titulos.test(partes[0])) corto.push(partes.shift());
+      // Nombre de pila (sólo el primero) y PRIMER APELLIDO.
+      //
+      // Los apellidos vienen al final, así que se toma la última palabra
+      // que quede después del nombre. Con "Pedro Alejandro Montejo
+      // Peterson", tomar las dos primeras daría "Pedro Alejandro" y
+      // perdería el apellido, que es justo lo que sirve para identificar
+      // a alguien en una mesa de registro.
+      if (partes.length) corto.push(partes.shift());          // nombre de pila
+      if (partes.length >= 2) {
+        corto.push(partes[partes.length - 2]);                // primer apellido
+      } else if (partes.length === 1) {
+        corto.push(partes[0]);
+      }
+      var propuesta = corto.join(' ');
+      // Sólo se usa si de verdad acorta: si el nombre ya venía corto en
+      // palabras, recortar no ayuda y se prefiere el completo.
+      if (propuesta.length >= 6 && propuesta.length < visible.length) {
+        visible = propuesta;
+        $('e-nombre').textContent = visible;
+      }
+    }
+
     if (visible.length > 30) $('e-nombre').className = 'nombre muylargo';
     else if (visible.length > 24) $('e-nombre').className = 'nombre largo';
     else $('e-nombre').className = 'nombre';
@@ -309,6 +353,7 @@
   var hayLugar = fila && asiento;
   $('e-lugar').hidden = !hayLugar;
   $('etiqueta').classList.toggle('sin-lugar', !hayLugar);
+  $('etiqueta').classList.toggle('sin-codigo', sinQr);
   if (hayLugar) $('e-lugar-v').textContent = fila + ' · ' + asiento;
   }
   pintarDatos();
@@ -336,7 +381,9 @@
    * para que cualquier cámara lo lea al vuelo.
    */
   function dibujarQr() {
-    if (!qr || !window.QRCode) { listoParaImprimir(); return; }
+    // Los invitados de honor no llevan código: se salta el dibujado y se
+    // pasa directo a imprimir.
+    if (sinQr || !qr || !window.QRCode) { listoParaImprimir(); return; }
     QRCode.toDataURL(qr, {
       width: 700,
       margin: 1,
@@ -391,6 +438,7 @@
         empresa = a.empresa || '';
         fila = a.fila || '';
         asiento = a.asiento != null ? String(a.asiento) : '';
+        sinQr = !!a.sin_qr;
         pintarDatos();
         dibujarQr();
       })

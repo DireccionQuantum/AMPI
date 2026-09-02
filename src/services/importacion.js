@@ -75,6 +75,9 @@ const ALIAS = {
   fila:     ['fila', 'row', 'seccion', 'zona'],
   asiento:  ['asiento', 'seat', 'silla', 'lugar', 'numasiento'],
   numa:     ['numa', 'numeroasiento', 'filaasiento'],
+  // Invitados de honor: su etiqueta no lleva código. La columna del
+  // archivo viene sin encabezado, así que también se acepta vacía.
+  sinqr:    ['sinqr', 'noqr', 'nollevaqr', 'observaciones', 'nota', ''],
 };
 
 /** Mapea los encabezados reales del archivo a nuestros campos. */
@@ -128,6 +131,7 @@ function leerCsv(texto) {
       fila: get('fila'),
       asiento: get('asiento'),
       numa: get('numa'),
+      sinqr: get('sinqr'),
     });
   }
   return { columnas: mapa, encabezados, filas };
@@ -141,6 +145,19 @@ function limpiarEmpresa(raw) {
   if (typeof raw !== 'string') return null;
   const v = raw.trim().replace(/\s+/g, ' ');
   return v.length >= 2 && v.length <= 80 ? v.slice(0, 80) : null;
+}
+
+/**
+ * ¿Este asistente va sin código QR?
+ *
+ * Se acepta cualquier texto que lo diga: "NO LLEVA QR", "sin qr", "no".
+ * El archivo lo trae escrito a mano, así que no conviene exigir un valor
+ * exacto que alguien vaya a teclear distinto.
+ */
+function parseSinQr(v) {
+  const s = String(v == null ? '' : v).trim().toUpperCase();
+  if (!s) return false;
+  return /NO\s*LLEVA|SIN\s*QR|NO\s*QR|^NO$|^X$/.test(s);
 }
 
 /**
@@ -212,6 +229,7 @@ function prepararFila(f) {
     email: limpiarEmail(f.email),
     empresa: limpiarEmpresa(f.empresa),
     ...parseLugar(f),
+    sin_qr: parseSinQr(f.sinqr),
   };
 }
 
@@ -289,7 +307,7 @@ async function importar(client, texto, opts = {}) {
     let existente = null;
     if (f.qr_id) {
       const r = await client.query(
-        'SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado FROM asistentes WHERE qr_id = $1',
+        'SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, sin_qr, codigo_corto, estado FROM asistentes WHERE qr_id = $1',
         [f.qr_id]
       );
       existente = r.rows[0] || null;
@@ -315,7 +333,7 @@ async function importar(client, texto, opts = {}) {
     // Sin esto, cada reimportación creaba un duplicado silencioso.
     if (!existente && !f.telefono) {
       const r = await client.query(
-        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, codigo_corto, estado
+        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, sin_qr, codigo_corto, estado
            FROM asistentes
           WHERE unaccent_simple(coalesce(nombre,'')) = unaccent_simple($1)
             AND unaccent_simple(coalesce(apellido,'')) = unaccent_simple($2)
@@ -352,6 +370,11 @@ async function importar(client, texto, opts = {}) {
       if (existente.estado === 'pendiente') {
         campos.push(`estado = 'verificado'`);
       }
+      // La marca de invitado de honor también se actualiza: AMPI puede
+      // agregar o quitar autoridades hasta el último momento.
+      if (existente.sin_qr !== f.sin_qr) {
+        campos.push(`sin_qr = $${++n}`); vals.push(f.sin_qr);
+      }
       if (campos.length) {
         await client.query(
           `UPDATE asistentes SET ${campos.join(', ')}, datos_en = COALESCE(datos_en, now()) WHERE id = $1`,
@@ -385,11 +408,12 @@ async function importar(client, texto, opts = {}) {
         const r = await client.query(
           `INSERT INTO asistentes
              (qr_id, codigo_corto, nombre, apellido, telefono, email, empresa,
-              fila, asiento, estado, origen, datos_en)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'verificado','csv', now())
-           RETURNING id, qr_id, codigo_corto, nombre, apellido, empresa, fila, asiento`,
+              fila, asiento, sin_qr, estado, origen, datos_en)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'verificado','csv', now())
+           RETURNING id, qr_id, codigo_corto, nombre, apellido, empresa,
+                     fila, asiento, sin_qr`,
           [qr, codigo, f.nombre, f.apellido, f.telefono, f.email, f.empresa,
-           f.fila, f.asiento]
+           f.fila, f.asiento, f.sin_qr]
         );
         await client.query('RELEASE SAVEPOINT alta_asistente');
         insertado = r.rows[0];

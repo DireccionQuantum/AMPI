@@ -98,19 +98,44 @@ const ORDENES = {
   captura:  `id`,
 };
 
-async function paraImprimir(db, { filtro = 'pendientes', limite = LOTE_MAX, orden = 'nombre' } = {}) {
+async function paraImprimir(db, {
+  filtro = 'pendientes', limite = LOTE_MAX, orden = 'nombre', fila = null,
+} = {}) {
   const lim = Math.min(Math.max(parseInt(limite, 10) || LOTE_MAX, 1), LOTE_MAX);
-  const cond = filtro === 'todos' ? '' : 'WHERE etiqueta_impresa_en IS NULL';
-  // El orden viene del navegador: se toma de la lista blanca y nunca se
-  // concatena lo que llegue, o sería una puerta abierta a inyección.
   const porOrden = ORDENES[orden] || ORDENES.nombre;
+
+  // Filtro por fila del salón, para imprimir por secciones y armar los
+  // carnets tanda por tanda en vez de las 191 de golpe.
+  const cond = [];
+  const args = [];
+  if (filtro !== 'todos') cond.push('etiqueta_impresa_en IS NULL');
+  if (fila) {
+    const f = String(fila).trim().toUpperCase();
+    if (/^[A-Z]{1,4}$/.test(f)) { args.push(f); cond.push(`upper(fila) = $${args.length}`); }
+    else if (f === 'SIN') cond.push('fila IS NULL');
+  }
+  const donde = cond.length ? 'WHERE ' + cond.join(' AND ') : '';
+
   const { rows } = await db.query(
     `SELECT id, qr_id, nombre, apellido, empresa, codigo_corto,
-            fila, asiento, etiqueta_impresa_en
+            fila, asiento, sin_qr, etiqueta_impresa_en
        FROM asistentes
-       ${cond}
+       ${donde}
       ORDER BY ${porOrden}
-      LIMIT ${lim}`
+      LIMIT ${lim}`, args
+  );
+  return rows;
+}
+
+/** Las filas del salón con cuántos faltan por imprimir en cada una. */
+async function filasDelSalon(db) {
+  const { rows } = await db.query(
+    `SELECT coalesce(fila, 'SIN') AS fila,
+            count(*)::int AS total,
+            count(*) FILTER (WHERE etiqueta_impresa_en IS NULL)::int AS pendientes
+       FROM asistentes
+      GROUP BY coalesce(fila, 'SIN')
+      ORDER BY orden_fila(nullif(coalesce(fila,'SIN'),'SIN'))`
   );
   return rows;
 }
@@ -140,6 +165,7 @@ async function panorama(db) {
 
 module.exports = {
   ORDENES,
+  filasDelSalon,
   normalizar,
   buscar,
   entregar,

@@ -95,7 +95,15 @@
   }
   /* Sin lugar: el QR crece y ocupa el espacio, sin dejar hueco. */
   .eti.sin-lugar .eti-qr{width:25mm;height:25mm}
-  .eti-pie{
+
+  /* Invitados de honor: sin QR ni código, con el asiento en grande. */
+  .eti.sin-codigo .eti-qr,
+  .eti.sin-codigo .eti-cod{display:none}
+  .eti.sin-codigo .eti-dcha{flex:1}
+  .eti.sin-codigo .eti-lugar{padding:2.2mm 3mm}
+  .eti.sin-codigo .eti-lugar span{font-size:26pt}
+  .eti.sin-codigo .eti-lugar b{font-size:5.4pt}
+  .eti-pie{padding-right:2.5mm;
     border-top:.3mm solid #000;padding-top:1.2mm;display:flex;
     justify-content:space-between;align-items:flex-end;font-size:6.5pt;
   }
@@ -137,6 +145,9 @@
       <option value="pendientes">Sólo pendientes de imprimir</option>
       <option value="todos">Todos los asistentes</option>
     </select>
+    <select id="fila" title="Imprime sólo una fila del salón, para armar por secciones">
+      <option value="">Todas las filas</option>
+    </select>
     <select id="orden" title="Orden en que sale la tira de la impresora">
       <option value="nombre">Orden por nombre</option>
       <option value="apellido">Orden por apellido</option>
@@ -171,6 +182,7 @@
   var cuenta   = document.getElementById('cuenta');
   var filtro   = document.getElementById('filtro');
   var orden    = document.getElementById('orden');
+  var selFila  = document.getElementById('fila');
   var btnImp   = document.getElementById('imprimir');
   var aviso    = document.getElementById('aviso');
   var lote     = [];
@@ -183,8 +195,24 @@
   }
 
   /** El nombre largo se achica en lugar de desbordarse fuera del sticker. */
-  // Umbrales medidos contra el archivo real: a 13pt caben 22 caracteres
-  // por renglón y el nombre dispone de dos, así que 30 entra holgado.
+  /**
+   * Nombres muy largos: nombre de pila y primer apellido, conservando el
+   * título. Mismo criterio que la etiqueta individual, para que la tira y
+   * las sueltas se vean igual.
+   */
+  function nombreCorto(v) {
+    if (!v || v.length <= 26) return v;
+    var partes = v.split(' ').filter(Boolean);
+    var titulos = /^(lic|ing|mtra|mtro|dr|dra|c\.?p|arq|prof)\.?$/i;
+    var corto = [];
+    if (partes.length && titulos.test(partes[0])) corto.push(partes.shift());
+    if (partes.length) corto.push(partes.shift());
+    if (partes.length >= 2) corto.push(partes[partes.length - 2]);
+    else if (partes.length === 1) corto.push(partes[0]);
+    var x = corto.join(' ');
+    return (x.length >= 6 && x.length < v.length) ? x : v;
+  }
+
   function claseNombre(txt) {
     var n = (txt || '').length;
     if (n > 30) return 'eti-nom mini';
@@ -216,19 +244,23 @@
       var nombreCompleto = [a.nombre, a.apellido].filter(Boolean).join(' ');
 
       var div = document.createElement('div');
-      div.className = 'eti' + (a.fila && a.asiento ? '' : ' sin-lugar');
+      div.className = 'eti' +
+        (a.fila && a.asiento ? '' : ' sin-lugar') +
+        (a.sin_qr ? ' sin-codigo' : '');
       div.innerHTML =
         (a.etiqueta_impresa_en ? '<div class="eti-ya">ya impresa</div>' : '') +
-        '<div class="eti-top">AMPI Tijuana 2026<span>3 de septiembre</span></div>' +
+        '<div class="eti-top">AMPI Tijuana 2026<span>2 y 3 de septiembre</span></div>' +
         '<div class="eti-cuerpo">' +
           '<div class="eti-datos">' +
-            '<div class="' + claseNombre(nombreCompleto) + '">' + esc(nombreCompleto) + '</div>' +
+            '<div class="' + claseNombre(nombreCorto(nombreCompleto)) + '">' +
+              esc(nombreCorto(nombreCompleto)) + '</div>' +
             (a.empresa
               ? '<div class="' + claseEmpresa(a.empresa) + '">' + esc(a.empresa) + '</div>'
               : '') +
           '</div>' +
           '<div class="eti-abajo">' +
-            '<div class="eti-qr" data-qr="' + esc(a.qr_id) + '"></div>' +
+            (a.sin_qr ? '' :
+              '<div class="eti-qr" data-qr="' + esc(a.qr_id) + '"></div>') +
             '<div class="eti-dcha">' +
               (a.fila && a.asiento
                 ? '<div class="eti-lugar"><b>Fila · Asiento</b>' +
@@ -278,7 +310,9 @@
   function cargar() {
     cuenta.textContent = 'cargando…';
     fetch('/api/admin/modulo/etiquetas?filtro=' + filtro.value +
-          '&orden=' + orden.value + '&limite=500',
+          '&orden=' + orden.value +
+          (selFila.value ? '&fila=' + encodeURIComponent(selFila.value) : '') +
+          '&limite=500',
           { credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 403) throw new Error('Inicia sesión en el panel para imprimir etiquetas.');
@@ -332,6 +366,29 @@
   document.getElementById('recargar').addEventListener('click', cargar);
   filtro.addEventListener('change', cargar);
   orden.addEventListener('change', cargar);
+  selFila.addEventListener('change', cargar);
+
+  /**
+   * Llena el selector con las filas del salón y cuántas faltan en cada
+   * una. Ver el pendiente por fila es lo que permite ir armando los
+   * carnets por secciones sin perder la cuenta.
+   */
+  function cargarFilas() {
+    fetch('/api/admin/modulo/filas', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var actual = selFila.value;
+        selFila.innerHTML = '<option value="">Todas las filas</option>' +
+          d.filas.map(function (f) {
+            var etq = f.fila === 'SIN' ? 'Sin asiento' : 'Fila ' + f.fila;
+            return '<option value="' + f.fila + '">' + etq +
+                   ' · ' + f.pendientes + ' de ' + f.total + '</option>';
+          }).join('');
+        selFila.value = actual;
+      })
+      .catch(function () {});
+  }
+  cargarFilas();
   cargar();
 })();
 </script>

@@ -65,6 +65,32 @@ ancho, 55 de alto, márgenes en cero. Y guardarlo como predeterminado.
 Si el diálogo de Chrome no muestra esa opción, usar «Imprimir usando el
 diálogo del sistema», que es el nativo de macOS y siempre la tiene.
 
+## Invitados sin QR
+
+Las 27 autoridades de las filas AAA y AA reciben carnet con nombre y
+asiento, pero sin código: no visitan módulos ni entran a las rifas.
+
+Se marca en el archivo con la anotación «NO LLEVA QR» en una columna
+extra. El importador también acepta «SIN QR», «NO» o «X».
+
+En su etiqueta el asiento ocupa el lugar del código y se imprime en
+grande: es lo único que necesitan ver al llegar a su fila.
+
+Quedan excluidos del sorteo desde la vista , no desde
+cada consulta suelta.
+
+## Nombres largos
+
+Los que pasan de 26 caracteres se recortan a título, nombre de pila y
+primer apellido: «Ing. Pedro Alejandro Montejo Peterson» queda como
+«Ing. Pedro Montejo». Se conserva el título porque en este público
+importa, y el apellido porque es lo que identifica a alguien en la mesa.
+
+## Imprimir por fila
+
+El lote tiene un selector con las filas del salón y cuántas etiquetas
+faltan en cada una, para ir armando los carnets por secciones.
+
 ## Cómo aplicarlo
 
 ```
