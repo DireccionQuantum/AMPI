@@ -73,6 +73,24 @@ const DATOS = { nombre: 'Laura', apellido: 'Medina', telefono: '6641234567' };
   chk(consultas[0] && consultas[0].args.length === 2,
       'manda los dos parámetros', consultas[0] && consultas[0].args);
 
+  console.log('\n=== Correo opcional en el alta ===');
+  // El correo es opcional: sin él el alta debe funcionar igual, y con uno
+  // inválido debe avisar en lugar de guardarlo mal.
+  c = cliente();
+  r = await v.registrarNuevo(c, DATOS);
+  chk(r.ok, 'sin correo: se registra igual', r.errores);
+  chk(c.insertados[0][4] === null, 'guarda el correo como vacío', c.insertados[0][4]);
+
+  c = cliente();
+  r = await v.registrarNuevo(c, { ...DATOS, email: '  LAURA@Empresa.MX ' });
+  chk(r.ok, 'con correo válido: se registra', r.errores);
+  chk(c.insertados[0][4] === 'laura@empresa.mx',
+      'lo normaliza a minúsculas y sin espacios', c.insertados[0][4]);
+
+  r = await v.registrarNuevo(cliente(), { ...DATOS, email: 'sin-arroba' });
+  chk(!r.ok && r.errores && r.errores.email,
+      'con correo inválido: avisa en lugar de guardarlo', r.errores);
+
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
   console.log('='.repeat(52));

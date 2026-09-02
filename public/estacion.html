@@ -80,6 +80,8 @@
     display:block;margin-top:8px;font-size:12px;font-weight:800;
     letter-spacing:.1em;text-transform:uppercase;color:var(--amber);
   }
+
+  .campo label .opc{font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -136,8 +138,15 @@
         <div class="campo">
           <label for="telefono">Teléfono</label>
           <input id="telefono" type="tel" inputmode="numeric" maxlength="16"
-                 placeholder="664 123 4567" enterkeyhint="done">
+                 placeholder="664 123 4567" enterkeyhint="next">
           <div class="error-txt" id="e-telefono"></div>
+        </div>
+        <div class="campo">
+          <label for="correo">Correo <span class="opc">— opcional</span></label>
+          <input id="correo" type="email" inputmode="email" autocomplete="off"
+                 autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="correo@ejemplo.com" enterkeyhint="done">
+          <div class="error-txt" id="e-email"></div>
         </div>
         <label class="opcion" id="caja-medios">
           <input type="checkbox" id="sin-qr">
@@ -230,9 +239,10 @@
 
   /* ---------- Registrar ---------- */
   function limpiarErrores(){
-    ['nombre','apellido','telefono'].forEach(function(c){
+    ['nombre','apellido','telefono','correo'].forEach(function(c){
       $(c).classList.remove('malo');
-      $('e-'+c).classList.remove('ver');
+      var e = $('e-' + (c === 'correo' ? 'email' : c));
+      if (e) e.classList.remove('ver');
     });
     $('f-err').classList.add('oculto');
   }
@@ -246,17 +256,23 @@
       nombre: $('nombre').value,
       apellido: $('apellido').value,
       telefono: $('telefono').value,
+      email: $('correo').value,
       sin_qr: $('sin-qr').checked,
     }).then(function(res){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
 
       if(res.s === 422){
         var errs = res.d.errores || {};
+        // El servidor nombra el campo "email"; en la pantalla se llama
+        // "correo". Sin esta traducción el error no se mostraba en ningún
+        // lado y el registro parecía fallar sin motivo.
+        var campoDe = { email: 'correo' };
         Object.keys(errs).forEach(function(c){
-          if(!$(c)) return;
-          $(c).classList.add('malo');
-          $('e-'+c).textContent = errs[c];
-          $('e-'+c).classList.add('ver');
+          var id = campoDe[c] || c;
+          if(!$(id)) return;
+          $(id).classList.add('malo');
+          var caja = $('e-' + c);
+          if (caja) { caja.textContent = errs[c]; caja.classList.add('ver'); }
         });
         return;
       }
@@ -270,6 +286,7 @@
       // La casilla se reinicia: lo normal es el asistente con código, y
       // dejarla marcada haría que el siguiente se registrara mal.
       $('sin-qr').checked = false;
+      $('correo').value = '';
       mostrarListo(res.d, res.d.yaExistia);
     }).catch(function(){
       btn.disabled = false; btn.textContent = 'Registrar y generar código';
