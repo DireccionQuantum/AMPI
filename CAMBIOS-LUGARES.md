@@ -103,6 +103,21 @@ tres migraciones distintas, agregando una columna cada vez, y
 
 Arreglo: `DROP VIEW IF EXISTS` antes de cada creación.
 
+## Impresión una por una
+
+Casilla en el lote, activada por omisión. Manda un trabajo de impresión
+por etiqueta en vez de la tira completa, así la QL-800 corta al terminar
+cada una y salen ya sueltas.
+
+Sin ella, el corte se acumula y hay que ir separando a mano.
+
+### El botón se quedaba desactivado al filtrar
+
+El contador esperaba a que se dibujaran tantos QR como etiquetas
+hubiera, pero los 27 invitados de honor no generan imagen. Nunca llegaba
+a cero y el botón no se habilitaba. Ahora sólo cuenta las que sí llevan
+código.
+
 ## Cómo aplicarlo
 
 ```

@@ -118,7 +118,10 @@
 
   /* ---------- Impresión ---------- */
   @page{size:62mm 55mm;margin:0}
+  .opcion{display:inline-flex;align-items:center;gap:6px;font-size:13px;
+          color:var(--muted);cursor:pointer;white-space:nowrap}
   @media print{
+    .oculta-impresion{display:none !important}
     /* Igual que etiqueta.html: 62 × 55 sin giros. */
     @page{ size:62mm 55mm; margin:0 }
     html,body{margin:0;padding:0;background:#fff}
@@ -148,6 +151,9 @@
     <select id="fila" title="Imprime sólo una fila del salón, para armar por secciones">
       <option value="">Todas las filas</option>
     </select>
+    <label class="opcion" title="La impresora corta cada etiqueta al terminarla">
+      <input type="checkbox" id="una-a-una" checked> Una por una
+    </label>
     <select id="orden" title="Orden en que sale la tira de la impresora">
       <option value="nombre">Orden por nombre</option>
       <option value="apellido">Orden por apellido</option>
@@ -183,6 +189,7 @@
   var filtro   = document.getElementById('filtro');
   var orden    = document.getElementById('orden');
   var selFila  = document.getElementById('fila');
+  var unaAUna  = document.getElementById('una-a-una');
   var btnImp   = document.getElementById('imprimir');
   var aviso    = document.getElementById('aviso');
   var lote     = [];
@@ -232,10 +239,13 @@
   function pintar(lista) {
     hoja.innerHTML = '';
     vacio.hidden = lista.length > 0;
-    pendientesQr = lista.length;
+    // Sólo cuentan las que llevan QR: los invitados de honor no generan
+    // imagen, y contarlos dejaba el botón desactivado para siempre porque
+    // el contador nunca llegaba a cero.
+    pendientesQr = lista.filter(function (a) { return !a.sin_qr; }).length;
     // Se habilita hasta que todos los QR estén dibujados: imprimir antes
     // saca etiquetas con el cuadro en blanco.
-    btnImp.disabled = true;
+    btnImp.disabled = lista.length === 0 || pendientesQr > 0;
     cuenta.textContent = lista.length + (lista.length === 1 ? ' etiqueta' : ' etiquetas');
 
     lista.forEach(function (a) {
@@ -329,17 +339,55 @@
 
   /** Espera a las fuentes antes de imprimir: sin ellas el texto sale en
       blanco o con la tipografía de reserva. */
-  function imprimirCuandoListo() {
-    var arranca = function () { setTimeout(function () { window.print(); }, 200); };
+  function imprimirCuandoListo(despues) {
+    var arranca = function () {
+      setTimeout(despues || function () { window.print(); }, 200);
+    };
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(arranca).catch(arranca);
     } else { arranca(); }
   }
 
+  /**
+   * Imprime una sola etiqueta a la vez.
+   *
+   * Con la QL-800 mandar la tira completa deja que el corte se acumule y
+   * hay que ir separando a mano. Enviando de una en una, la impresora
+   * corta al terminar cada etiqueta y salen ya sueltas.
+   *
+   * Entre una y otra se espera un momento: si se encolan de golpe, el
+   * controlador las junta otra vez en un solo trabajo.
+   */
+  function imprimirUnaAUna(i) {
+    var todas = Array.prototype.slice.call(hoja.querySelectorAll('.eti'));
+    if (i >= todas.length) {
+      todas.forEach(function (e) { e.classList.remove('oculta-impresion'); });
+      return;
+    }
+    // Se oculta todo menos la etiqueta en turno.
+    todas.forEach(function (e, k) {
+      e.classList.toggle('oculta-impresion', k !== i);
+    });
+    setTimeout(function () {
+      window.print();
+      setTimeout(function () { imprimirUnaAUna(i + 1); }, 900);
+    }, 250);
+  }
+
   btnImp.addEventListener('click', function () {
     if (!lote.length) return;
     var ids = lote.map(function (a) { return a.id; });
-    imprimirCuandoListo();
+
+    // Con "una por una" se recorren las etiquetas mandando un trabajo por
+    // cada una; si no, sale la tira completa de un tirón.
+    var espera = 700;
+    if (unaAUna.checked) {
+      imprimirCuandoListo(function () { imprimirUnaAUna(0); });
+      espera = 900 * lote.length + 1200;      // hay que dejar que terminen
+    } else {
+      imprimirCuandoListo();
+    }
+
     // Se pregunta después de imprimir: si la impresora falló, no se marca.
     setTimeout(function () {
       if (!confirm('¿Se imprimieron bien las ' + ids.length + ' etiquetas?\n\n' +
@@ -354,13 +402,13 @@
         .then(function (d) {
           aviso.textContent = d.marcadas + ' etiquetas marcadas como impresas.';
           aviso.className = 'aviso ok';
-          cargar();
+          cargar(); cargarFilas();
         })
         .catch(function () {
           aviso.textContent = 'Se imprimieron, pero no se pudieron marcar. Vuelve a intentar.';
           aviso.className = 'aviso';
         });
-    }, 700);
+    }, espera);
   });
 
   document.getElementById('recargar').addEventListener('click', cargar);
