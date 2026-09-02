@@ -133,17 +133,22 @@
   @media print{
     .oculta-impresion{display:none !important}
     /* Igual que etiqueta.html: 62 × 55 sin giros. */
-    @page{ size:62mm 55mm; margin:0 }
+    /* Sin size: el papel del diálogo manda. Si el CSS pidiera una medida
+       distinta a la configurada, cada etiqueta se partiría en dos hojas. */
+    @page{ margin:0 }
     html,body{margin:0;padding:0;background:#fff}
     .barra,.aviso,.vacio,.eti-ya{display:none !important}
     .zona{padding:0;margin:0;max-width:none}
     .hoja{display:block;gap:0}
     .eti{
-      width:62mm; height:55mm; overflow:hidden;
+      width:100%; height:auto; overflow:visible;
       border:0; border-radius:0; margin:0; box-shadow:none;
+      /* Cada etiqueta en su hoja, pero sin partirse por dentro. */
+      page-break-inside:avoid; break-inside:avoid;
       page-break-after:always; break-after:page;
     }
     .eti:last-child{page-break-after:auto;break-after:auto}
+    .eti .eti-pie{margin-top:1.4mm}
   }
 </style>
 </head>

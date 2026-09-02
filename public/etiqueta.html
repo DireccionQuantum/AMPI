@@ -191,15 +191,25 @@
        En el diálogo de macOS hay que elegir el tamaño de papel de 62 mm
        con márgenes en cero y escala al 100 %.
        ===================================================================== */
-    @page{ size:62mm 55mm; margin:0; }
+    /* No se declara @page size a propósito.
+       El tamaño lo pone el papel elegido en el diálogo, y si el CSS pide
+       una medida distinta el navegador pagina y el pie se va a una
+       segunda hoja. Dejándolo libre, la etiqueta se adapta al papel que
+       haya configurado, sea 55, 58 o 60 mm. */
+    @page{ margin:0; }
 
     html,body{ margin:0; padding:0; background:#fff; display:block }
     .panel,.solo-pantalla{ display:none !important }
 
     .etiqueta{
-      width:62mm; height:55mm; border:none;
-      margin:0; page-break-after:always;
+      width:100%; border:none; margin:0;
+      /* Altura libre: ocupa lo que necesite y nunca fuerza salto. */
+      height:auto; min-height:0;
+      page-break-inside:avoid; page-break-after:avoid;
     }
+    /* El pie se pega al final del contenido, no al fondo de una caja de
+       altura fija que podría no existir. */
+    .etiqueta .pie{ margin-top:1.4mm }
   }
 
 </style>
@@ -252,9 +262,10 @@
   <button onclick="window.print()">Imprimir etiqueta</button>
   <div class="aviso">
     <b>Configuración de impresión (macOS)</b>
-    En <b>Tamaño del papel</b> elige el personalizado de
-    <b>62 × 55 mm</b> con los cuatro márgenes en <b>0</b>.
-    Escala <b>100 %</b>, sin encabezados ni pies de página.
+    La etiqueta se adapta al papel que elijas, así que basta con que el
+    tamaño personalizado tenga <b>62 mm de ancho</b> y los cuatro
+    márgenes en <b>0</b>. Escala <b>100 %</b>, sin encabezados ni pies.
+    Si sale en dos hojas, sube un poco el alto del papel.
     Guárdalo como preconfiguración para no repetirlo cada vez.
   </div>
 </div>
