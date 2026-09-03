@@ -82,6 +82,39 @@ function espia(rifa, cfg) {
   chk(validar({ email: 'sin-arroba' }) !== null, 'correo inválido: avisa');
   chk(validar({}) === null, 'todo vacío: no hay nada que validar');
 
+  console.log('\n=== 5. Asiento escrito a mano ===');
+  // Misma lógica que el endpoint: elegir el número dado, o el primer
+  // hueco si viene en blanco.
+  function asignar(usados, pedido) {
+    const ocupados = new Map(usados.map((u) => [u.asiento, u]));
+    if (pedido != null) {
+      const n = parseInt(pedido, 10);
+      if (!Number.isInteger(n) || n < 1 || n > 199) return { error: 'rango' };
+      const quien = ocupados.get(n);
+      if (quien) return { error: 'ocupado', por: quien.nombre };
+      return { asiento: n };
+    }
+    let libre = 1;
+    while (ocupados.has(libre) && libre < 200) libre++;
+    return { asiento: libre };
+  }
+
+  const fila = [{ asiento: 1, nombre: 'Ana' }, { asiento: 2, nombre: 'Beto' },
+                { asiento: 5, nombre: 'Caro' }];
+
+  chk(asignar(fila, 3).asiento === 3, 'toma el número que se le escribe');
+  chk(asignar(fila, 12).asiento === 12, 'acepta un número lejano');
+  chk(asignar(fila, null).asiento === 3, 'en blanco: primer hueco libre');
+  chk(asignar([], null).asiento === 1, 'fila vacía: empieza en 1');
+
+  const choque = asignar(fila, 2);
+  chk(choque.error === 'ocupado' && choque.por === 'Beto',
+      'si está ocupado, dice de quién es', choque);
+
+  chk(asignar(fila, 0).error === 'rango', 'rechaza el cero');
+  chk(asignar(fila, 250).error === 'rango', 'rechaza fuera de rango');
+  chk(asignar(fila, 'abc').error === 'rango', 'rechaza texto');
+
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
   console.log('='.repeat(52));

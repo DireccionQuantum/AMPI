@@ -258,6 +258,80 @@
   }
 
   /**
+   * Panel para asignar el lugar.
+   *
+   * El asiento se escribe a mano: en la mesa suele saberse cuál está
+   * libre porque se está viendo el salón. Si se deja en blanco, el
+   * sistema toma el primer hueco de esa fila.
+   */
+  function darAsiento(id, fila) {
+    var quien = fila.querySelector('.p-nom').textContent;
+
+    var caja = document.createElement('div');
+    caja.className = 'modal';
+    caja.innerHTML =
+      '<div class="modal-caja">' +
+        '<h3>Asignar lugar</h3>' +
+        '<p class="modal-ay">' + esc(quien) + '</p>' +
+        '<div class="mc"><label for="a-fila">Fila</label>' +
+          '<input id="a-fila" autocapitalize="characters" maxlength="4" ' +
+          'placeholder="I" style="text-transform:uppercase"></div>' +
+        '<div class="mc"><label for="a-num">Asiento ' +
+          '<span class="opc">— en blanco toma el siguiente libre</span></label>' +
+          '<input id="a-num" type="number" inputmode="numeric" min="1" max="199" ' +
+          'placeholder="12"></div>' +
+        '<div class="modal-err" id="a-err"></div>' +
+        '<div class="modal-acc">' +
+          '<button class="b b-s" id="a-cancel">Cancelar</button>' +
+          '<button class="b b-p" id="a-guardar">Asignar</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(caja);
+
+    var err = caja.querySelector('#a-err');
+    setTimeout(function () { caja.querySelector('#a-fila').focus(); }, 50);
+
+    function cerrar() { caja.remove(); }
+    caja.addEventListener('click', function (ev) { if (ev.target === caja) cerrar(); });
+    caja.querySelector('#a-cancel').addEventListener('click', cerrar);
+
+    function guardar() {
+      var f = caja.querySelector('#a-fila').value.trim().toUpperCase();
+      var n = caja.querySelector('#a-num').value.trim();
+      if (!f) { err.textContent = 'Escribe la fila'; return; }
+
+      var btn = caja.querySelector('#a-guardar');
+      btn.disabled = true;
+      err.textContent = '';
+      fetch('/api/admin/modulo/asignar-asiento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ id: id, fila: f, asiento: n || null }),
+      })
+        .then(function (r) {
+          return r.json().then(function (d) { if (!r.ok) throw d; return d; });
+        })
+        .then(function (d) {
+          cerrar();
+          buscar();
+          var a = d.asistente;
+          aviso('Lugar asignado: ' + a.fila + '-' + a.asiento);
+        })
+        .catch(function (d) {
+          btn.disabled = false;
+          err.textContent = (d && d.error) || 'No se pudo asignar';
+        });
+    }
+
+    caja.querySelector('#a-guardar').addEventListener('click', guardar);
+    caja.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') guardar();
+      if (ev.key === 'Escape') cerrar();
+    });
+  }
+
+  /**
    * Panel para completar los datos de una persona.
    *
    * Pensado para las cortesías de patrocinador: llegan con una etiqueta
@@ -373,29 +447,7 @@
     }
 
     if (acc === 'asiento') {
-      var f = prompt('¿En qué fila lo sentamos?\n\n' +
-                     'Se le dará el siguiente asiento libre de esa fila.', 'I');
-      if (!f) return;
-      btn.disabled = true;
-      fetch('/api/admin/modulo/asignar-asiento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ id: id, fila: f.trim() }),
-      })
-        .then(function (r) {
-          return r.json().then(function (d) { if (!r.ok) throw d; return d; });
-        })
-        .then(function (d) {
-          var a = d.asistente;
-          alert('Asiento asignado: ' + a.fila + '-' + a.asiento +
-                '\n\nImprime su etiqueta para que lo lleve consigo.');
-          buscar();
-        })
-        .catch(function (d) {
-          btn.disabled = false;
-          alert((d && d.error) || 'No se pudo asignar');
-        });
+      darAsiento(id, fila);
       return;
     }
 

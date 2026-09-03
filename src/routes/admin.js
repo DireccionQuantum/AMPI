@@ -821,24 +821,49 @@ module.exports = function adminRoutes(db, io) {
         return res.status(400).json({ error: 'Fila inválida' });
       }
 
+      // El asiento puede venir escrito a mano. Si no viene, se toma el
+      // primer hueco libre de esa fila.
+      const pedido = (req.body || {}).asiento;
+      let manual = null;
+      if (pedido != null && String(pedido).trim() !== '') {
+        manual = parseInt(String(pedido).trim(), 10);
+        if (!Number.isInteger(manual) || manual < 1 || manual > 199) {
+          return res.status(422).json({ error: 'El asiento debe ser un número del 1 al 199' });
+        }
+      }
+
       const r = await enTransaccion(async (client) => {
         // Se bloquean los asientos ya usados de esa fila para que dos
         // asignaciones simultáneas no elijan el mismo número.
         const ocup = await client.query(
-          `SELECT asiento FROM asistentes
+          `SELECT id, asiento, nombre, apellido FROM asistentes
             WHERE upper(fila) = $1 AND asiento IS NOT NULL
             ORDER BY asiento FOR UPDATE`,
           [fila]
         );
-        const usados = new Set(ocup.rows.map((x) => x.asiento));
-        let libre = 1;
-        while (usados.has(libre) && libre < 200) libre++;
-        if (libre >= 200) return { error: 'No hay asientos libres en esa fila' };
+        const usados = new Map(ocup.rows.map((x) => [x.asiento, x]));
+
+        let elegido;
+        if (manual != null) {
+          // Si ya está ocupado se avisa con el nombre de quien lo tiene:
+          // el personal necesita saber a quién le está quitando el lugar,
+          // no sólo que "está ocupado".
+          const quien = usados.get(manual);
+          if (quien && quien.id !== id) {
+            const nom = [quien.nombre, quien.apellido].filter(Boolean).join(' ');
+            return { error: `${fila}-${manual} ya es de ${nom || 'otra persona'}` };
+          }
+          elegido = manual;
+        } else {
+          elegido = 1;
+          while (usados.has(elegido) && elegido < 200) elegido++;
+          if (elegido >= 200) return { error: 'No hay asientos libres en esa fila' };
+        }
 
         const upd = await client.query(
           `UPDATE asistentes SET fila = $2, asiento = $3
             WHERE id = $1 RETURNING id, nombre, apellido, empresa, fila, asiento`,
-          [id, fila, libre]
+          [id, fila, elegido]
         );
         if (!upd.rows[0]) return { error: 'Asistente no encontrado' };
         return { ok: true, asistente: upd.rows[0] };
