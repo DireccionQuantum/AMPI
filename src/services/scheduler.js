@@ -67,6 +67,8 @@ async function ejecutarVencidas(io) {
             nombre: resultado.rifa.nombre,
             premio: resultado.rifa.premio,
             valor: resultado.rifa.valor,
+            // Cuánto debe girar la tómbola antes de revelar.
+            duracion_seg: resultado.rifa.duracion_seg,
           },
           ganadores: resultado.ganadores.map((g) => ({
             posicion: g.posicion,

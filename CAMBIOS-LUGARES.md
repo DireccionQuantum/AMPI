@@ -209,6 +209,22 @@ Todos los campos son opcionales y el panel se puede cerrar sin guardar.
 Al guardar, la persona pasa a «verificado», que es lo que la habilita
 para las rifas.
 
+## Duración de la tómbola
+
+Al programar una rifa se elige cuánto gira: 5, 9, 15, 20 o 30 segundos.
+El premio grande merece más tensión que uno de cortesía.
+
+Se guarda por rifa, no en la configuración general, para poder darle 20
+segundos al principal y 5 a los rápidos sin tocar nada entre uno y otro
+durante el evento.
+
+Dos cosas que se ajustan solas con la duración:
+
+- **La pista de folios** crece a razón de unos 8 por segundo. Con una
+  cantidad fija, una tómbola de 30 s giraría a paso de tortuga.
+- **El cierre de la pantalla** se calcula desde el final de la animación,
+  así el ganador siempre queda 12 s a la vista.
+
 ## Cómo aplicarlo
 
 ```

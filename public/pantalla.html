@@ -389,9 +389,13 @@
     var pista = $('s-pista');
     pista.innerHTML = '';
     var muestras = [];
-    // Más muestras para la animación larga: con 40 la pista se agotaba
-    // antes de terminar y el giro se veía detenido al final.
-    for(var i = 0; i < 70; i++){
+    // La pista crece con la duración: unos 8 folios por segundo. Con una
+    // cantidad fija, una tómbola de 30 s giraría a paso de tortuga y una
+    // de 5 s se quedaría corta.
+    var cuantos = Math.round((duracionMs / 1000) * 8);
+    if (cuantos < 30) cuantos = 30;
+    if (cuantos > 260) cuantos = 260;
+    for(var i = 0; i < cuantos; i++){
       muestras.push('AMPI-' + String(Math.floor(Math.random()*999999)).padStart(6,'0'));
     }
     muestras.forEach(function(f){
@@ -458,8 +462,10 @@
     if(!g){ $('sorteo').classList.remove('ver'); return; }
 
     mostrarSorteo(d.rifa.premio);
-    // 8.8 s en vez de 3.8: cinco segundos más de tensión antes de revelar.
-    correrRuleta(8800, function(){
+    // La duración la define cada rifa: el premio grande merece más
+    // tensión que uno de cortesía. Si no viene, 9 segundos.
+    var dur = Math.min(60, Math.max(3, Number(d.rifa && d.rifa.duracion_seg) || 9)) * 1000;
+    correrRuleta(dur, function(){
       $('s-ruleta').style.display = 'none';
       sonarGanador();
       $('s-nombre').textContent = (g.nombre || '') + ' ' + (g.apellido || '');
@@ -479,9 +485,10 @@
       $('s-ganador').classList.add('ver');
       lanzarConfeti();
 
-      // 21 s en vez de 16: la animación creció 5 segundos y sin ajustar
-      // esto el ganador quedaba en pantalla sólo 7 s en lugar de 12.
-      setTimeout(function(){ $('sorteo').classList.remove('ver'); }, 21000);
+      // El ganador se queda 12 s en pantalla, cuente lo que cuente la
+      // tómbola. Con un tiempo fijo, una animación larga se comía la
+      // revelación.
+      setTimeout(function(){ $('sorteo').classList.remove('ver'); }, dur + 12200);
     });
   }
 

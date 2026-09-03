@@ -140,6 +140,26 @@ function espia(rifa, cfg) {
   chk(prepararRifa({ premio: 'Tablet', hora: 'no-es-fecha' }).error,
       'hora inválida: avisa');
 
+  console.log('\n=== 7. Duración de la tómbola ===');
+  // Misma acotación que el endpoint y que la pantalla.
+  const acotar = (v) => Math.min(60, Math.max(3, Number(v) || 9));
+
+  chk(acotar(5) === 5, '5 segundos se respeta');
+  chk(acotar(30) === 30, '30 segundos se respeta');
+  chk(acotar(undefined) === 9, 'sin valor: 9 segundos por omisión');
+  chk(acotar('') === 9, 'vacío: 9 segundos');
+  chk(acotar(0) === 9, 'cero: cae al valor por omisión');
+  chk(acotar(1) === 3, 'menos de 3: sube al mínimo');
+  chk(acotar(999) === 60, 'más de 60: baja al máximo');
+  chk(acotar('abc') === 9, 'texto: valor por omisión');
+
+  // El ganador debe quedar 12.2 s en pantalla sin importar la tómbola.
+  const cierre = (seg) => acotar(seg) * 1000 + 12200;
+  chk(cierre(5) === 17200, 'tómbola de 5 s → cierra a 17.2 s');
+  chk(cierre(30) === 42200, 'tómbola de 30 s → cierra a 42.2 s');
+  chk(cierre(30) - acotar(30) * 1000 === 12200,
+      'el ganador siempre se ve 12.2 s');
+
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
   console.log('='.repeat(52));

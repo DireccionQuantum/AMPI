@@ -555,6 +555,7 @@
         mt.textContent = hora + ' · ' + r.num_ganadores +
           (r.num_ganadores === 1 ? ' ganador' : ' ganadores') +
           (r.valor ? ' · $' + Number(r.valor).toLocaleString('es-MX') : '') +
+          (r.duracion_seg ? ' · tómbola ' + r.duracion_seg + ' s' : '') +
           (r.patrocinador ? ' · ' + r.patrocinador : '');
         // Si la rifa es de un stand, se dice en la lista: al sortear en
         // vivo importa saber que la urna está restringida a ese módulo.
@@ -624,6 +625,14 @@
         '<input id="n-hora" type="datetime-local">' +
         '<span class="ay-campo">Déjala en blanco para lanzarla a mano desde el panel.</span></div>' +
       '<div class="campo"><label>Número de ganadores</label><input id="n-gan" type="number" value="1" min="1"></div>' +
+      '<div class="campo"><label>Duración de la tómbola</label>' +
+        '<select id="n-dur">' +
+          '<option value="5">5 segundos · rápida</option>' +
+          '<option value="9" selected>9 segundos · normal</option>' +
+          '<option value="15">15 segundos · con tensión</option>' +
+          '<option value="20">20 segundos · premio mayor</option>' +
+          '<option value="30">30 segundos · máxima emoción</option>' +
+        '</select></div>' +
       '<div class="campo"><label>Patrocinador del premio</label>' +
         '<select id="n-modulo"><option value="">Abierta a todo el evento</option></select>' +
         '<span class="ay-campo">Al elegir un stand, sólo participan quienes ' +
@@ -652,6 +661,7 @@
         hora:   m.querySelector('#n-hora').value,
         num_ganadores: m.querySelector('#n-gan').value,
         expositor_id: m.querySelector('#n-modulo').value || null,
+        duracion_seg: m.querySelector('#n-dur').value,
       })}).then(function(){ m.remove(); toast('Rifa programada'); cargarRifas(); })
         .catch(function(e){ toast(e.message); });
     };

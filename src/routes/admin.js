@@ -364,7 +364,8 @@ module.exports = function adminRoutes(db, io) {
   router.post('/rifas', soloAdmin, async (req, res, next) => {
     try {
       const { nombre, premio, valor, hora, num_ganadores,
-              min_modulos, patrocinador_id, expositor_id, auto } = req.body || {};
+              min_modulos, patrocinador_id, expositor_id, duracion_seg,
+              auto } = req.body || {};
 
       if (!premio || String(premio).trim().length < 2) {
         return res.status(422).json({ error: 'Describe el premio' });
@@ -379,8 +380,9 @@ module.exports = function adminRoutes(db, io) {
 
       const { rows } = await db.query(
         `INSERT INTO rifas (nombre, premio, valor, hora, num_ganadores,
-                            min_modulos, patrocinador_id, expositor_id, auto)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+                            min_modulos, patrocinador_id, expositor_id,
+                            duracion_seg, auto)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
         [String(nombre || premio).trim(), String(premio).trim(),
          valor != null && valor !== '' ? Number(valor) : null,
          cuando, Math.max(1, Number(num_ganadores) || 1),
@@ -388,6 +390,9 @@ module.exports = function adminRoutes(db, io) {
          patrocinador_id || null,
          // Módulo del patrocinador: sólo participa quien visitó su stand.
          expositor_id ? parseInt(expositor_id, 10) || null : null,
+         // La duración se acota al rango que acepta la base: un valor
+         // absurdo dejaría la pantalla girando sin fin.
+         Math.min(60, Math.max(3, Number(duracion_seg) || 9)),
          // Sin hora programada no se dispara sola: la lanza el presentador
          // desde el panel cuando toca.
          hora ? auto !== false : false]
@@ -454,6 +459,7 @@ module.exports = function adminRoutes(db, io) {
         rifa: {
           id: r.rifa.id, nombre: r.rifa.nombre,
           premio: r.rifa.premio, valor: r.rifa.valor,
+          duracion_seg: r.rifa.duracion_seg,
         },
         ganadores: r.ganadores.map((g) => ({
           posicion: g.posicion, nombre: g.nombre,
