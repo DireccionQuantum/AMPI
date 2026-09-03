@@ -113,9 +113,17 @@ async function paraImprimir(db, {
     const f = String(fila).trim().toUpperCase();
     // 'SIN' va PRIMERO: también cumple el patrón de letras, y si se
     // evaluara después buscaría una fila llamada "SIN" que no existe.
-    // Por eso el filtro de los que no tienen asiento no devolvía nada.
     if (f === 'SIN') {
       cond.push('fila IS NULL');
+
+    // Los dos días comparten filas: el día 1 usa los asientos 1 al 20 y
+    // el día 2 del 21 en adelante, salvo las filas H, I y J que son
+    // nuevas y empiezan en 1.
+    } else if (f === 'DIA1') {
+      cond.push("asiento <= 20 AND upper(coalesce(fila,'')) NOT IN ('H','I','J')");
+    } else if (f === 'DIA2') {
+      cond.push("(asiento > 20 OR upper(coalesce(fila,'')) IN ('H','I','J'))");
+
     } else if (/^[A-Z]{1,4}$/.test(f)) {
       args.push(f);
       cond.push(`upper(fila) = $${args.length}`);
@@ -144,7 +152,31 @@ async function filasDelSalon(db) {
       GROUP BY coalesce(fila, 'SIN')
       ORDER BY orden_fila(nullif(coalesce(fila,'SIN'),'SIN'))`
   );
-  return rows;
+
+  // Los dos días encabezan la lista: es el corte que más se usa al
+  // imprimir, y buscarlo fila por fila obliga a recordar qué asientos
+  // son de cuál.
+  const dias = await db.query(
+    `SELECT
+       count(*) FILTER (WHERE asiento <= 20
+         AND upper(coalesce(fila,'')) NOT IN ('H','I','J'))::int AS d1_total,
+       count(*) FILTER (WHERE asiento <= 20
+         AND upper(coalesce(fila,'')) NOT IN ('H','I','J')
+         AND etiqueta_impresa_en IS NULL)::int AS d1_pend,
+       count(*) FILTER (WHERE asiento > 20
+         OR upper(coalesce(fila,'')) IN ('H','I','J'))::int AS d2_total,
+       count(*) FILTER (WHERE (asiento > 20
+         OR upper(coalesce(fila,'')) IN ('H','I','J'))
+         AND etiqueta_impresa_en IS NULL)::int AS d2_pend
+     FROM asistentes WHERE fila IS NOT NULL`
+  );
+  const d = dias.rows[0];
+
+  return [
+    { fila: 'DIA1', total: d.d1_total, pendientes: d.d1_pend },
+    { fila: 'DIA2', total: d.d2_total, pendientes: d.d2_pend },
+    ...rows,
+  ];
 }
 
 /** Marca un lote como impreso. Recibe ids; ignora los que no existan. */

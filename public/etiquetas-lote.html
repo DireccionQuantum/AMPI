@@ -143,6 +143,13 @@
 
   /* ---------- Impresión ---------- */
   @page{size:62mm 55mm;margin:0}
+  .b-dia{
+    background:var(--navy);color:#fff;border:none;border-radius:10px;
+    padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;
+    cursor:pointer;white-space:nowrap;
+  }
+  .b-dia:hover{background:var(--navy-2)}
+  .b-dia.on{background:var(--green);color:#0a1a0a}
   .opcion{display:inline-flex;align-items:center;gap:6px;font-size:13px;
           color:var(--muted);cursor:pointer;white-space:nowrap}
   @media print{
@@ -190,6 +197,9 @@
       <option value="pendientes">Sólo pendientes de imprimir</option>
       <option value="todos">Todos los asistentes</option>
     </select>
+    <button id="btn-dia2" class="b-dia" title="Filtra los del día 2 y deja listo el lote">
+      Sólo día 2
+    </button>
     <select id="fila" title="Imprime sólo una fila del salón, para armar por secciones">
       <option value="">Todas las filas</option>
     </select>
@@ -476,7 +486,17 @@
   document.getElementById('recargar').addEventListener('click', cargar);
   filtro.addEventListener('change', cargar);
   orden.addEventListener('change', cargar);
-  selFila.addEventListener('change', cargar);
+  selFila.addEventListener('change', function () {
+    document.getElementById('btn-dia2').classList.toggle('on', selFila.value === 'DIA2');
+    cargar();
+  });
+
+  // Atajo al corte que más se usa: los del día 2 con su lugar.
+  document.getElementById('btn-dia2').addEventListener('click', function () {
+    selFila.value = selFila.value === 'DIA2' ? '' : 'DIA2';
+    this.classList.toggle('on', selFila.value === 'DIA2');
+    cargar();
+  });
 
   /**
    * Llena el selector con las filas del salón y cuántas faltan en cada
@@ -490,7 +510,11 @@
         var actual = selFila.value;
         selFila.innerHTML = '<option value="">Todas las filas</option>' +
           d.filas.map(function (f) {
-            var etq = f.fila === 'SIN' ? 'Sin asiento' : 'Fila ' + f.fila;
+            var etq;
+            if (f.fila === 'SIN') etq = 'Sin asiento';
+            else if (f.fila === 'DIA1') etq = '— Sólo día 1 —';
+            else if (f.fila === 'DIA2') etq = '— Sólo día 2 —';
+            else etq = 'Fila ' + f.fila;
             return '<option value="' + f.fila + '">' + etq +
                    ' · ' + f.pendientes + ' de ' + f.total + '</option>';
           }).join('');

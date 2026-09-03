@@ -344,14 +344,32 @@ async function importar(client, texto, opts = {}) {
     // un invitado que el organizador capturó sin datos de contacto.
     // Sin esto, cada reimportación creaba un duplicado silencioso.
     if (!existente && !f.telefono) {
+      // El LUGAR forma parte de la identidad cuando existe.
+      //
+      // Las cortesías de patrocinador vienen sin nombre real: los siete
+      // asientos de RUBA se llaman los siete "RUBA". Buscando sólo por
+      // nombre y empresa, el segundo encontraba al primero y lo
+      // actualizaba: los siete se colapsaban en uno solo y 79 personas
+      // se quedaban fuera de la importación.
+      //
+      // Con fila y asiento en la condición, cada butaca es una persona
+      // distinta, que es lo que son.
+      const conLugar = f.fila && f.asiento;
       const r = await client.query(
-        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento, sin_qr, codigo_corto, estado
+        `SELECT id, nombre, apellido, telefono, email, empresa, fila, asiento,
+                sin_qr, codigo_corto, estado
            FROM asistentes
           WHERE unaccent_simple(coalesce(nombre,'')) = unaccent_simple($1)
             AND unaccent_simple(coalesce(apellido,'')) = unaccent_simple($2)
             AND unaccent_simple(coalesce(empresa,''))  = unaccent_simple($3)
+            ${conLugar
+              ? 'AND (fila IS NULL OR (upper(fila) = $4 AND asiento = $5))'
+              : ''}
+          ORDER BY (fila IS NOT NULL) DESC
           LIMIT 1`,
-        [f.nombre, f.apellido || '', f.empresa || '']
+        conLugar
+          ? [f.nombre, f.apellido || '', f.empresa || '', f.fila, f.asiento]
+          : [f.nombre, f.apellido || '', f.empresa || '']
       );
       existente = r.rows[0] || null;
     }

@@ -11,12 +11,12 @@ const chk = (c, m, x) => { c ? (ok++, console.log('  ok    ' + m))
   : (fail++, console.log('  FALLA ' + m + (x !== undefined ? ' → ' + JSON.stringify(x) : ''))); };
 
 console.log('=== 1. El archivo del día 2 ===');
-const csv = fs.readFileSync('/mnt/user-data/outputs/summit-dia2.csv', 'utf8');
+const csv = fs.readFileSync(__dirname + '/datos/summit-dia2.csv', 'utf8');
 const lect = imp.leerCsv(csv);
 const prep = lect.filas.map(imp.prepararFila);
 const validas = prep.filter((f) => f.ok);
 
-chk(validas.length === 97, 'las 97 personas son válidas', validas.length);
+chk(validas.length === 109, 'las 109 personas son válidas', validas.length);
 chk(prep.filter((f) => !f.ok).length === 0, 'ninguna rechazada');
 chk(validas.every((f) => f.fila && f.asiento), 'todas traen fila y asiento');
 
