@@ -369,8 +369,13 @@ module.exports = function adminRoutes(db, io) {
       if (!premio || String(premio).trim().length < 2) {
         return res.status(422).json({ error: 'Describe el premio' });
       }
-      const cuando = new Date(hora);
-      if (isNaN(cuando)) return res.status(422).json({ error: 'La hora no es válida' });
+      // La hora es opcional: muchas rifas se sortean a mano cuando el
+      // presentador lo decide, no a una hora programada. Sin hora se usa
+      // la actual y la rifa queda lista para dispararse manualmente.
+      let cuando = hora ? new Date(hora) : new Date();
+      if (isNaN(cuando)) {
+        return res.status(422).json({ error: 'La hora no es válida' });
+      }
 
       const { rows } = await db.query(
         `INSERT INTO rifas (nombre, premio, valor, hora, num_ganadores,
@@ -383,7 +388,9 @@ module.exports = function adminRoutes(db, io) {
          patrocinador_id || null,
          // Módulo del patrocinador: sólo participa quien visitó su stand.
          expositor_id ? parseInt(expositor_id, 10) || null : null,
-         auto !== false]
+         // Sin hora programada no se dispara sola: la lanza el presentador
+         // desde el panel cuando toca.
+         hora ? auto !== false : false]
       );
       io.emit('rifas:cambio');
       res.json({ ok: true, rifa: rows[0] });
@@ -844,14 +851,17 @@ module.exports = function adminRoutes(db, io) {
         const usados = new Map(ocup.rows.map((x) => [x.asiento, x]));
 
         let elegido;
+        let compartidoCon = null;
         if (manual != null) {
-          // Si ya está ocupado se avisa con el nombre de quien lo tiene:
-          // el personal necesita saber a quién le está quitando el lugar,
-          // no sólo que "está ocupado".
+          // El número escrito a mano SIEMPRE se respeta, aunque el lugar
+          // ya esté tomado: en el evento a veces se sientan dos en una
+          // butaca o se reacomoda sobre la marcha, y el sistema no debe
+          // discutir con quien está viendo el salón.
+          // Sólo se informa con quién queda compartido, para que quede
+          // constancia en la pantalla.
           const quien = usados.get(manual);
           if (quien && quien.id !== id) {
-            const nom = [quien.nombre, quien.apellido].filter(Boolean).join(' ');
-            return { error: `${fila}-${manual} ya es de ${nom || 'otra persona'}` };
+            compartidoCon = [quien.nombre, quien.apellido].filter(Boolean).join(' ') || null;
           }
           elegido = manual;
         } else {
@@ -866,7 +876,7 @@ module.exports = function adminRoutes(db, io) {
           [id, fila, elegido]
         );
         if (!upd.rows[0]) return { error: 'Asistente no encontrado' };
-        return { ok: true, asistente: upd.rows[0] };
+        return { ok: true, asistente: upd.rows[0], compartido_con: compartidoCon };
       });
 
       if (r.error) return res.status(r.error.includes('encontrado') ? 404 : 409).json(r);

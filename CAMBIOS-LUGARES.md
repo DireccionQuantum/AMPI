@@ -166,9 +166,12 @@ escribe la fila y el asiento a mano: en la mesa suele saberse cuál está
 libre porque se está viendo el salón.
 
 Si el asiento se deja en blanco, el sistema toma el primer hueco de esa
-fila. Si el número ya está ocupado, avisa **de quién es** — el personal
-necesita saber a quién le estaría quitando el lugar, no sólo que está
-tomado.
+fila.
+
+El número escrito a mano **siempre se respeta**, aunque el lugar ya esté
+tomado: en el evento a veces se sientan dos en una butaca o se reacomoda
+sobre la marcha, y el sistema no debe discutir con quien está viendo el
+salón. Sólo avisa con quién queda compartido.
 
 Va con la fila bloqueada, así que dos mesas asignando a la vez no
 repiten número.

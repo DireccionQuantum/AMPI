@@ -90,13 +90,14 @@ function espia(rifa, cfg) {
     if (pedido != null) {
       const n = parseInt(pedido, 10);
       if (!Number.isInteger(n) || n < 1 || n > 199) return { error: 'rango' };
+      // El número escrito a mano siempre se respeta, ocupado o no: sólo
+      // se informa con quién queda compartido.
       const quien = ocupados.get(n);
-      if (quien) return { error: 'ocupado', por: quien.nombre };
-      return { asiento: n };
+      return { asiento: n, compartido: quien ? quien.nombre : null };
     }
     let libre = 1;
     while (ocupados.has(libre) && libre < 200) libre++;
-    return { asiento: libre };
+    return { asiento: libre, compartido: null };
   }
 
   const fila = [{ asiento: 1, nombre: 'Ana' }, { asiento: 2, nombre: 'Beto' },
@@ -108,12 +109,36 @@ function espia(rifa, cfg) {
   chk(asignar([], null).asiento === 1, 'fila vacía: empieza en 1');
 
   const choque = asignar(fila, 2);
-  chk(choque.error === 'ocupado' && choque.por === 'Beto',
-      'si está ocupado, dice de quién es', choque);
+  chk(choque.asiento === 2, 'un asiento ocupado se asigna igual', choque);
+  chk(choque.compartido === 'Beto', 'y avisa con quién queda compartido', choque);
 
   chk(asignar(fila, 0).error === 'rango', 'rechaza el cero');
   chk(asignar(fila, 250).error === 'rango', 'rechaza fuera de rango');
   chk(asignar(fila, 'abc').error === 'rango', 'rechaza texto');
+
+  console.log('\n=== 6. Hora opcional al programar ===');
+  // Misma lógica que el endpoint: sin hora se usa la actual y la rifa
+  // NO se dispara sola, la lanza el presentador desde el panel.
+  function prepararRifa(body) {
+    if (!body.premio || String(body.premio).trim().length < 2) {
+      return { error: 'Describe el premio' };
+    }
+    const cuando = body.hora ? new Date(body.hora) : new Date();
+    if (isNaN(cuando)) return { error: 'La hora no es válida' };
+    return { hora: cuando, auto: body.hora ? body.auto !== false : false };
+  }
+
+  let r1 = prepararRifa({ premio: 'Pantalla 55 pulgadas' });
+  chk(!r1.error, 'sin hora: se puede programar', r1.error);
+  chk(r1.auto === false, 'sin hora: no se dispara sola', r1.auto);
+  chk(r1.hora instanceof Date, 'usa la hora actual');
+
+  let r2 = prepararRifa({ premio: 'Tablet', hora: '2026-09-03T18:00' });
+  chk(!r2.error && r2.auto === true, 'con hora: sí se dispara sola', r2);
+
+  chk(prepararRifa({ premio: 'X' }).error, 'premio muy corto: avisa');
+  chk(prepararRifa({ premio: 'Tablet', hora: 'no-es-fecha' }).error,
+      'hora inválida: avisa');
 
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);

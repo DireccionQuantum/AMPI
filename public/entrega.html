@@ -316,7 +316,10 @@
           cerrar();
           buscar();
           var a = d.asistente;
-          aviso('Lugar asignado: ' + a.fila + '-' + a.asiento);
+          // Si el lugar ya lo tenía alguien, se asigna igual pero se dice
+          // con quién queda compartido.
+          aviso('Lugar asignado: ' + a.fila + '-' + a.asiento +
+                (d.compartido_con ? ' · compartido con ' + d.compartido_con : ''));
         })
         .catch(function (d) {
           btn.disabled = false;

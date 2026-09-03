@@ -124,6 +124,8 @@
          font-size:14px;font-weight:700;z-index:60;box-shadow:var(--sombra)}
 
   .ay-campo{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+  .campo label .opc{font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -618,7 +620,9 @@
       '<div class="caja"><h3>Nueva rifa</h3>' +
       '<div class="campo"><label>Premio</label><input id="n-premio" placeholder="Tablet Samsung"></div>' +
       '<div class="campo"><label>Valor aproximado (MXN)</label><input id="n-valor" type="number" placeholder="4500"></div>' +
-      '<div class="campo"><label>Hora del sorteo</label><input id="n-hora" type="datetime-local"></div>' +
+      '<div class="campo"><label>Hora del sorteo <span class="opc">— opcional</span></label>' +
+        '<input id="n-hora" type="datetime-local">' +
+        '<span class="ay-campo">Déjala en blanco para lanzarla a mano desde el panel.</span></div>' +
       '<div class="campo"><label>Número de ganadores</label><input id="n-gan" type="number" value="1" min="1"></div>' +
       '<div class="campo"><label>Patrocinador del premio</label>' +
         '<select id="n-modulo"><option value="">Abierta a todo el evento</option></select>' +
