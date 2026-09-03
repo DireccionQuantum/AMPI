@@ -225,6 +225,22 @@ Dos cosas que se ajustan solas con la duración:
 - **El cierre de la pantalla** se calcula desde el final de la animación,
   así el ganador siempre queda 12 s a la vista.
 
+## Editar rifas programadas
+
+Botón **Editar** en cada rifa pendiente. Abre el mismo formulario que
+al crearla, con sus valores actuales: premio, valor, hora, ganadores,
+duración de la tómbola y patrocinador.
+
+Es el mismo formulario a propósito. Con dos copias, un campo nuevo se
+agregaba en una y se olvidaba en la otra.
+
+Dos detalles del guardado:
+
+- Borrar la hora pasa la rifa a manual; borrar el patrocinador la abre a
+  todo el evento. Ambos campos distinguen «vacío a propósito» de «no se
+  tocó»: sin eso, editar sólo el premio le quitaba la hora programada.
+- Las rifas ya sorteadas no se pueden editar.
+
 ## Cómo aplicarlo
 
 ```

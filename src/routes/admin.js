@@ -404,18 +404,49 @@ module.exports = function adminRoutes(db, io) {
 
   router.patch('/rifas/:id', soloAdmin, async (req, res, next) => {
     try {
-      const { nombre, premio, valor, hora, num_ganadores, estado, auto } = req.body || {};
+      const { nombre, premio, valor, hora, num_ganadores, estado, auto,
+              expositor_id, duracion_seg } = req.body || {};
+
+      // COALESCE deja pasar sólo lo que venga; lo demás queda igual. Así
+      // el panel puede mandar un cambio suelto sin reenviar toda la rifa.
+      //
+      // Dos campos necesitan poder BORRARSE, no sólo cambiarse:
+      //   · quitar el patrocinador para abrir la rifa a todo el evento
+      //   · quitar la hora para pasarla a manual
+      // Por eso llevan un interruptor aparte en vez de usar COALESCE.
+      // Se distingue "no lo mandaron" de "lo mandaron vacío":
+      //   · undefined → el panel no tocó ese campo, se deja como está
+      //   · null o ''  → el operador lo borró a propósito
+      // Sin esa distinción, editar sólo el premio le quitaba la hora
+      // programada a la rifa.
+      const tocoModulo = Object.prototype.hasOwnProperty.call(req.body || {}, 'expositor_id');
+      const tocoHora = Object.prototype.hasOwnProperty.call(req.body || {}, 'hora');
+      const quitarModulo = tocoModulo && (expositor_id === null || expositor_id === '');
+      const quitarHora = tocoHora && (hora === null || hora === '');
+
       const { rows } = await db.query(
         `UPDATE rifas
             SET nombre = COALESCE($2,nombre), premio = COALESCE($3,premio),
-                valor = COALESCE($4,valor), hora = COALESCE($5,hora),
+                valor = COALESCE($4,valor),
+                hora  = CASE WHEN $9::bool THEN now() ELSE COALESCE($5,hora) END,
                 num_ganadores = COALESCE($6,num_ganadores),
-                estado = COALESCE($7,estado), auto = COALESCE($8,auto)
+                estado = COALESCE($7,estado),
+                auto = CASE WHEN $9::bool THEN false ELSE COALESCE($8,auto) END,
+                expositor_id  = CASE WHEN $10::bool THEN NULL
+                                     ELSE COALESCE($11,expositor_id) END,
+                duracion_seg  = COALESCE($12,duracion_seg)
           WHERE id = $1 AND estado <> 'finalizada' RETURNING *`,
         [req.params.id, nombre || null, premio || null,
-         valor != null ? Number(valor) : null, hora ? new Date(hora) : null,
-         num_ganadores != null ? Number(num_ganadores) : null,
-         estado || null, auto != null ? Boolean(auto) : null]
+         valor != null && valor !== '' ? Number(valor) : null,
+         hora ? new Date(hora) : null,
+         num_ganadores != null && num_ganadores !== '' ? Number(num_ganadores) : null,
+         estado || null,
+         auto != null ? Boolean(auto) : null,
+         quitarHora,
+         quitarModulo,
+         expositor_id ? parseInt(expositor_id, 10) || null : null,
+         duracion_seg != null && duracion_seg !== ''
+           ? Math.min(60, Math.max(3, Number(duracion_seg) || 9)) : null]
       );
       if (!rows.length) {
         return res.status(404).json({ error: 'No se puede editar: no existe o ya se sorteó' });

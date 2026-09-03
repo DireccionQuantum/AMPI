@@ -592,7 +592,11 @@
           api('/rifas/' + r.id + '/previa').then(function(p){
             prev.textContent = p.personas + ' personas · ' + p.boletos + ' boletos en la urna';
           }).catch(function(){ prev.textContent = ''; });
-          acc.appendChild(btn); acc.appendChild(prev);
+          var bEd = document.createElement('button');
+          bEd.className = 'btn-chico btn-fantasma';
+          bEd.textContent = 'Editar';
+          bEd.onclick = function(){ formRifa(r); };
+          acc.appendChild(btn); acc.appendChild(bEd); acc.appendChild(prev);
           el.appendChild(acc);
         }
         cont.appendChild(el);
@@ -614,11 +618,20 @@
       });
   }
 
-  $('btn-nueva-rifa').addEventListener('click', function(){
+  /**
+   * Formulario de rifa, para crear y para editar.
+   *
+   * Es el mismo en los dos casos: mantener dos copias hacía que un campo
+   * nuevo se agregara en una y se olvidara en la otra.
+   *
+   * @param {object} [rifa] si viene, se edita esa; si no, se crea una.
+   */
+  function formRifa(rifa){
+    var editar = !!(rifa && rifa.id);
     var m = document.createElement('div');
     m.className = 'modal';
     m.innerHTML =
-      '<div class="caja"><h3>Nueva rifa</h3>' +
+      '<div class="caja"><h3>' + (editar ? 'Editar rifa' : 'Nueva rifa') + '</h3>' +
       '<div class="campo"><label>Premio</label><input id="n-premio" placeholder="Tablet Samsung"></div>' +
       '<div class="campo"><label>Valor aproximado (MXN)</label><input id="n-valor" type="number" placeholder="4500"></div>' +
       '<div class="campo"><label>Hora del sorteo <span class="opc">— opcional</span></label>' +
@@ -628,7 +641,7 @@
       '<div class="campo"><label>Duración de la tómbola</label>' +
         '<select id="n-dur">' +
           '<option value="5">5 segundos · rápida</option>' +
-          '<option value="9" selected>9 segundos · normal</option>' +
+          '<option value="9">9 segundos · normal</option>' +
           '<option value="15">15 segundos · con tensión</option>' +
           '<option value="20">20 segundos · premio mayor</option>' +
           '<option value="30">30 segundos · máxima emoción</option>' +
@@ -638,8 +651,28 @@
         '<span class="ay-campo">Al elegir un stand, sólo participan quienes ' +
         'escanearon su código.</span></div>' +
       '<div class="fila"><button class="btn-fantasma" id="n-cancel">Cancelar</button>' +
-      '<button id="n-guardar" style="flex:1">Programar rifa</button></div></div>';
+      '<button id="n-guardar" style="flex:1">' +
+        (editar ? 'Guardar cambios' : 'Programar rifa') + '</button></div></div>';
     document.body.appendChild(m);
+
+    // Valores actuales al editar
+    if (editar) {
+      m.querySelector('#n-premio').value = rifa.premio || '';
+      m.querySelector('#n-valor').value = rifa.valor != null ? rifa.valor : '';
+      m.querySelector('#n-gan').value = rifa.num_ganadores || 1;
+      m.querySelector('#n-dur').value = String(rifa.duracion_seg || 9);
+      // El campo datetime-local necesita la hora local sin zona; si se le
+      // pasa el texto ISO tal cual, queda en blanco.
+      if (rifa.hora && rifa.auto) {
+        var d = new Date(rifa.hora);
+        var p2 = function(n){ return String(n).padStart(2,'0'); };
+        m.querySelector('#n-hora').value =
+          d.getFullYear() + '-' + p2(d.getMonth()+1) + '-' + p2(d.getDate()) +
+          'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+      }
+    } else {
+      m.querySelector('#n-dur').value = '9';
+    }
 
     // Los módulos se cargan al abrir: la lista cambia durante el evento.
     api('/expositores').then(function(lista){
@@ -651,21 +684,33 @@
           o.textContent = x.nombre + (x.empresa ? ' · ' + x.empresa : '');
           sel.appendChild(o);
         });
+      if (editar && rifa.expositor_id) sel.value = String(rifa.expositor_id);
     }).catch(function(){});
 
     m.querySelector('#n-cancel').onclick = function(){ m.remove(); };
     m.querySelector('#n-guardar').onclick = function(){
-      api('/rifas', { method:'POST', body: JSON.stringify({
+      var datos = {
         premio: m.querySelector('#n-premio').value,
         valor:  m.querySelector('#n-valor').value,
         hora:   m.querySelector('#n-hora').value,
         num_ganadores: m.querySelector('#n-gan').value,
         expositor_id: m.querySelector('#n-modulo').value || null,
         duracion_seg: m.querySelector('#n-dur').value,
-      })}).then(function(){ m.remove(); toast('Rifa programada'); cargarRifas(); })
+      };
+      var peticion = editar
+        ? api('/rifas/' + rifa.id, { method:'PATCH', body: JSON.stringify(datos) })
+        : api('/rifas', { method:'POST', body: JSON.stringify(datos) });
+      peticion
+        .then(function(){
+          m.remove();
+          toast(editar ? 'Rifa actualizada' : 'Rifa programada');
+          cargarRifas();
+        })
         .catch(function(e){ toast(e.message); });
     };
-  });
+  }
+
+  $('btn-nueva-rifa').addEventListener('click', function(){ formRifa(); });
 
   /* ================= Asistentes ================= */
   /* Registros pendientes sin nombre ni teléfono: se crean cuando el

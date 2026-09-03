@@ -160,6 +160,40 @@ function espia(rifa, cfg) {
   chk(cierre(30) - acotar(30) * 1000 === 12200,
       'el ganador siempre se ve 12.2 s');
 
+  console.log('\n=== 8. Editar una rifa programada ===');
+  // El patch usa COALESCE: sólo cambia lo que venga. Pero dos campos
+  // necesitan poder BORRARSE, y para eso llevan interruptor aparte.
+  function preparar(body) {
+    const tocoHora = Object.prototype.hasOwnProperty.call(body, 'hora');
+    const tocoMod = Object.prototype.hasOwnProperty.call(body, 'expositor_id');
+    return {
+      quitarHora: tocoHora && (body.hora === null || body.hora === ''),
+      quitarModulo: tocoMod && (body.expositor_id === null || body.expositor_id === ''),
+      duracion: body.duracion_seg != null && body.duracion_seg !== ''
+        ? Math.min(60, Math.max(3, Number(body.duracion_seg) || 9)) : null,
+      valor: body.valor != null && body.valor !== '' ? Number(body.valor) : null,
+    };
+  }
+
+  let e = preparar({ premio: 'Tablet' });
+  chk(e.quitarHora === false, 'editar sólo el premio: NO le quita la hora');
+  chk(preparar({ hora: '' }).quitarHora === true,
+      'hora borrada a propósito: pasa a manual');
+  chk(e.duracion === null, 'sin duración: no se toca la que tenía');
+
+  e = preparar({ hora: '2026-09-03T18:00', duracion_seg: 20 });
+  chk(e.quitarHora === false, 'con hora: se programa');
+  chk(e.duracion === 20, 'guarda la duración nueva');
+
+  e = preparar({ expositor_id: '' });
+  chk(e.quitarModulo === true, 'módulo vacío: abre la rifa a todo el evento');
+
+  e = preparar({ expositor_id: '42' });
+  chk(e.quitarModulo === false, 'con módulo: queda restringida');
+
+  chk(preparar({ duracion_seg: 999 }).duracion === 60, 'acota la duración al máximo');
+  chk(preparar({ valor: '' }).valor === null, 'valor vacío: no se toca');
+
   console.log('\n' + '='.repeat(52));
   console.log(`  ${ok} pruebas pasaron, ${fail} fallaron`);
   console.log('='.repeat(52));
