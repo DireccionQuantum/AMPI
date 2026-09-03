@@ -172,6 +172,32 @@ aceptaba letras. Nueve carnets se quedaban fuera. Ahora se aceptan
 dígitos, aunque el nombre debe seguir empezando con letra para que un
 teléfono mal pegado no pase como válido.
 
+## Rifas de patrocinador ligadas a su stand
+
+Al crear una rifa hay un selector de **patrocinador del premio**. Si se
+elige un stand, sólo participan quienes escanearon el QR de ese módulo:
+es la razón por la que el patrocinador puso el regalo.
+
+Se apunta al expositor y no al patrocinador porque los escaneos se
+registran contra expositores — son dos tablas distintas y sólo una tiene
+el dato de quién pasó por el stand.
+
+En la lista de rifas se avisa «Sólo quienes visitaron [módulo]», porque
+al sortear en vivo importa saber que la urna está restringida.
+
+Convive con las otras reglas: mínimo de módulos visitados y exclusión de
+ganadores previos.
+
+## Completar información en la mesa de entrega
+
+Botón en cada tarjeta: nombre, apellido, teléfono y correo. Pensado para
+las cortesías de patrocinador, que llegan con una etiqueta que sólo dice
+su empresa.
+
+Todos los campos son opcionales y el panel se puede cerrar sin guardar.
+Al guardar, la persona pasa a «verificado», que es lo que la habilita
+para las rifas.
+
 ## Cómo aplicarlo
 
 ```

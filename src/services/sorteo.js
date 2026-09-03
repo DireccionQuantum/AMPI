@@ -54,6 +54,17 @@ async function boletosElegibles(client, rifa, cfg) {
     filtros.push(`(SELECT COUNT(*) FROM escaneos e WHERE e.asistente_id = a.id) >= $${params.length}`);
   }
 
+  // Rifa de patrocinador: sólo participa quien visitó SU módulo.
+  //
+  // Es la razón por la que el patrocinador puso el premio, así que el
+  // filtro es sobre el escaneo real, no sobre haber estado en el evento.
+  if (rifa.expositor_id) {
+    params.push(rifa.expositor_id);
+    filtros.push(`EXISTS (SELECT 1 FROM escaneos e
+                           WHERE e.asistente_id = a.id
+                             AND e.expositor_id = $${params.length})`);
+  }
+
   if (excluirGanadores) {
     filtros.push(`NOT EXISTS (SELECT 1 FROM ganadores g WHERE g.asistente_id = a.id)`);
   } else {

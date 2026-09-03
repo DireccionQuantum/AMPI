@@ -71,9 +71,15 @@
   .modal-caja h3{font-size:17px;font-weight:800;color:var(--ink)}
   .modal-ay{font-size:13px;color:var(--muted);margin:6px 0 14px;line-height:1.5}
   .modal-caja input{
-    width:100%;padding:14px;font-size:17px;border:1px solid var(--line);
+    width:100%;padding:13px;font-size:16px;border:1px solid var(--line);
     border-radius:10px;font-family:inherit;
   }
+  .mc{margin-bottom:10px}
+  .mc label{
+    display:block;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:4px;
+  }
+  .mc label .opc{font-weight:400;letter-spacing:0;text-transform:none}
   .modal-caja input:focus{outline:none;border-color:var(--green);
     box-shadow:0 0 0 3px rgba(92,184,92,.18)}
   .modal-err{color:#c62828;font-size:13px;margin-top:7px;min-height:17px}
@@ -201,10 +207,10 @@
           (a.fila && a.asiento
             ? ' · <b>' + esc(a.fila) + '-' + a.asiento + '</b>' : '') +
         '</div>' +
-        '<div class="p-mail" data-acc="correo">' +
+        '<div class="p-mail" data-acc="datos">' +
           (a.email
             ? '✉ ' + esc(a.email)
-            : '<span class="p-falta">＋ Agregar correo</span>') +
+            : '<span class="p-falta">＋ Completar información</span>') +
         '</div>' +
         '<div class="p-tags">' + tags + '</div>' +
       '</div>' +
@@ -212,6 +218,7 @@
         (entregado
           ? '<button class="b b-s" data-acc="deshacer">Deshacer</button>'
           : '<button class="b b-p" data-acc="entregar">Entregar</button>') +
+        '<button class="b b-s" data-acc="datos">Completar</button>' +
         (a.fila && a.asiento ? '' :
           '<button class="b b-s" data-acc="asiento">Dar asiento</button>') +
         '<button class="b b-s" data-acc="imprimir">Imprimir</button>' +
@@ -251,73 +258,89 @@
   }
 
   /**
-   * Panel para capturar el correo de una persona.
+   * Panel para completar los datos de una persona.
    *
-   * Se abre al tocar la línea del correo en su tarjeta. Puede guardarse,
-   * o cerrarse y entregar el carnet sin él: en la fila del evento no
-   * siempre hay tiempo de pedirlo, y detener la entrega por eso sería
-   * peor que quedarse sin el dato.
+   * Pensado para las cortesías de patrocinador: llegan con una etiqueta
+   * que sólo dice su empresa, y aquí se les captura lo que falta para
+   * que entren bien a las rifas.
+   *
+   * Todos los campos son opcionales y se puede cerrar sin guardar: en la
+   * fila del evento no siempre hay tiempo, y detener la entrega por un
+   * dato sería peor que capturarlo después.
    */
-  function pedirCorreo(id, fila) {
-    var nombre = fila.querySelector('.p-nom').textContent;
-    var actual = (fila.querySelector('.p-mail').textContent || '')
-      .replace(/^[✉＋]\s*/, '').replace('Agregar correo', '').trim();
+  function pedirDatos(id, fila) {
+    var quien = fila.querySelector('.p-nom').textContent;
 
     var caja = document.createElement('div');
     caja.className = 'modal';
     caja.innerHTML =
       '<div class="modal-caja">' +
-        '<h3>Correo de ' + esc(nombre) + '</h3>' +
-        '<p class="modal-ay">Si no lo tiene a la mano, puedes entregar el ' +
-          'carnet y capturarlo después.</p>' +
-        '<input type="email" id="mail-input" inputmode="email" ' +
-          'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
-          'placeholder="correo@ejemplo.com" value="' + esc(actual) + '">' +
-        '<div class="modal-err" id="mail-err"></div>' +
+        '<h3>Completar información</h3>' +
+        '<p class="modal-ay">' + esc(quien) + '. Llena lo que tengas; ' +
+          'puedes entregar el carnet y capturar el resto después.</p>' +
+        '<div class="mc"><label for="d-nombre">Nombre</label>' +
+          '<input id="d-nombre" autocomplete="off" placeholder="Nombre de pila"></div>' +
+        '<div class="mc"><label for="d-apellido">Apellido</label>' +
+          '<input id="d-apellido" autocomplete="off"></div>' +
+        '<div class="mc"><label for="d-tel">Teléfono</label>' +
+          '<input id="d-tel" type="tel" inputmode="numeric" maxlength="16" ' +
+          'placeholder="664 123 4567"></div>' +
+        '<div class="mc"><label for="d-mail">Correo <span class="opc">— opcional</span></label>' +
+          '<input id="d-mail" type="email" inputmode="email" autocapitalize="off" ' +
+          'autocorrect="off" spellcheck="false" placeholder="correo@ejemplo.com"></div>' +
+        '<div class="modal-err" id="d-err"></div>' +
         '<div class="modal-acc">' +
-          '<button class="b b-s" id="mail-omitir">Ahora no</button>' +
-          '<button class="b b-p" id="mail-guardar">Guardar</button>' +
+          '<button class="b b-s" id="d-omitir">Ahora no</button>' +
+          '<button class="b b-p" id="d-guardar">Guardar</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(caja);
 
-    var campo = caja.querySelector('#mail-input');
-    var err = caja.querySelector('#mail-err');
-    setTimeout(function () { campo.focus(); campo.select(); }, 50);
+    var err = caja.querySelector('#d-err');
+    setTimeout(function () { caja.querySelector('#d-nombre').focus(); }, 50);
 
     function cerrar() { caja.remove(); }
-
-    caja.addEventListener('click', function (ev) {
-      if (ev.target === caja) cerrar();
-    });
-    caja.querySelector('#mail-omitir').addEventListener('click', cerrar);
+    caja.addEventListener('click', function (ev) { if (ev.target === caja) cerrar(); });
+    caja.querySelector('#d-omitir').addEventListener('click', cerrar);
 
     function guardar() {
-      var valor = campo.value.trim();
-      var btn = caja.querySelector('#mail-guardar');
+      var btn = caja.querySelector('#d-guardar');
+      var datos = {
+        nombre: caja.querySelector('#d-nombre').value,
+        apellido: caja.querySelector('#d-apellido').value,
+        telefono: caja.querySelector('#d-tel').value,
+        email: caja.querySelector('#d-mail').value,
+      };
+      // Nada escrito: se cierra sin molestar con un error.
+      var algo = Object.keys(datos).some(function (k) { return datos[k].trim(); });
+      if (!algo) { cerrar(); return; }
+
       btn.disabled = true;
       err.textContent = '';
-      fetch('/api/admin/modulo/asistente/' + id + '/email', {
+      fetch('/api/admin/modulo/asistente/' + id + '/datos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ email: valor }),
+        body: JSON.stringify(datos),
       })
         .then(function (r) {
           return r.json().then(function (d) { if (!r.ok) throw d; return d; });
         })
-        .then(function () {
-          cerrar();
-          buscar();          // se recarga para ver el correo en la tarjeta
-        })
+        .then(function () { cerrar(); buscar(); })
         .catch(function (d) {
           btn.disabled = false;
-          err.textContent = (d && d.error) || 'No se pudo guardar';
+          var msj = (d && d.error) || '';
+          if (d && d.errores) {
+            msj = Object.keys(d.errores).map(function (k) {
+              return d.errores[k];
+            }).join(' · ');
+          }
+          err.textContent = msj || 'No se pudo guardar';
         });
     }
 
-    caja.querySelector('#mail-guardar').addEventListener('click', guardar);
-    campo.addEventListener('keydown', function (ev) {
+    caja.querySelector('#d-guardar').addEventListener('click', guardar);
+    caja.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter') guardar();
       if (ev.key === 'Escape') cerrar();
     });
@@ -344,8 +367,8 @@
       return;
     }
 
-    if (acc === 'correo') {
-      pedirCorreo(id, fila);
+    if (acc === 'datos' || acc === 'correo') {
+      pedirDatos(id, fila);
       return;
     }
 

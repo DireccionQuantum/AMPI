@@ -356,12 +356,42 @@
     });
   }
 
+  /* ---------- Sonido del sorteo ----------
+     Se genera con el oscilador del navegador en lugar de un archivo de
+     audio: no hay que cargar nada y suena igual en cualquier equipo.
+     Si el navegador bloquea el audio, todo sigue funcionando en silencio. */
+  var audioCtx = null;
+
+  function tono(frec, ms, tipo, volumen){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = tipo || 'sine';
+      o.frequency.value = frec;
+      g.gain.setValueAtTime(volumen == null ? .14 : volumen, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + ms/1000);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + ms/1000);
+    }catch(e){}
+  }
+
+  /** Fanfarria al revelar al ganador. */
+  function sonarGanador(){
+    // Acorde ascendente: do, mi, sol, do alto.
+    [[523,0],[659,110],[784,220],[1047,340]].forEach(function(par){
+      setTimeout(function(){ tono(par[0], 620, 'triangle', .17); }, par[1]);
+    });
+  }
+
   /* ---------- Animación de sorteo ---------- */
   function correrRuleta(duracionMs, alFinal){
     var pista = $('s-pista');
     pista.innerHTML = '';
     var muestras = [];
-    for(var i = 0; i < 40; i++){
+    // Más muestras para la animación larga: con 40 la pista se agotaba
+    // antes de terminar y el giro se veía detenido al final.
+    for(var i = 0; i < 70; i++){
       muestras.push('AMPI-' + String(Math.floor(Math.random()*999999)).padStart(6,'0'));
     }
     muestras.forEach(function(f){
@@ -373,12 +403,25 @@
     var alto = pista.firstChild.offsetHeight || 100;
     var total = muestras.length - 1;
     var inicio = performance.now();
+    var ultimoIndice = -1;
 
     function paso(ahora){
       var t = Math.min(1, (ahora - inicio) / duracionMs);
       // Desaceleración fuerte al final: crea la tensión del sorteo.
       var e = 1 - Math.pow(1 - t, 3.2);
-      pista.style.transform = 'translateY(' + (-e * total * alto) + 'px)';
+      var desplazado = e * total;
+      pista.style.transform = 'translateY(' + (-desplazado * alto) + 'px)';
+
+      // Un tic por cada folio que pasa. Como la ruleta desacelera, los
+      // tics se van separando solos: es lo que da la sensación de que
+      // está a punto de detenerse.
+      var idx = Math.floor(desplazado);
+      if(idx !== ultimoIndice){
+        ultimoIndice = idx;
+        // Sube de tono conforme avanza, para que crezca la tensión.
+        tono(320 + t * 260, 45, 'square', .05);
+      }
+
       if(t < 1) requestAnimationFrame(paso);
       else alFinal();
     }
@@ -415,8 +458,10 @@
     if(!g){ $('sorteo').classList.remove('ver'); return; }
 
     mostrarSorteo(d.rifa.premio);
-    correrRuleta(3800, function(){
+    // 8.8 s en vez de 3.8: cinco segundos más de tensión antes de revelar.
+    correrRuleta(8800, function(){
       $('s-ruleta').style.display = 'none';
+      sonarGanador();
       $('s-nombre').textContent = (g.nombre || '') + ' ' + (g.apellido || '');
       $('s-folio').textContent = g.folio || '';
 
@@ -434,7 +479,9 @@
       $('s-ganador').classList.add('ver');
       lanzarConfeti();
 
-      setTimeout(function(){ $('sorteo').classList.remove('ver'); }, 16000);
+      // 21 s en vez de 16: la animación creció 5 segundos y sin ajustar
+      // esto el ganador quedaba en pantalla sólo 7 s en lugar de 12.
+      setTimeout(function(){ $('sorteo').classList.remove('ver'); }, 21000);
     });
   }
 

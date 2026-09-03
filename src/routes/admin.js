@@ -351,9 +351,11 @@ module.exports = function adminRoutes(db, io) {
     try {
       const { rows } = await db.query(
         `SELECT r.*, p.nombre AS patrocinador,
+                x.nombre AS modulo,
                 (SELECT COUNT(*) FROM ganadores g WHERE g.rifa_id = r.id) AS ganadores
            FROM rifas r
            LEFT JOIN patrocinadores p ON p.id = r.patrocinador_id
+           LEFT JOIN expositores   x ON x.id = r.expositor_id
           ORDER BY r.hora`);
       res.json(rows);
     } catch (err) { next(err); }
@@ -362,7 +364,7 @@ module.exports = function adminRoutes(db, io) {
   router.post('/rifas', soloAdmin, async (req, res, next) => {
     try {
       const { nombre, premio, valor, hora, num_ganadores,
-              min_modulos, patrocinador_id, auto } = req.body || {};
+              min_modulos, patrocinador_id, expositor_id, auto } = req.body || {};
 
       if (!premio || String(premio).trim().length < 2) {
         return res.status(422).json({ error: 'Describe el premio' });
@@ -372,13 +374,16 @@ module.exports = function adminRoutes(db, io) {
 
       const { rows } = await db.query(
         `INSERT INTO rifas (nombre, premio, valor, hora, num_ganadores,
-                            min_modulos, patrocinador_id, auto)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+                            min_modulos, patrocinador_id, expositor_id, auto)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
         [String(nombre || premio).trim(), String(premio).trim(),
          valor != null && valor !== '' ? Number(valor) : null,
          cuando, Math.max(1, Number(num_ganadores) || 1),
          Math.max(0, Number(min_modulos) || 0),
-         patrocinador_id || null, auto !== false]
+         patrocinador_id || null,
+         // Módulo del patrocinador: sólo participa quien visitó su stand.
+         expositor_id ? parseInt(expositor_id, 10) || null : null,
+         auto !== false]
       );
       io.emit('rifas:cambio');
       res.json({ ok: true, rifa: rows[0] });
@@ -693,6 +698,74 @@ module.exports = function adminRoutes(db, io) {
   });
 
   /** Lista de etiquetas por imprimir. */
+  /**
+   * Completa los datos de un asistente desde la mesa de entrega.
+   *
+   * Para las cortesías de patrocinador: llegan con etiqueta que sólo
+   * dice la empresa, y aquí se les captura nombre y teléfono para que
+   * entren bien a las rifas. Todos los campos son opcionales: si la
+   * persona trae prisa se guarda lo que haya y se completa después.
+   */
+  router.post('/modulo/asistente/:id/datos', soloStaff, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Id inválido' });
+      }
+      const b = req.body || {};
+      const campos = [];
+      const vals = [id];
+      const errores = {};
+
+      const texto = (v, max) => {
+        const s = String(v == null ? '' : v).trim().replace(/\s+/g, ' ');
+        return s ? s.slice(0, max) : null;
+      };
+
+      const nombre = texto(b.nombre, 60);
+      if (nombre !== null) {
+        if (nombre.length < 2) errores.nombre = 'Muy corto';
+        else { campos.push(`nombre = $${vals.length + 1}`); vals.push(nombre); }
+      }
+
+      const apellido = texto(b.apellido, 60);
+      if (apellido !== null) { campos.push(`apellido = $${vals.length + 1}`); vals.push(apellido); }
+
+      const empresa = texto(b.empresa, 80);
+      if (empresa !== null) { campos.push(`empresa = $${vals.length + 1}`); vals.push(empresa); }
+
+      // El teléfono se guarda a 10 dígitos, como el resto del sistema.
+      if (b.telefono != null && String(b.telefono).trim()) {
+        const d = String(b.telefono).replace(/\D/g, '');
+        const diez = d.length > 10 ? d.slice(-10) : d;
+        if (diez.length !== 10) errores.telefono = 'Deben ser 10 dígitos';
+        else { campos.push(`telefono = $${vals.length + 1}`); vals.push(diez); }
+      }
+
+      if (b.email != null && String(b.email).trim()) {
+        const e = String(b.email).trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(e) || e.length > 120) {
+          errores.email = 'Ese correo no parece válido';
+        } else { campos.push(`email = $${vals.length + 1}`); vals.push(e); }
+      }
+
+      if (Object.keys(errores).length) return res.status(422).json({ errores });
+      if (!campos.length) return res.status(422).json({ error: 'No hay nada que guardar' });
+
+      // Estar identificado por el personal cuenta como verificación: así
+      // la persona entra a las rifas, que es el objetivo de capturarlo.
+      campos.push(`estado = 'verificado'`);
+
+      const { rows } = await db.query(
+        `UPDATE asistentes SET ${campos.join(', ')} WHERE id = $1
+         RETURNING id, nombre, apellido, empresa, telefono, email, fila, asiento`,
+        vals
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'No encontrado' });
+      res.json({ ok: true, asistente: rows[0] });
+    } catch (err) { next(err); }
+  });
+
   /**
    * Guarda el correo de un asistente desde la mesa de entrega.
    *
